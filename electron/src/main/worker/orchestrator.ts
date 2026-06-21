@@ -363,7 +363,7 @@ export class Orchestrator {
       const seconds = Math.floor((now - this.turnStartedAt) / 1000);
       this.lastAgentOutputAt = now;
       this.pushUI('chat:message', {
-        text: `[Agent] 思考中... ${seconds}s`,
+        text: `[Agent] 仍在执行，等待输出... ${seconds}s`,
         timestamp: now,
       });
       logger.info('agent:silence', { seconds, task: this.currentTask.slice(0, 100) });
