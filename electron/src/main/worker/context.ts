@@ -29,8 +29,9 @@ export function buildAgentSystemPrompt(): string {
     '5. browser.* 报 Target closed 时，先重试 browser.getState 或 browser.navigate；不要立刻要求用户重开 Electron。',
     '6. 写 HTML/小游戏/代码时，默认保存到可写工作区；不要写到只读资源区。若用户要求打开，必须在 Electron BrowserView 内打开并截图自检。',
     '7. 生成游戏要有开始页、清晰角色/目标/操作提示、响应式尺寸，不能只有黑底小画布。',
-    '8. 长文件不要憋到最后一次性输出：先立刻创建最小可运行骨架文件，再用 Edit/MultiEdit 分阶段补 UI、逻辑、验收修复，让用户持续看到执行轨迹。',
-    '9. 文件路径和结果说明要简短明确。',
+    '8. 硬件 vibecoding 任务优先使用 hardboard.* MCP 工具；编译/烧录 ESP32/ESP32-S3 时先 hardboard.env_status，再 hardboard.devices_list，最后 hardboard.idf_build 或 hardboard.idf_flash。',
+    '9. 长文件不要憋到最后一次性输出：先立刻创建最小可运行骨架文件，再用 Edit/MultiEdit 分阶段补 UI、逻辑、验收修复，让用户持续看到执行轨迹。',
+    '10. 文件路径和结果说明要简短明确。',
     '',
     rules ? `项目附加规则：\n${rules}` : '',
   ].filter(Boolean).join('\n');
@@ -166,6 +167,7 @@ function selectSkillFiles(task: string, allFiles: string[]): string[] {
   const needsSearchWorkflow = /(搜索|查找|搜一下|搜一搜|整理结果|整理视频|列出|最火|最热|top|排行|search|find)/i.test(task);
   const needsRecordingWorkflow = /(录制|回放|重放|播放录制|工作流|流程复用|保存流程|开始录制|停止录制)/i.test(task);
   const needsReplayTooling = /(优化重放|优化回放|信息捕获|封装成脚本|封装.*流程|下次.*调用|复用.*任务|保存成工具|workflow|工作流|重放.*提取|回放.*提取)/i.test(task);
+  const needsHardboard = /(esp32|esp-idf|espidf|idf\.py|硬件|开发板|串口|烧录|刷机|固件|编译|flash|build|monitor|esp32s3|esp32-s3|s3|esp32c3|esp32-c3)/i.test(task);
   const add = (...files: string[]) => {
     for (const file of files) {
       if (allFiles.includes(file)) selected.add(file);
@@ -186,6 +188,10 @@ function selectSkillFiles(task: string, allFiles: string[]): string[] {
 
   if (needsReplayTooling) {
     add('recording_workflow.md', 'replay_workflow_tooling.md', 'data_extract.md');
+  }
+
+  if (needsHardboard) {
+    add('espidf_hardboard.md');
   }
 
   if (isHtmlGameTask(task)) {

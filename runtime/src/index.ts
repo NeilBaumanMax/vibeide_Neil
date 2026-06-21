@@ -14,6 +14,7 @@ export { saveRecording, loadRecording, loadLatestRecording, listRecordings } fro
 export { saveWorkspace, readWorkspace, listWorkspaces } from './storage';
 export { saveWorkflow, loadWorkflow, listWorkflows } from './workflows';
 export { startMCPServer } from './mcp/server';
+export { getHardboardEnvStatus, listHardboardDevices, runIdfBuild, runIdfFlash, runIdfSetTarget, runIdfCommand } from './hardboard';
 
 async function runCli(): Promise<void> {
   const command = process.argv[2] ?? 'health';
@@ -42,6 +43,18 @@ async function runCli(): Promise<void> {
     const { connectBrowser, getBrowserState } = await import('./browser.js');
     await connectBrowser(cdpPort);
     console.log(JSON.stringify(await getBrowserState(), null, 2));
+    return;
+  }
+
+  if (command === 'hardboard:env') {
+    const { getHardboardEnvStatus } = await import('./hardboard.js');
+    console.log(JSON.stringify(getHardboardEnvStatus(process.argv[3]), null, 2));
+    return;
+  }
+
+  if (command === 'hardboard:devices') {
+    const { listHardboardDevices } = await import('./hardboard.js');
+    console.log(JSON.stringify(await listHardboardDevices(), null, 2));
     return;
   }
 

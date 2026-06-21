@@ -10,7 +10,8 @@
     "start": "node node_modules/tsx/dist/cli.mjs src/index.ts mcp",
     "mcp": "node node_modules/tsx/dist/cli.mjs src/index.ts mcp",
     "connect": "node node_modules/tsx/dist/cli.mjs src/index.ts connect",
-    "typecheck": "node node_modules/typescript/lib/tsc.js --noEmit"
+    "typecheck": "node node_modules/typescript/lib/tsc.js --noEmit",
+    "smoke:hardboard": "npm run build && node scripts/verify_hardboard_build.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

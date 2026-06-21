@@ -64,6 +64,12 @@ export interface RecordingSummary {
   updatedAt: number | null;
 }
 
+export interface HardboardDevice {
+  port: string;
+  label: string;
+  source: string;
+}
+
 export interface WindowAPI {
   sendMessage: (text: string) => Promise<{ ok: boolean }>;
   onMessage: (cb: (msg: { text: string; timestamp: number; error?: boolean }) => void) => void;
@@ -88,6 +94,7 @@ export interface WindowAPI {
   replayBrowserRecording: (target?: string) => Promise<{ ok: boolean; file?: string; actionCount?: number; error?: string }>;
   listBrowserRecordings: () => Promise<{ files: string[] }>;
   listBrowserRecordingSummaries: () => Promise<{ recordings: RecordingSummary[] }>;
+  listHardboardDevices: () => Promise<{ devices: HardboardDevice[] }>;
   onBrowserTabs: (cb: (result: { tabs: BrowserTab[] }) => void) => void;
 }
 

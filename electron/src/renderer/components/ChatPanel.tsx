@@ -40,7 +40,7 @@ export default function ChatPanel({ messages, onSend }: Props) {
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="输入采集任务，例如：采集抖音 AI 潮玩 20 条"
+          placeholder="输入硬件任务，例如：基于 ESP32-S3 新建工程并编译"
         />
         <button className="nes-btn is-primary" type="submit">发送</button>
       </form>

@@ -1,0 +1,16 @@
+idf_component_register(
+  SRCS
+    "main.c"
+  INCLUDE_DIRS
+    "."
+  REQUIRES
+    openlive2d_board_touch_lcd_2
+    openlive2d_core
+    openlive2d_renderer_lvgl
+    lvgl
+  EMBED_FILES
+    "assets/ATRI.moc3"
+    "assets/room_window_240x320.rgb565"
+    "assets/texture_00.rgb565"
+    "assets/texture_00.a8"
+)

@@ -35,6 +35,14 @@ extraResources:
       - "!recordings/**"
       - "!workflows/**"
       - "!logs/**"
+  - from: ../runtime/hardboard
+    to: runtime/hardboard
+    filter:
+      - "**/*"
+      - "!**/build/**"
+      - "!**/.git/**"
+      - "!**/.cache/**"
+      - "!logs/**"
   - from: ../scripts
     to: scripts
     filter:

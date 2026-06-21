@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatPanel from './components/ChatPanel';
 import BrowserPanel from './components/BrowserPanel';
 import TaskProgress from './components/TaskProgress';
-import type { BrowserTab, ChatMessage, RecordingSummary, TaskStep, WorkbenchOverview } from './types';
+import type { BrowserTab, ChatMessage, HardboardDevice, RecordingSummary, TaskStep, WorkbenchOverview } from './types';
 
 export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -13,6 +13,7 @@ export default function App() {
   const [recordingSummary, setRecordingSummary] = useState('未开始录制');
   const [activeRecordingName, setActiveRecordingName] = useState('');
   const [recordings, setRecordings] = useState<RecordingSummary[]>([]);
+  const [hardboardDevices, setHardboardDevices] = useState<HardboardDevice[]>([]);
   const [workbench, setWorkbench] = useState<WorkbenchOverview | null>(null);
   const workbenchSmokeTriggered = useRef(false);
 
@@ -26,6 +27,10 @@ export default function App() {
     }
     if (recordingResult) {
       setRecordings(recordingResult.recordings);
+    }
+    const deviceResult = await window.electronAPI?.listHardboardDevices();
+    if (deviceResult) {
+      setHardboardDevices(deviceResult.devices);
     }
   }, []);
 
@@ -155,6 +160,30 @@ export default function App() {
     }]);
   }, []);
 
+  const handleRefreshHardboardDevices = useCallback(async () => {
+    const result = await window.electronAPI?.listHardboardDevices();
+    if (!result) return;
+    setHardboardDevices(result.devices);
+    setMessages(prev => [...prev, {
+      id: crypto.randomUUID(),
+      text: result.devices.length
+        ? `已发现硬件设备:\n${result.devices.map((device) => `${device.port} · ${device.label}`).join('\n')}`
+        : '未发现串口设备，请确认 ESP32-S3 已连接并安装串口驱动。',
+      role: 'agent',
+      timestamp: Date.now(),
+      error: result.devices.length === 0,
+    }]);
+  }, []);
+
+  const handleHardboardBuild = useCallback(() => {
+    handleSend('使用 hardboard.idf_build 编译当前 hardboard ESP32-S3 工程。先调用 hardboard.env_status 检查 ESP-IDF 5.4.3 环境，再选择 runtime/hardboard/projects 或示例工程执行构建，并把完整命令和结果摘要展示出来。');
+  }, [handleSend]);
+
+  const handleHardboardFlash = useCallback((port: string) => {
+    const deviceHint = port ? `串口端口是 ${port}。` : '请先调用 hardboard.devices_list 选择可用串口。';
+    handleSend(`使用 hardboard.idf_flash 烧录当前 hardboard ESP32-S3 工程。${deviceHint}烧录前先确认 ESP-IDF 5.4.3 环境和项目目录，失败时输出具体错误。`);
+  }, [handleSend]);
+
   const handleRefreshWorkbench = useCallback(async () => {
     await refreshWorkbench();
   }, [refreshWorkbench]);
@@ -224,9 +253,13 @@ export default function App() {
             isRecording={isRecording}
             recordingSummary={recordingSummary}
             recordings={recordings}
+            hardboardDevices={hardboardDevices}
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
             onReplayRecording={handleReplayRecording}
+            onRefreshHardboardDevices={handleRefreshHardboardDevices}
+            onHardboardBuild={handleHardboardBuild}
+            onHardboardFlash={handleHardboardFlash}
             workbench={workbench}
             onRefreshWorkbench={handleRefreshWorkbench}
             onOpenWorkbenchItem={handleOpenWorkbenchItem}

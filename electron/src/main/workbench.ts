@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { getAppRoot, getRecordingsDir, getWorkflowsDir, getAgentWorkspaceDir } from './paths';
+import { getAppRoot, getRecordingsDir, getWorkflowsDir, getAgentWorkspaceDir, getHardboardDir } from './paths';
 
 export interface WorkbenchItem {
   name: string;
@@ -45,6 +45,7 @@ function allowedWorkbenchRoots(): string[] {
     getRecordingsDir(),
     getWorkflowsDir(),
     path.join(PROJECT_ROOT, 'agent', 'tools'),
+    getHardboardDir(),
   ].map((entry) => path.resolve(entry));
 }
 
@@ -162,10 +163,34 @@ export function getWorkbenchOverview(): WorkbenchOverview {
       {
         id: 'tools',
         title: '生成',
-        description: 'Agent 生成的 HTML、代码和临时文件',
+        description: 'Agent 生成的代码和临时文件',
         folderPath: getAgentWorkspaceDir(),
         items: listDirectory(getAgentWorkspaceDir(), { limit: 24 }),
         emptyText: '还没有生成文件',
+      },
+      {
+        id: 'hardboard-doc',
+        title: '硬件文档',
+        description: '施工文档、设备资料和 ESP-IDF 调用规则',
+        folderPath: getHardboardDir('doc'),
+        items: listDirectory(getHardboardDir('doc'), { limit: 24 }),
+        emptyText: '还没有硬件文档',
+      },
+      {
+        id: 'hardboard-examples',
+        title: '硬件示例',
+        description: 'ESP32-S3 / ESP-IDF 示例工程',
+        folderPath: getHardboardDir('example'),
+        items: listDirectory(getHardboardDir('example'), { limit: 24 }),
+        emptyText: '还没有示例工程',
+      },
+      {
+        id: 'hardboard-projects',
+        title: '硬件工程',
+        description: 'Agent 可编译和烧录的本地 ESP-IDF 工程',
+        folderPath: getHardboardDir('projects'),
+        items: listDirectory(getHardboardDir('projects'), { limit: 24 }),
+        emptyText: '还没有硬件工程',
       },
       {
         id: 'agent-tools',

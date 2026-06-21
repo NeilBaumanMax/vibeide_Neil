@@ -15,6 +15,14 @@ export const RUNTIME_DIRS = {
   cookies: path.join(RUNTIME_ROOT, 'cookies'),
   logs: path.join(RUNTIME_ROOT, 'logs'),
   pids: path.join(RUNTIME_ROOT, 'pids'),
+  hardboard: path.join(RUNTIME_ROOT, 'hardboard'),
+  hardboardEspTools: path.join(RUNTIME_ROOT, 'hardboard', 'esptools'),
+  hardboardExamples: path.join(RUNTIME_ROOT, 'hardboard', 'example'),
+  hardboardDocs: path.join(RUNTIME_ROOT, 'hardboard', 'doc'),
+  hardboardProjects: path.join(RUNTIME_ROOT, 'hardboard', 'projects'),
+  hardboardSnapshots: path.join(RUNTIME_ROOT, 'hardboard', 'git-snapshots'),
+  hardboardLogs: path.join(RUNTIME_ROOT, 'hardboard', 'logs'),
+  hardboardFirmware: path.join(RUNTIME_ROOT, 'hardboard', 'firmware'),
 };
 
 export const STATE_FILE = path.join(RUNTIME_ROOT, 'state.json');

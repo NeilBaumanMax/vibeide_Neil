@@ -13,6 +13,12 @@ runtime/recordings/
 runtime/workflows/
 runtime/claude-session/
 runtime/claude-config/
+runtime/hardboard/**/build/
+runtime/hardboard/**/managed_components/
+runtime/hardboard/**/dependencies.lock
+runtime/hardboard/**/sdkconfig
+runtime/hardboard/esptools/esp-idf-v*/
+runtime/hardboard/esptools/idf-tools/
 workplaces/
 !workplaces/.samples/
 !workplaces/.samples/**

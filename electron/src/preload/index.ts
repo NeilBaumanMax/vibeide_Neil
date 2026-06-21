@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   replayBrowserRecording: (target?: string) => ipcRenderer.invoke('browser:replayRecording', target),
   listBrowserRecordings: () => ipcRenderer.invoke('browser:listRecordings'),
   listBrowserRecordingSummaries: () => ipcRenderer.invoke('browser:listRecordingSummaries'),
+  listHardboardDevices: () => ipcRenderer.invoke('hardboard:listDevices'),
   onBrowserTabs: (cb: (result: { tabs: Array<{ id: string; title: string; url: string; active: boolean }> }) => void) => {
     ipcRenderer.on('browser:tabs', (_event, result) => cb(result));
   },

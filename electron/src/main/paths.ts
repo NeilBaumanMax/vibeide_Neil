@@ -84,6 +84,11 @@ export function getRuntimeDir(): string {
     : path.join(process.resourcesPath, 'runtime');
 }
 
+/** Hardboard 硬件 vibecoding 资源目录 */
+export function getHardboardDir(...segments: string[]): string {
+  return path.join(getRuntimeDir(), 'hardboard', ...segments);
+}
+
 /** Claude Code CLI 二进制路径 */
 export function getClaudeBin(): string {
   return path.join(

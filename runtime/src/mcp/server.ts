@@ -2,18 +2,20 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { registerBrowserTools } from './browser.tool.js';
 import { registerStorageTools } from './storage.tool.js';
+import { registerHardboardTools } from './hardboard.tool.js';
 
 export async function startMCPServer() {
   const server = new McpServer(
     { name: 'vibeide-runtime', version: '0.3.0' },
     {
       capabilities: { tools: {} },
-      instructions: 'vibeide Runtime MCP Server — 提供浏览器自动化和存储能力。',
+      instructions: 'vibeide Runtime MCP Server — 提供浏览器自动化、存储和 ESP-IDF 硬件 vibecoding 能力。',
     }
   );
 
   registerBrowserTools(server);
   registerStorageTools(server);
+  registerHardboardTools(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import WorkspacePanel from './WorkspacePanel';
-import type { BrowserTab, RecordingSummary, WorkbenchOverview } from '../types';
+import type { BrowserTab, HardboardDevice, RecordingSummary, WorkbenchOverview } from '../types';
 
 interface Props {
   url: string;
@@ -11,9 +11,13 @@ interface Props {
   isRecording: boolean;
   recordingSummary: string;
   recordings: RecordingSummary[];
+  hardboardDevices: HardboardDevice[];
   onStartRecording: (label: string) => void;
   onStopRecording: (label: string) => void;
   onReplayRecording: (target: string) => void;
+  onRefreshHardboardDevices: () => void;
+  onHardboardBuild: () => void;
+  onHardboardFlash: (port: string) => void;
   workbench: WorkbenchOverview | null;
   onRefreshWorkbench: () => void;
   onOpenWorkbenchItem: (targetPath: string) => void;
@@ -34,16 +38,20 @@ export default function BrowserPanel({
   isRecording,
   recordingSummary,
   recordings,
+  hardboardDevices,
   onStartRecording,
   onStopRecording,
   onReplayRecording,
+  onRefreshHardboardDevices,
+  onHardboardBuild,
+  onHardboardFlash,
   workbench,
   onRefreshWorkbench,
   onOpenWorkbenchItem,
 }: Props) {
   const [inputUrl, setInputUrl] = useState('');
   const [recordingName, setRecordingName] = useState('');
-  const [replayTarget, setReplayTarget] = useState('');
+  const [selectedDevicePort, setSelectedDevicePort] = useState('');
   const [selectedViewId, setSelectedViewId] = useState(WORKBENCH_VIEW_ID);
   const browserStageRef = useRef<HTMLDivElement | null>(null);
   const previousActiveTabId = useRef<string | null>(null);
@@ -137,10 +145,11 @@ export default function BrowserPanel({
     onCloseTab(tabId);
   };
 
-  const replayOptions = recordings.map((recording) => ({
-    value: recording.file,
-    label: `${recording.label || recording.file}${recording.actionCount == null ? '' : ` · ${recording.actionCount} 动作`}`,
-  }));
+  useEffect(() => {
+    if (!selectedDevicePort && hardboardDevices[0]) {
+      setSelectedDevicePort(hardboardDevices[0].port);
+    }
+  }, [hardboardDevices, selectedDevicePort]);
 
   return (
     <div className="browser-panel nes-container is-rounded">
@@ -230,23 +239,18 @@ export default function BrowserPanel({
               )}
               <select
                 className="nes-select"
-                value={replayTarget}
-                onChange={(e) => setReplayTarget(e.target.value)}
-                title="选择要重放的录制"
+                value={selectedDevicePort}
+                onChange={(e) => setSelectedDevicePort(e.target.value)}
+                title="选择 ESP32-S3 串口设备"
               >
-                <option value="">最近录制</option>
-                {replayOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
+                <option value="">设备</option>
+                {hardboardDevices.map((device) => (
+                  <option key={device.port} value={device.port}>{device.port}</option>
                 ))}
               </select>
-              <input
-                className="browser-replay-target nes-input"
-                type="text"
-                value={replayTarget}
-                onChange={(e) => setReplayTarget(e.target.value)}
-                placeholder="重放名/文件"
-              />
-              <button className="nes-btn is-warning" type="button" onClick={() => onReplayRecording(replayTarget.trim())}>Play</button>
+              <button className="nes-btn" type="button" onClick={onRefreshHardboardDevices}>Dev</button>
+              <button className="nes-btn is-warning" type="button" onClick={onHardboardBuild}>Build</button>
+              <button className="nes-btn is-error" type="button" onClick={() => onHardboardFlash(selectedDevicePort.trim())}>Flash</button>
               <button type="button" className="browser-ghost-button nes-btn" onClick={() => handleSelectView(WORKBENCH_VIEW_ID)}>
                 台
               </button>
