@@ -10,14 +10,6 @@ import { appendClaudeSessionTurn, loadClaudeSession, getClaudeSessionFile } from
 
 export type PushUIFn = (channel: string, data: unknown) => void;
 
-function shouldHideAgentNarration(content: string): boolean {
-  const text = content.trim();
-  if (!text) return true;
-  if (/[\u4e00-\u9fa5]/.test(text)) return false;
-  if (/^(File created|File updated|Done|Saved|Updated|Created|Opened|Navigated|Screenshot|Error)/i.test(text)) return false;
-  return /^(The user|I need|I should|I will|I'll|Let me|Now I|Actually|Wait,|Looking at|This means|Good,|Okay,|Hmm,|We need)/i.test(text);
-}
-
 export class Orchestrator {
   private mainWindow: BrowserWindow;
   private pushUI: PushUIFn;
@@ -328,24 +320,14 @@ export class Orchestrator {
       return;
     }
 
-    if (p.type === 'thinking') {
-      logger.debug('ui:push', { channel: 'chat:message', type: p.type, content: p.content.slice(0, 300), hidden: true });
-      return;
-    }
-
     const isError = p.type === 'error';
     if (p.content) {
       this.currentAgentTranscript += `${p.content}\n`;
     }
 
-    if (p.type === 'text' && shouldHideAgentNarration(p.content)) {
-      logger.debug('ui:push', { channel: 'chat:message', type: p.type, content: p.content.slice(0, 300), hidden: true });
-      return;
-    }
-
     logger.debug('ui:push', { channel: 'chat:message', type: p.type, tool: p.toolName, content: p.content.slice(0, 300) });
     this.pushUI('chat:message', {
-      text: p.content,
+      text: p.type === 'thinking' ? `[Agent 思考]\n${p.content}` : p.content,
       timestamp: Date.now(),
       error: isError,
     });
