@@ -30,7 +30,7 @@ export function isDev(): boolean {
 
 let _devProjectRoot: string | null = null;
 
-/** 开发模式下的项目根目录（D:\coffecat-windows1.0） */
+/** 开发模式下的项目根目录（D:\vibeide-windows1.0） */
 function devProjectRoot(): string {
   if (!_devProjectRoot) {
     // __dirname = electron/dist/main/
@@ -106,7 +106,7 @@ export function getApiKeyPath(): string {
   const base = app.isReady()
     ? app.getPath('appData')
     : process.env.APPDATA || path.join(require('os').homedir(), 'AppData', 'Roaming');
-  return path.join(base, 'coffecat', 'apikey.txt');
+  return path.join(base, 'vibeide', 'apikey.txt');
 }
 
 /** 运行时数据目录（recordings、workflows、logs 等） */

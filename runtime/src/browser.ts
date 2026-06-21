@@ -101,7 +101,7 @@ export async function connectBrowser(cdpPort?: number): Promise<{ browser: Brows
     page = await context.newPage();
   }
 
-  console.error(`[coffecat] CDP 已连接 :${port}，活跃页面: ${page.url()}`);
+  console.error(`[vibeide] CDP 已连接 :${port}，活跃页面: ${page.url()}`);
 
   return { browser, context, page };
 }

@@ -23,11 +23,11 @@ export default function ChatPanel({ messages, onSend }: Props) {
   };
 
   return (
-    <div className="chat-panel">
-      <div className="chat-title">Agent 对话</div>
+    <div className="chat-panel nes-container is-rounded">
+      <div className="chat-title">Agent Dialog</div>
       <div className="chat-messages">
         {messages.map(msg => (
-          <div key={msg.id} className={`chat-msg chat-msg--${msg.role}${msg.error ? ' chat-msg--error' : ''}`}>
+          <div key={msg.id} className={`chat-msg nes-container is-rounded chat-msg--${msg.role}${msg.error ? ' chat-msg--error is-error' : ''}`}>
             <span className="chat-msg-role">{msg.role === 'user' ? 'You' : 'Agent'}</span>
             <p className="chat-msg-text">{msg.text}</p>
           </div>
@@ -36,12 +36,13 @@ export default function ChatPanel({ messages, onSend }: Props) {
       </div>
       <form className="chat-input" onSubmit={handleSubmit}>
         <input
+          className="nes-input"
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="输入采集任务，例如：采集抖音 AI 潮玩 20 条"
         />
-        <button type="submit">发送</button>
+        <button className="nes-btn is-primary" type="submit">发送</button>
       </form>
     </div>
   );

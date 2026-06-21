@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { getResourcesDir, getAppRoot, getRecordingsDir, getWorkflowsDir, getAgentDir } from './paths';
 
 export interface WorkbenchItem {
@@ -29,7 +30,27 @@ export interface WorkbenchOverview {
   sections: WorkbenchSection[];
 }
 
+export interface WorkbenchOpenResult {
+  kind: 'file' | 'dir';
+  path: string;
+  url: string;
+}
+
 const PROJECT_ROOT = getAppRoot();
+
+function allowedWorkbenchRoots(): string[] {
+  return [
+    PROJECT_ROOT,
+    getRecordingsDir(),
+    getWorkflowsDir(),
+    path.join(PROJECT_ROOT, 'agent', 'tools'),
+  ].map((entry) => path.resolve(entry));
+}
+
+function isAllowedWorkbenchPath(targetPath: string): boolean {
+  const resolved = path.resolve(targetPath);
+  return allowedWorkbenchRoots().some((root) => resolved === root || resolved.startsWith(`${root}${path.sep}`));
+}
 
 function statItem(filePath: string, enrich?: (item: WorkbenchItem) => WorkbenchItem): WorkbenchItem | null {
   try {
@@ -162,5 +183,23 @@ export function getWorkbenchOverview(): WorkbenchOverview {
         emptyText: '还没有工作流文件',
       },
     ],
+  };
+}
+
+export function openWorkbenchItem(targetPath: string): WorkbenchOpenResult {
+  if (!isAllowedWorkbenchPath(targetPath)) {
+    throw new Error('不允许打开工作台范围外的路径');
+  }
+
+  const resolved = path.resolve(targetPath);
+  const stats = fs.statSync(resolved);
+  if (!stats.isFile() && !stats.isDirectory()) {
+    throw new Error('只能打开文件或目录');
+  }
+
+  return {
+    kind: stats.isDirectory() ? 'dir' : 'file',
+    path: resolved,
+    url: pathToFileURL(resolved).toString(),
   };
 }

@@ -15,6 +15,7 @@ type LogEvent =
   | 'task:start' | 'task:context' | 'task:state' | 'task:complete' | 'task:error'
   | 'agent:spawn' | 'agent:stdout' | 'agent:stderr' | 'agent:parsed'
   | 'agent:close' | 'agent:error' | 'agent:kill' | 'agent:mcp-config-write-failed'
+  | 'claude:session'
   | 'first-run:detected' | 'first-run:apikey-saved' | 'first-run:apikey-save-failed' | 'first-run:apikey-copied-from-resources' | 'first-run:apikey-copy-failed' | 'first-run:status'
   | 'mcp:init'
   | 'ui:push'

@@ -2,6 +2,50 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-06-21 — Claude 软件会话与 NES UI 重构
+
+- 新增：
+  - `docs/PLAN_2026-06-21_CLAUDE_SESSION_NES_UI.md`
+  - `electron/src/main/worker/session-store.ts`
+  - `electron/scripts/run_workbench_smoke.cjs`
+  - `electron/scripts/verify_claude_session.cjs`
+  - `electron/assets/icon.svg`
+  - `electron/assets/icon.png`
+  - `electron/assets/icon.ico`
+- 更新：
+  - `electron/src/main/agent.ts`
+  - `electron/src/main/worker/orchestrator.ts`
+  - `electron/src/main/worker/logger.ts`
+  - `electron/src/renderer/*`
+  - `electron/electron-builder.yml`
+  - `electron/package.json`
+  - `runtime/package.json`
+  - `agent/package.json`
+  - `scripts/start_electron_desktop.*`
+  - `.gitignore`
+  - `docs/DEV_PROGRESS.md`
+- 当前变化：
+  - 增加软件级 Claude session store，最近上下文持久化到 `runtime/claude-session/session.json`
+  - 每次 Agent prompt 会注入同一软件会话上下文，避免用户体验上每问一次都是新会话
+  - Claude CLI 从第二轮起尝试使用 `--continue`，并固定 `CLAUDE_CONFIG_DIR` 到 `runtime/claude-config`
+  - Electron 前端改为 NES.css / 蓝白机风格，覆盖 Agent 对话、任务进度、结果区、右侧工作台和浏览器外框
+  - 右侧工作台条目从纯展示改为可点击按钮，点击后通过 `workbench:openItem` 打开到右侧浏览页层
+  - 增加工作台点击烟测，真实启动 Electron 并触发工作台按钮 `.click()`
+  - 增加 Claude 软件会话烟测，验证 `session.json` 能跨轮保存并生成后续上下文
+  - 应用标题、package、MCP server、日志前缀、浏览器 partition 从旧 `coffecat` 迁到 `vibeide`
+  - 打包规则改为 `com.vibeide.app` / `vibeide`，新增 Windows icon，移除真实 `apikey.txt` extraResource
+  - npm scripts 改成直接调用 `node_modules/<pkg>/...`，降低 `.bin` symlink 依赖
+- 验证：
+  - `pytest tests/test_project.py` 通过
+  - `node --check agent/tools/build_platform_search_url.mjs` 通过
+  - `node --check agent/tools/bilibili_search.mjs` 通过
+  - `node --check agent/tools/cdp_navigate.mjs` 通过
+  - `cd runtime && npm run typecheck && npm run build` 通过
+  - `cd electron && npm run typecheck && npm run build:main && npm run build:renderer` 通过
+  - `cd electron && npm run verify:session` 通过
+  - `cd electron && npm run smoke:workbench` 通过，打开目标：`README.md`
+  - 本机 Electron 构建产物可启动并截图确认 NES UI，截图：`/tmp/vibeide-nes-ui.png`
+
 ## 2026-06-21 — GitHub 接力与文档重构
 
 - 仓库：

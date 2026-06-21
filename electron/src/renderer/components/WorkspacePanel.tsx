@@ -1,9 +1,10 @@
 import React from 'react';
-import type { WorkbenchOverview, WorkbenchSection } from '../types';
+import type { WorkbenchItem, WorkbenchOverview, WorkbenchSection } from '../types';
 
 interface Props {
   overview: WorkbenchOverview | null;
   onRefresh: () => void;
+  onOpenItem: (targetPath: string) => void;
 }
 
 function formatTime(value: number | null): string {
@@ -23,9 +24,9 @@ function formatSize(value: number | null): string {
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function renderSection(section: WorkbenchSection) {
+function renderSection(section: WorkbenchSection, onOpenItem: (targetPath: string) => void) {
   return (
-    <section key={section.id} className="workspace-section">
+    <section key={section.id} className="workspace-section nes-container is-rounded">
       <div className="workspace-section-header">
         <div>
           <h3>{section.title}</h3>
@@ -34,8 +35,15 @@ function renderSection(section: WorkbenchSection) {
         <code>{section.folderPath}</code>
       </div>
       <div className="workspace-items">
-        {section.items.length ? section.items.map((item) => (
-          <article key={item.path} className="workspace-item">
+        {section.items.length ? section.items.map((item: WorkbenchItem) => (
+          <button
+            key={item.path}
+            type="button"
+            className="workspace-item workspace-item-button nes-container is-rounded"
+            onClick={() => onOpenItem(item.path)}
+            title={`打开 ${item.path}`}
+            data-workbench-path={item.path}
+          >
             <div className="workspace-item-kind">{item.kind === 'dir' ? 'DIR' : 'FILE'}</div>
             <div className="workspace-item-body">
               <strong title={item.summary || item.label || item.name}>{item.summary || item.label || item.name}</strong>
@@ -46,7 +54,7 @@ function renderSection(section: WorkbenchSection) {
               <span>{formatSize(item.size)}</span>
               <span>{formatTime(item.updatedAt)}</span>
             </div>
-          </article>
+          </button>
         )) : (
           <div className="workspace-empty">{section.emptyText}</div>
         )}
@@ -55,7 +63,7 @@ function renderSection(section: WorkbenchSection) {
   );
 }
 
-export default function WorkspacePanel({ overview, onRefresh }: Props) {
+export default function WorkspacePanel({ overview, onRefresh, onOpenItem }: Props) {
   return (
     <div className="workspace-panel">
       <div className="workspace-hero">
@@ -64,10 +72,10 @@ export default function WorkspacePanel({ overview, onRefresh }: Props) {
           <h2>右侧固定工作台</h2>
           <p>这里始终保留文件、工具、录制和重放入口。浏览页面改成独立页层，在上方切换，不再把工作台本身覆盖掉。</p>
         </div>
-        <button type="button" onClick={onRefresh}>刷新目录</button>
+        <button className="nes-btn is-primary" type="button" onClick={onRefresh}>刷新目录</button>
       </div>
       <div className="workspace-grid">
-        {overview?.sections.map(renderSection)}
+        {overview?.sections.map((section) => renderSection(section, onOpenItem))}
       </div>
     </div>
   );

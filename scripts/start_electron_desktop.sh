@@ -37,7 +37,9 @@ mkdir -p \
   "$RUNTIME_DIR/chrome_profile" \
   "$RUNTIME_DIR/cookies" \
   "$RUNTIME_DIR/logs" \
-  "$RUNTIME_DIR/pids"
+  "$RUNTIME_DIR/pids" \
+  "$RUNTIME_DIR/claude-session" \
+  "$RUNTIME_DIR/claude-config"
 
 if [ ! -f "$RUNTIME_DIR/state.json" ]; then
   cat >"$RUNTIME_DIR/state.json" <<'EOF'

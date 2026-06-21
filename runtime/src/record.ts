@@ -3,8 +3,8 @@ import type { PageAction } from './types';
 
 const RECORDER_SCRIPT = `
 (() => {
-  if ((window).__coffecatRecorderInstalled) return;
-  (window).__coffecatRecorderInstalled = true;
+  if ((window).__vibeideRecorderInstalled) return;
+  (window).__vibeideRecorderInstalled = true;
 
   function shortText(value) {
     return String(value || "").replace(/\\s+/g, " ").trim().slice(0, 120);
@@ -38,8 +38,8 @@ const RECORDER_SCRIPT = `
   }
 
   function emit(type, payload) {
-    if (typeof (window).__coffecatRecordEvent !== "function") return;
-    (window).__coffecatRecordEvent({
+    if (typeof (window).__vibeideRecordEvent !== "function") return;
+    (window).__vibeideRecordEvent({
       type,
       url: location.href,
       title: document.title,
@@ -143,7 +143,7 @@ async function installRecorder(): Promise<void> {
   const context = getContext();
   if (hooked) return;
 
-  await context.exposeBinding('__coffecatRecordEvent', async (_source, payload: RecordedBrowserEvent) => {
+  await context.exposeBinding('__vibeideRecordEvent', async (_source, payload: RecordedBrowserEvent) => {
     recording.push(payload);
   });
   await context.addInitScript(RECORDER_SCRIPT);

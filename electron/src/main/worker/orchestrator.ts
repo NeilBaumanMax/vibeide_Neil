@@ -8,6 +8,7 @@ import { logger } from './logger';
 import { tryHandleQuickTask } from './quick-tasks';
 import { isHtmlGameTask, validateCurrentPage } from './page-validator';
 import { buildSearchPreflightPlan, buildSearchPreflightPrompt, SearchPreflightPlan } from './search-preflight';
+import { appendClaudeSessionTurn, buildClaudeSessionContext, getClaudeSessionFile } from './session-store';
 
 export type PushUIFn = (channel: string, data: unknown) => void;
 
@@ -17,6 +18,7 @@ export class Orchestrator {
   private state: TaskStateMachine;
   private buffer: ChatBuffer;
   private currentTask: string | null = null;
+  private currentAgentTranscript = '';
   private currentAttempt = 0;
   private readonly maxValidationRetries = 2;
 
@@ -55,6 +57,7 @@ export class Orchestrator {
 
   private async runTask(task: string, validationFeedback?: string): Promise<void> {
     logger.info('task:start', { task });
+    this.currentAgentTranscript = '';
 
     if (getAgentProcess()) {
       logger.warn('agent:kill', { reason: 'new task, killing old agent' });
@@ -101,6 +104,11 @@ export class Orchestrator {
           }
           this.state.advanceTo('navigating');
           this.state.complete();
+          appendClaudeSessionTurn({
+            user: task,
+            assistant: quickResult.message || `[Worker] 已通过 Electron 内置快捷流程完成：${quickResult.label}`,
+            status: 'completed',
+          });
           this.pushUI('task:complete', { code: 0 });
           this.currentTask = null;
           return;
@@ -147,11 +155,21 @@ export class Orchestrator {
     const effectiveTask = validationFeedback
       ? `${taskWithPreflight}\n\n【上一版页面验收失败，必须修正后重新生成】\n${validationFeedback}`
       : taskWithPreflight;
-    const { prompt, skillsFound } = buildContext(effectiveTask);
+    const sessionContext = buildClaudeSessionContext();
+    const taskForContext = `${sessionContext.text}\n${effectiveTask}`;
+    const { prompt, skillsFound } = buildContext(taskForContext);
     logger.info('task:context', {
       skillsFound,
       promptLength: prompt.length,
+      sessionId: sessionContext.session.id,
+      sessionTurns: sessionContext.session.turnCount,
+      sessionFile: getClaudeSessionFile(),
       promptPreview: prompt.slice(0, 500),
+    });
+
+    this.pushUI('chat:message', {
+      text: `[Session] ${sessionContext.session.id} · ${sessionContext.session.turnCount} 轮上下文已接入`,
+      timestamp: Date.now(),
     });
 
     if (skillsFound.length > 0) {
@@ -169,8 +187,12 @@ export class Orchestrator {
     });
 
     logger.info('agent:spawn', { task: task.slice(0, 100) });
-    const proc = spawnAgent(prompt);
-    logger.info('agent:spawn', { pid: proc.pid, started: !!proc.pid });
+    const proc = spawnAgent(prompt, { continueSession: sessionContext.session.turnCount > 0 });
+    logger.info('agent:spawn', {
+      pid: proc.pid,
+      started: !!proc.pid,
+      continueSession: sessionContext.session.turnCount > 0,
+    });
 
     proc.stdout?.on('data', (chunk: Buffer) => {
       const text = chunk.toString();
@@ -279,9 +301,19 @@ export class Orchestrator {
     if (code === 0) {
       this.state.complete();
       logger.info('task:complete', { exitCode: code });
+      appendClaudeSessionTurn({
+        user: task,
+        assistant: this.currentAgentTranscript || '[Agent] 任务完成',
+        status: 'completed',
+      });
     } else {
       this.state.fail();
       logger.error('task:complete', { exitCode: code, msg: 'Agent exited with error' });
+      appendClaudeSessionTurn({
+        user: task,
+        assistant: this.currentAgentTranscript || `[Agent] 任务失败 (code: ${code})`,
+        status: 'failed',
+      });
       this.pushUI('chat:message', {
         text: '当前远端 Agent 通道不可用。可先直接使用“打开网页 / B站 / 股票搜索 / 贪吃蛇”这类本地快捷能力。',
         timestamp: Date.now(),
@@ -339,6 +371,9 @@ export class Orchestrator {
     }
 
     const isError = p.type === 'error';
+    if (p.content) {
+      this.currentAgentTranscript += `${p.content}\n`;
+    }
 
     logger.debug('ui:push', { channel: 'chat:message', type: p.type, tool: p.toolName, content: p.content.slice(0, 300) });
     this.pushUI('chat:message', {
@@ -361,6 +396,13 @@ export class Orchestrator {
 
   pause(): void {
     logger.info('task:state', { action: 'pause' });
+    if (this.currentTask) {
+      appendClaudeSessionTurn({
+        user: this.currentTask,
+        assistant: this.currentAgentTranscript || '[Worker] 任务已暂停',
+        status: 'interrupted',
+      });
+    }
     killAgent();
     this.pushUI('chat:message', {
       text: '[Worker] 任务已暂停',

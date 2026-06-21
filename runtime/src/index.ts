@@ -52,7 +52,7 @@ const entryHref = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1]))
 if (import.meta.url === entryHref) {
   runCli().catch((error) => {
     const message = error instanceof Error ? error.message : String(error);
-    console.error(`[coffecat] runtime 启动失败: ${message}`);
+    console.error(`[vibeide] runtime 启动失败: ${message}`);
     process.exit(1);
   });
 }

@@ -13,7 +13,7 @@ export function setupTray(): Tray {
     { label: '退出', role: 'quit' },
   ]);
 
-  tray.setToolTip('coffecat');
+  tray.setToolTip('vibeide');
   tray.setContextMenu(menu);
 
   return tray;

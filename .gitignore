@@ -11,6 +11,8 @@ runtime/state.json
 runtime/ports.json
 runtime/recordings/
 runtime/workflows/
+runtime/claude-session/
+runtime/claude-config/
 workplaces/
 !workplaces/.samples/
 !workplaces/.samples/**

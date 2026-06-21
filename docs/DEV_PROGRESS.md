@@ -16,6 +16,15 @@
 - [x] 已从 Windows `C:\vibecodingide` 同步源码镜像到本机，排除依赖、构建产物、运行态和密钥
 - [x] README 已重写为 `vibeide` 当前 Electron + Runtime + Agent 主线
 - [x] 新文档体系已建立：INDEX / ARCHITECTURE / DEVELOPMENT / GITHUB_SYNC / REFACTOR_PLAN / SECURITY / HANDOFF
+- [x] Claude CLI 已接入软件级持续会话上下文，最近轮次持久化到 `runtime/claude-session/`
+- [x] Claude CLI 启动增加 `--continue` 续接策略，并用 prompt 注入作为兜底
+- [x] Electron 前端已重构为 NES.css / 蓝白机视觉
+- [x] 右侧工作台文件 / 目录现在可点击，会在右侧浏览页层打开 `file://` 地址
+- [x] 新增 Electron 工作台点击烟测：`cd electron && npm run smoke:workbench`
+- [x] 新增 Claude 软件会话记忆烟测：`cd electron && npm run verify:session`
+- [x] 应用图标已新增像素风 `electron/assets/icon.svg/png/ico`
+- [x] 打包规则已改为 `vibeide` appId/productName/icon，并停止把真实 `apikey.txt` 打进安装包
+- [x] runtime/electron/agent package 命名已从 `@coffecat/*` 迁移到 `@vibeide/*`
 - [x] Electron 33 + Vite 6 + React 18
 - [x] Gateway / Worker / Agent / Runtime 四层分工
 - [x] CDP 端口统一 `9230`
@@ -80,21 +89,21 @@ UI -> Gateway -> Worker -> Agent -> MCP -> Runtime -> Electron Chromium
 
 ## 当前已知问题
 
-1. 代码、package、UI 文案和部分路径注释仍含 `coffecat/coddecat` 旧命名，需要按 `docs/REFACTOR_PLAN.md` 分阶段统一。
-2. `tests/test_scaffold.py` 仍依赖旧 Python scaffold `src/coddecat`，与当前 Electron 主线不一致。
-3. Windows 原目录 `C:\vibecodingide` 还不是 Git clone 目录，后续应改为从 GitHub pull。
-4. `WebContentsView` 在 Linux/X11 下已增加无有效 bounds 隐藏保护，但仍需继续实机压测位置稳定性。
-5. Worker 层已接入统一搜索预处理，但平台识别仍应随新增平台继续扩展和压测。
-6. 个别 agent 规则文本仍使用旧词 `BrowserView`，语义上指的是“右侧浏览页层”。
-7. `pytest tests/` 当前仍因仓库缺少 `src/coddecat` 实现而在收集阶段失败，不属于本轮 runtime 改动回归。
-8. Runtime 录制/回放已接进 Electron 和 Agent，Electron UI 可命名和选择重放对象，但当前回放仍以 DOM 事件重放为主，复杂跨页流程还需继续压测。
+1. `tests/test_scaffold.py` 仍依赖旧 Python scaffold `src/coddecat`，与当前 Electron 主线不一致。
+2. Windows 原目录 `C:\vibecodingide` 还不是 Git clone 目录，后续应改为从 GitHub pull。
+3. `WebContentsView` 在 Linux/X11 下已增加无有效 bounds 隐藏保护，但仍需继续实机压测位置稳定性。
+4. Worker 层已接入统一搜索预处理，但平台识别仍应随新增平台继续扩展和压测。
+5. 个别 agent 规则文本仍使用旧词 `BrowserView`，语义上指的是“右侧浏览页层”。
+6. `pytest tests/` 当前仍因仓库缺少 `src/coddecat` 实现而在收集阶段失败，不属于本轮 runtime 改动回归。
+7. Runtime 录制/回放已接进 Electron 和 Agent，Electron UI 可命名和选择重放对象，但当前回放仍以 DOM 事件重放为主，复杂跨页流程还需继续压测。
+8. Claude Code CLI 的真实模型续聊效果仍需 Windows 实机上用真实 Agent 调用确认；应用级 session context 与 `verify:session` 已作为可验证兜底。
 
 ---
 
 ## 下一步
 
-1. 先完成源码和文档首批入库并 push 到 GitHub。
-2. 按 `docs/REFACTOR_PLAN.md` 统一项目命名和测试口径。
+1. 在 Windows 实机运行新 NES UI，并执行 `npm run smoke:workbench` / `npm run verify:session`。
+2. 明确旧 Python scaffold 是否保留，统一测试口径。
 3. 继续压测 Worker 搜索预处理在更多平台、更多自然语言表达下的稳定性。
 4. 继续验证右侧 `workbench + host + tabs` 模型的稳定性。
 5. 给更多平台补统一搜索 URL 工具和专项 workflow。

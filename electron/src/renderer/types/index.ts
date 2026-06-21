@@ -77,6 +77,9 @@ export interface WindowAPI {
   setBrowserBounds: (bounds: { x: number; y: number; width: number; height: number }) => Promise<{ ok: boolean }>;
   listBrowserTabs: () => Promise<{ tabs: BrowserTab[] }>;
   getWorkbenchOverview: () => Promise<WorkbenchOverview>;
+  openWorkbenchItem: (targetPath: string) => Promise<{ ok: boolean; kind?: 'file' | 'dir'; path?: string; url?: string; error?: string }>;
+  isWorkbenchSmokeTest?: boolean;
+  finishWorkbenchSmokeTest?: (result: unknown) => Promise<{ ok: boolean }>;
   activateBrowserTab: (id: string) => Promise<{ ok: boolean }>;
   closeBrowserTab: (id: string) => Promise<{ ok: boolean }>;
   startBrowserRecording: () => Promise<{ ok: boolean }>;

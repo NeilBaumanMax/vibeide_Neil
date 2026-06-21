@@ -11,7 +11,9 @@ $dirs = @(
   "runtime\pids",
   "runtime\logs",
   "runtime\recordings",
-  "runtime\workflows"
+  "runtime\workflows",
+  "runtime\claude-session",
+  "runtime\claude-config"
 )
 foreach ($dir in $dirs) {
   New-Item -ItemType Directory -Force -Path $dir | Out-Null

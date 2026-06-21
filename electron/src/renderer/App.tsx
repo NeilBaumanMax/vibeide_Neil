@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatPanel from './components/ChatPanel';
 import BrowserPanel from './components/BrowserPanel';
 import TaskProgress from './components/TaskProgress';
@@ -15,6 +15,7 @@ export default function App() {
   const [activeRecordingName, setActiveRecordingName] = useState('');
   const [recordings, setRecordings] = useState<RecordingSummary[]>([]);
   const [workbench, setWorkbench] = useState<WorkbenchOverview | null>(null);
+  const workbenchSmokeTriggered = useRef(false);
 
   const refreshWorkbench = useCallback(async () => {
     const [overview, recordingResult] = await Promise.all([
@@ -159,11 +160,64 @@ export default function App() {
     await refreshWorkbench();
   }, [refreshWorkbench]);
 
+  const handleOpenWorkbenchItem = useCallback(async (targetPath: string) => {
+    const result = await window.electronAPI?.openWorkbenchItem(targetPath);
+    if (!result) return;
+    setMessages(prev => [...prev, {
+      id: crypto.randomUUID(),
+      text: result.ok
+        ? `已打开工作台项目: ${result.path}`
+        : `打开工作台项目失败: ${result.error}`,
+      role: 'agent',
+      timestamp: Date.now(),
+      error: !result.ok,
+    }]);
+    if (window.electronAPI?.isWorkbenchSmokeTest) {
+      await window.electronAPI.finishWorkbenchSmokeTest?.({
+        source: 'workspace-item-click',
+        targetPath,
+        ...result,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!window.electronAPI?.isWorkbenchSmokeTest || workbenchSmokeTriggered.current || !workbench) {
+      return;
+    }
+    const hasItem = workbench.sections.some((section) => section.items.length > 0);
+    if (!hasItem) {
+      void window.electronAPI.finishWorkbenchSmokeTest?.({
+        ok: false,
+        error: '工作台没有可点击项目',
+      });
+      return;
+    }
+
+    workbenchSmokeTriggered.current = true;
+    window.setTimeout(() => {
+      const button = document.querySelector<HTMLButtonElement>('.workspace-item-button');
+      if (!button) {
+        void window.electronAPI.finishWorkbenchSmokeTest?.({
+          ok: false,
+          error: '没有找到工作台项目按钮',
+        });
+        return;
+      }
+      button.click();
+    }, 500);
+  }, [workbench]);
+
   return (
     <div className="app">
       <header className="app-header">
-        <span className="app-title">coffecat v0.2.0</span>
-        <span className="app-status">Runtime OK</span>
+        <div className="app-brand">
+          <span className="app-icon-pixel" aria-hidden="true" />
+          <span className="app-title">vibeide</span>
+        </div>
+        <span className="app-status nes-badge">
+          <span className="is-primary">Runtime OK</span>
+        </span>
       </header>
       <div className="app-body">
         <div className="left-panel">
@@ -186,6 +240,7 @@ export default function App() {
             onReplayRecording={handleReplayRecording}
             workbench={workbench}
             onRefreshWorkbench={handleRefreshWorkbench}
+            onOpenWorkbenchItem={handleOpenWorkbenchItem}
           />
         </div>
       </div>

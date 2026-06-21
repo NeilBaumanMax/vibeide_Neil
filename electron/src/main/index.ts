@@ -58,6 +58,8 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     backgroundColor: '#1a1b26',
+    title: 'vibeide',
+    icon: path.join(getResourcesDir(), 'electron', 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'index.js'),
       nodeIntegration: false,

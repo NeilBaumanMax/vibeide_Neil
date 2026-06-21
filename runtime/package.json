@@ -1,16 +1,16 @@
 {
-  "name": "@coffecat/runtime",
-  "version": "0.2.0",
+  "name": "@vibeide/runtime",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "npx tsx src/index.ts health",
-    "build": "tsc",
-    "start": "npx tsx src/index.ts mcp",
-    "mcp": "npx tsx src/index.ts mcp",
-    "connect": "npx tsx src/index.ts connect",
-    "typecheck": "npx tsc --noEmit"
+    "dev": "node node_modules/tsx/dist/cli.mjs src/index.ts health",
+    "build": "node node_modules/typescript/lib/tsc.js",
+    "start": "node node_modules/tsx/dist/cli.mjs src/index.ts mcp",
+    "mcp": "node node_modules/tsx/dist/cli.mjs src/index.ts mcp",
+    "connect": "node node_modules/tsx/dist/cli.mjs src/index.ts connect",
+    "typecheck": "node node_modules/typescript/lib/tsc.js --noEmit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

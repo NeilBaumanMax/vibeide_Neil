@@ -16,6 +16,7 @@ interface Props {
   onReplayRecording: (target: string) => void;
   workbench: WorkbenchOverview | null;
   onRefreshWorkbench: () => void;
+  onOpenWorkbenchItem: (targetPath: string) => void;
 }
 
 const WORKBENCH_VIEW_ID = 'workbench';
@@ -38,6 +39,7 @@ export default function BrowserPanel({
   onReplayRecording,
   workbench,
   onRefreshWorkbench,
+  onOpenWorkbenchItem,
 }: Props) {
   const [inputUrl, setInputUrl] = useState('');
   const [recordingName, setRecordingName] = useState('');
@@ -135,12 +137,12 @@ export default function BrowserPanel({
   }));
 
   return (
-    <div className="browser-panel">
-      <div className="browser-shell-header">
+    <div className="browser-panel nes-container is-rounded">
+      <div className="browser-shell-header nes-container is-dark">
         <div className="browser-tabs">
           <button
             type="button"
-            className={`browser-tab browser-tab--workspace${isWorkbenchActive ? ' browser-tab--active' : ''}`}
+            className={`browser-tab browser-tab--workspace nes-btn${isWorkbenchActive ? ' is-primary browser-tab--active' : ''}`}
             onClick={() => handleSelectView(WORKBENCH_VIEW_ID)}
           >
             工作台
@@ -148,14 +150,14 @@ export default function BrowserPanel({
           {visibleTabs.map((tab) => (
             <div
               key={tab.id}
-              className={`browser-tab${selectedViewId === tab.id ? ' browser-tab--active' : ''}`}
+              className={`browser-tab nes-btn${selectedViewId === tab.id ? ' is-primary browser-tab--active' : ''}`}
               onClick={() => handleSelectView(tab.id)}
             >
               <span className="browser-tab-title">{tab.title || tab.url || '新页面'}</span>
               {visibleTabs.length > 0 ? (
                 <button
                   type="button"
-                  className="browser-tab-close"
+                  className="browser-tab-close nes-btn is-error"
                   onClick={(e) => {
                     e.stopPropagation();
                     onCloseTab(tab.id);
@@ -169,7 +171,7 @@ export default function BrowserPanel({
         </div>
         <div className="browser-switcher">
           <span>页面</span>
-          <select value={selectedViewId} onChange={(e) => handleSelectView(e.target.value)}>
+          <select className="nes-select" value={selectedViewId} onChange={(e) => handleSelectView(e.target.value)}>
             <option value={WORKBENCH_VIEW_ID}>工作台 / 对话页</option>
             {visibleTabs.map((tab) => (
               <option key={tab.id} value={tab.id}>
@@ -181,34 +183,36 @@ export default function BrowserPanel({
       </div>
 
       {isWorkbenchActive ? (
-        <WorkspacePanel overview={workbench} onRefresh={onRefreshWorkbench} />
+        <WorkspacePanel overview={workbench} onRefresh={onRefreshWorkbench} onOpenItem={onOpenWorkbenchItem} />
       ) : (
         <>
-          <div className="browser-toolbar">
+          <div className="browser-toolbar nes-container is-rounded">
             <span className="browser-label">{browserTitle}</span>
             <form onSubmit={handleNavigate}>
               <input
+                className="nes-input"
                 type="text"
                 value={inputUrl}
                 onChange={(e) => setInputUrl(e.target.value)}
                 placeholder="输入 URL 导航..."
               />
-              <button type="submit">Go</button>
+              <button className="nes-btn is-primary" type="submit">Go</button>
             </form>
             <div className="browser-recording-controls">
               <input
-                className="browser-recording-name"
+                className="browser-recording-name nes-input"
                 type="text"
                 value={recordingName}
                 onChange={(e) => setRecordingName(e.target.value)}
                 placeholder="录制名"
               />
               {isRecording ? (
-                <button type="button" onClick={() => onStopRecording(recordingName.trim())}>Stop Rec</button>
+                <button className="nes-btn is-error" type="button" onClick={() => onStopRecording(recordingName.trim())}>Stop Rec</button>
               ) : (
-                <button type="button" onClick={() => onStartRecording(recordingName.trim())}>Start Rec</button>
+                <button className="nes-btn is-success" type="button" onClick={() => onStartRecording(recordingName.trim())}>Start Rec</button>
               )}
               <select
+                className="nes-select"
                 value={replayTarget}
                 onChange={(e) => setReplayTarget(e.target.value)}
                 title="选择要重放的录制"
@@ -219,23 +223,23 @@ export default function BrowserPanel({
                 ))}
               </select>
               <input
-                className="browser-replay-target"
+                className="browser-replay-target nes-input"
                 type="text"
                 value={replayTarget}
                 onChange={(e) => setReplayTarget(e.target.value)}
                 placeholder="重放名/文件"
               />
-              <button type="button" onClick={() => onReplayRecording(replayTarget.trim())}>Play</button>
-              <button type="button" className="browser-ghost-button" onClick={() => handleSelectView(WORKBENCH_VIEW_ID)}>
+              <button className="nes-btn is-warning" type="button" onClick={() => onReplayRecording(replayTarget.trim())}>Play</button>
+              <button type="button" className="browser-ghost-button nes-btn" onClick={() => handleSelectView(WORKBENCH_VIEW_ID)}>
                 返回工作台
               </button>
             </div>
             <span className="browser-current-url">{url}</span>
           </div>
-          <div className="browser-recording-status">{recordingSummary}</div>
+          <div className="browser-recording-status nes-container is-rounded">{recordingSummary}</div>
           <div ref={browserStageRef} className="browser-stage">
             <div className="browser-stage-frame">
-              <div className="browser-stage-hint">
+              <div className="browser-stage-hint nes-container is-dark">
                 当前浏览页在同一窗口中全尺寸显示。上方可切换到工作台或其他页面。
               </div>
             </div>

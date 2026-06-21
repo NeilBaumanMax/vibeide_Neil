@@ -22,7 +22,7 @@ let tabsEmitter: ((tabs: BrowserTab[]) => void) | null = null;
 let tabs: BrowserTabEntry[] = [];
 let activeTabId: string | null = null;
 let tabSeq = 0;
-const BROWSER_PARTITION = 'persist:coffecat-browser';
+const BROWSER_PARTITION = 'persist:vibeide-browser';
 const MIN_BROWSER_WIDTH = 0;
 const MIN_BROWSER_HEIGHT = 0;
 let rendererBounds: Rectangle | null = null;

@@ -1,8 +1,10 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { ipcMain, BrowserWindow } from 'electron';
 import { handleTask, getOrchestrator } from './worker';
-import { activateTab, closeTab, listTabs, setBrowserTabsEmitter, setBrowserViewBoundsFromRenderer } from './browser-view';
+import { activateTab, closeTab, listTabs, openTabUrl, setBrowserTabsEmitter, setBrowserViewBoundsFromRenderer } from './browser-view';
 import { listBrowserRecordingSummaries, listBrowserRecordings, replayBrowserRecording, replayLatestBrowserRecording, startBrowserRecording, stopBrowserRecording } from './browser-recorder';
-import { getWorkbenchOverview } from './workbench';
+import { getWorkbenchOverview, openWorkbenchItem } from './workbench';
 
 export function startGateway(mainWindow: BrowserWindow): void {
   // Gateway 提供 pushUI 能力 — Worker 通过它推消息到 UI
@@ -59,6 +61,29 @@ export function startGateway(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('workbench:getOverview', async () => {
     return getWorkbenchOverview();
+  });
+
+  ipcMain.handle('workbench:openItem', async (_event, targetPath: string) => {
+    try {
+      const result = openWorkbenchItem(targetPath);
+      openTabUrl(result.url, true);
+      return { ok: true, ...result };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: false, error: message };
+    }
+  });
+
+  ipcMain.handle('smoke:workbench:finish', async (_event, result: unknown) => {
+    const resultFile = process.env.VIBEIDE_SMOKE_RESULT_FILE;
+    if (resultFile) {
+      fs.mkdirSync(path.dirname(resultFile), { recursive: true });
+      fs.writeFileSync(resultFile, JSON.stringify(result, null, 2), 'utf-8');
+    }
+    setTimeout(() => {
+      mainWindow.close();
+    }, 250);
+    return { ok: true };
   });
 
   ipcMain.handle('browser:activateTab', async (_event, id: string) => {

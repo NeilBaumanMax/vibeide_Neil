@@ -8,9 +8,9 @@ import {
   getApiKeyPath,
   getRuntimeDir,
   getResourcesDir,
-  getTsxBin,
   getRuntimeDevServerEntry,
   getRuntimeServerEntry,
+  getRuntimeDataDir,
   isDev,
   isPackaged,
 } from './paths';
@@ -24,7 +24,11 @@ const DEFAULT_DEEPSEEK_MODEL = 'deepseek-v4-pro';
 let agentProcess: ChildProcess | null = null;
 let agentSeq = 0;
 
-export function spawnAgent(prompt: string): ChildProcess {
+export interface SpawnAgentOptions {
+  continueSession?: boolean;
+}
+
+export function spawnAgent(prompt: string, options: SpawnAgentOptions = {}): ChildProcess {
   const seq = ++agentSeq;
 
   if (agentProcess) {
@@ -45,7 +49,7 @@ export function spawnAgent(prompt: string): ChildProcess {
   } catch (err) {
     logger.error('agent:mcp-config-write-failed', { error: String(err), path: mcpConfigPath });
     // 降级：尝试写入系统临时目录
-    const tmpPath = path.join(require('os').tmpdir(), `.coffecat-mcp-${seq}.json`);
+    const tmpPath = path.join(require('os').tmpdir(), `.vibeide-mcp-${seq}.json`);
     fs.writeFileSync(tmpPath, JSON.stringify(mcpConfig, null, 2), 'utf-8');
     mcpConfigPath = tmpPath;
   }
@@ -55,15 +59,27 @@ export function spawnAgent(prompt: string): ChildProcess {
     '--dangerously-skip-permissions',
     '--output-format', 'stream-json',
     '--verbose',
+    ...(options.continueSession ? ['--continue'] : []),
     '-p', prompt,
   ];
 
   logger.info('agent:spawn', {
     bin: CLAUDE_BIN,
-    args: ['--mcp-config', '<dynamic>', '--dangerously-skip-permissions', '--output-format', 'stream-json', '--verbose', '-p', `(${prompt.length} chars)`],
+    args: [
+      '--mcp-config',
+      '<dynamic>',
+      '--dangerously-skip-permissions',
+      '--output-format',
+      'stream-json',
+      '--verbose',
+      ...(options.continueSession ? ['--continue'] : []),
+      '-p',
+      `(${prompt.length} chars)`,
+    ],
     cwd: AGENT_DIR,
     mcpConfigPath,
     seq,
+    continueSession: !!options.continueSession,
   });
 
   const env = buildAgentEnv();
@@ -125,6 +141,7 @@ function buildAgentEnv(): NodeJS.ProcessEnv {
 
   env.CDP_PORT = '9230';
   env.DISPLAY = process.env.DISPLAY || ':0';
+  env.CLAUDE_CONFIG_DIR = getRuntimeDataDir('claude-config');
 
   const apiKey = readDeepSeekApiKey();
   if (apiKey) {
@@ -136,11 +153,13 @@ function buildAgentEnv(): NodeJS.ProcessEnv {
       apiKeyFile: API_KEY_FILE,
       baseUrl: env.ANTHROPIC_BASE_URL,
       model: env.ANTHROPIC_MODEL,
+      claudeConfigDir: env.CLAUDE_CONFIG_DIR,
     });
   } else {
     logger.warn('agent:spawn', {
       authMode: 'no-apikey-file',
       apiKeyFile: API_KEY_FILE,
+      claudeConfigDir: env.CLAUDE_CONFIG_DIR,
       msg: 'DeepSeek API key not found; agent may require interactive Claude login',
     });
   }
@@ -157,7 +176,7 @@ function buildAgentEnv(): NodeJS.ProcessEnv {
  */
 function buildMcpConfig(): { mcpServers: Record<string, unknown> } {
   const runtimeDir = getRuntimeDir();
-  const tsxBin = getTsxBin();
+  const tsxCli = path.join(runtimeDir, 'node_modules', 'tsx', 'dist', 'cli.mjs');
   const devServerEntry = getRuntimeDevServerEntry();
   const prodServerEntry = getRuntimeServerEntry();
 
@@ -173,9 +192,9 @@ function buildMcpConfig(): { mcpServers: Record<string, unknown> } {
   if (isDev()) {
     return {
       mcpServers: {
-        'coffecat-runtime': {
-          command: tsxBin,
-          args: [devServerEntry],
+        'vibeide-runtime': {
+          command: process.execPath,
+          args: [tsxCli, devServerEntry],
           env: baseEnv,
         },
       },
@@ -184,11 +203,10 @@ function buildMcpConfig(): { mcpServers: Record<string, unknown> } {
 
   // 生产模式：portable node + tsx 跑编译后的 JS（tsx 处理 ESM 后缀问题）
   const nodeBin = path.join(runtimeDir, 'nodejs', 'node.exe');
-  const tsxCli = path.join(runtimeDir, 'node_modules', 'tsx', 'dist', 'cli.mjs');
   if (fs.existsSync(nodeBin) && fs.existsSync(tsxCli)) {
     return {
       mcpServers: {
-        'coffecat-runtime': {
+        'vibeide-runtime': {
           command: nodeBin,
           args: [tsxCli, prodServerEntry],
           env: baseEnv,
@@ -200,7 +218,7 @@ function buildMcpConfig(): { mcpServers: Record<string, unknown> } {
   // 最终降级：系统 PATH 中的 node + tsx
   return {
     mcpServers: {
-      'coffecat-runtime': {
+      'vibeide-runtime': {
         command: 'node',
         args: [tsxCli, prodServerEntry],
         env: baseEnv,

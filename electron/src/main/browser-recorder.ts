@@ -40,13 +40,13 @@ const RECORDINGS_DIR = getRecordingsDir();
 
 const RECORDER_SCRIPT = String.raw`
 (() => {
-  if (window.__coffecatRecorderInstalled) {
-    window.__coffecatRecordedEvents = [];
+  if (window.__vibeideRecorderInstalled) {
+    window.__vibeideRecordedEvents = [];
     return;
   }
 
-  window.__coffecatRecorderInstalled = true;
-  window.__coffecatRecordedEvents = [];
+  window.__vibeideRecorderInstalled = true;
+  window.__vibeideRecordedEvents = [];
 
   function shortText(value) {
     return String(value || "").replace(/\s+/g, " ").trim().slice(0, 120);
@@ -80,7 +80,7 @@ const RECORDER_SCRIPT = String.raw`
   }
 
   function record(type, payload) {
-    window.__coffecatRecordedEvents.push({
+    window.__vibeideRecordedEvents.push({
       type,
       url: location.href,
       title: document.title,
@@ -165,7 +165,7 @@ export async function startBrowserRecording(): Promise<void> {
 export async function stopBrowserRecording(label?: string): Promise<{ file: string; actionCount: number }> {
   const view = getActiveView();
   const startUrl = view.webContents.getURL();
-  const events = await view.webContents.executeJavaScript('window.__coffecatRecordedEvents || []') as BrowserRecordingEvent[];
+  const events = await view.webContents.executeJavaScript('window.__vibeideRecordedEvents || []') as BrowserRecordingEvent[];
   const startTitle = events[0]?.title ?? view.webContents.getTitle();
 
   ensureRecordingsDir();
