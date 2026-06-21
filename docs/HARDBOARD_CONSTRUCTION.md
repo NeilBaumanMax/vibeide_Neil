@@ -77,10 +77,25 @@ hardboard\projects\<project-name>
 已定位过的典型错误：
 
 ```text
+fatal error: bits/c++config.h: No such file or directory
 fatal error: bits/stl_iterator_base_types.h: No such file or directory
 ```
 
-这个错误不是 ESP-IDF 源码缺文件。实测头文件存在，问题出在打包后路径环境。修复后用打包版 runtime 执行：
+这类错误通常不是 ESP-IDF 源码缺文件。实测头文件存在，常见原因有两类：
+
+1. 打包后路径过深或旧 build 缓存记录了旧路径。先确认 `hardboard.env_status` 返回的是短路径 `%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard`，然后删除工程 `build` 后重试。
+2. 打包版 Xtensa GCC 14.2.0 的 C++ multilib include 没被编译命令带上。症状通常出现在 ESP-IDF C++ 组件，例如 `nvs_flash`，缺的是 `xtensa-esp-elf/include/c++/14.2.0/xtensa-esp-elf/esp32s3/no-rtti/bits/*`。
+
+排查顺序：
+
+```cmd
+cd /d C:\vibeide\electron\dist-package\win-unpacked\resources\runtime
+node dist\index.js hardboard:env
+rmdir /S /Q hardboard\projects\wifi_connect_fmai\build
+node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai
+```
+
+如果仍然报 `bits/c++config.h` 或 `bits/stl_iterator_base_types.h`，不要继续改业务源码。应优先修 runtime 的 toolchain include 注入，或在具体 ESP-IDF 工程顶层 `CMakeLists.txt` 临时补 C++ include workaround，并重新打包验证。修复后用打包版 runtime 执行：
 
 ```cmd
 cd /d C:\vibeide\electron\dist-package\win-unpacked\resources\runtime
@@ -128,7 +143,7 @@ find <project> -path '*/build' -prune -o -type f -print
 - MCP 和 CLI 返回 compact JSON：`exitCode`、`ok`、`cwd`、`stdoutLogPath`、`stderrLogPath`、`stdoutTail`、`stderrTail`、`stdoutBytes`、`stderrBytes`。
 - Agent 不再需要读取 Claude 自己保存的超长 tool-result 文件。
 
-## 已验证状态
+## 当前接力状态
 
 - Windows 仓库：`C:\vibeide`。
 - 当前 GitHub main：以仓库 `main` 分支为准。
@@ -150,13 +165,15 @@ find <project> -path '*/build' -prune -o -type f -print
   - `electron/dist-package/win-unpacked/奥德赛0.0.exe`
   - `electron/dist-package/奥德赛0.0-0.3.0-win-x64.exe`
   - `electron/dist-package/奥德赛0.0-0.3.0-win-x64.exe.blockmap`
-- 打包版 runtime 相对路径编译已通过：
+- 打包版 runtime 的输出压缩机制已验证：`hardboard:build` 会返回 compact JSON 和 `stdoutLogPath` / `stderrLogPath`，不会再把 15 万字符直接塞回 Agent。
+- 最近一次打包版 runtime 相对路径编译暴露了新的 C++ multilib include 问题，下一位接力必须先修复并复测，不能直接宣称通过：
   - 命令：`node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai`
   - `cwd`：`%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard\projects\wifi_connect_fmai`
-  - `exitCode`：`0`
-- 打包版 runtime 烧录已通过：
+  - 失败症状：`fatal error: bits/c++config.h: No such file or directory`
+  - 处理方向：清理 build 后复测；若仍失败，修 runtime toolchain C++ include 注入或工程 CMake workaround，再重新打包。
+- 打包版 runtime 烧录只有在上述 build 重新通过后才允许继续跑：
   - 命令：`node dist\index.js hardboard:flash hardboard\projects\wifi_connect_fmai COM3`
-  - `COM3` 识别为 ESP32-S3，写入和 hash verified 均成功。
+  - 成功标准：`COM3` 识别为 ESP32-S3，写入和 hash verified 均成功。
 
 ## 随包环境策略
 

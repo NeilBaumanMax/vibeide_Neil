@@ -108,9 +108,10 @@ pytest tests/test_project.py
 - [重构计划](docs/REFACTOR_PLAN.md)
 - [安全和账号规则](docs/SECURITY.md)
 - [接力开发文档](docs/HANDOFF.md)
+- [Hardboard 施工文档](docs/HARDBOARD_CONSTRUCTION.md)
 - [开发进度](docs/DEV_PROGRESS.md)
 - [施工日志](docs/LOG.md)
-- [Hardboard 施工文档](runtime/hardboard/doc/README.md)
+- [Hardboard Agent 运行文档](runtime/hardboard/doc/README.md)
 
 ## Git 策略
 

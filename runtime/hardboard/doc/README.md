@@ -40,6 +40,22 @@
 - 修改源码前先读 `main/CMakeLists.txt` 的 `SRCS` 字段，不要猜源码一定叫 `main.c`。
 - `hardboard.idf_build` 和 `hardboard.idf_flash` 返回的是精简摘要；完整 stdout/stderr 在返回的 `stdoutLogPath` / `stderrLogPath`。
 
+## 打包版 C++ include 排障
+
+如果打包版 runtime 编译 ESP-IDF 工程时报：
+
+```text
+fatal error: bits/c++config.h: No such file or directory
+fatal error: bits/stl_iterator_base_types.h: No such file or directory
+```
+
+不要先改业务源码。排查顺序：
+
+1. `hardboard.env_status` 必须显示 `hardboardRoot` 位于 `%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard`。
+2. 删除当前工程 `build` 目录，避免旧 Python、旧 ESP-IDF 路径或旧 toolchain include 缓存。
+3. 重新执行 `hardboard.idf_build`，读取 compact JSON 里的 `stderrTail` 和 `stderrLogPath`。
+4. 如果仍然失败，优先修 runtime 的 Xtensa GCC 14.2.0 C++ multilib include 注入；临时方案是在工程顶层 `CMakeLists.txt` 对 C++ 编译追加 `xtensa-esp-elf/include/c++/14.2.0/xtensa-esp-elf/esp32s3/no-rtti`。
+
 ## 验证事实
 
 Windows `C:\vibeide` 下已完成：
@@ -48,5 +64,6 @@ Windows `C:\vibeide` 下已完成：
 - `hardboard.idf_flash` 对 `COM3` 烧录 hello_world 成功。
 - `hardboard.serial_capture` 用于 SSH/Agent 下非交互抓取串口日志，替代需要 TTY 的 `idf.py monitor`。
 - 打包产物正式名使用 `奥德赛0.0`。
+- 最近一次打包版 `hardboard:build hardboard\projects\wifi_connect_fmai` 已验证 compact JSON 输出正常，但编译遇到 `bits/c++config.h`，需要按上面的 C++ include 排障继续修复后再宣称打包版 build/flash 通过。
 
 不要假装编译或烧录成功。只有 hardboard 工具返回 exitCode 0，才可以报告成功。

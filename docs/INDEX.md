@@ -11,7 +11,8 @@
 5. [GITHUB_SYNC](GITHUB_SYNC.md)：Windows 实机、Linux 本机和 GitHub 的同步方案。
 6. [REFACTOR_PLAN](REFACTOR_PLAN.md)：下一步重构路线和验收口径。
 7. [SECURITY](SECURITY.md)：账号、密码、API key、运行态文件规则。
-8. [Hardboard 施工文档](../runtime/hardboard/doc/README.md)：ESP-IDF 5.4.3、硬件工程、烧录和 Agent 调用规则。
+8. [HARDBOARD_CONSTRUCTION](HARDBOARD_CONSTRUCTION.md)：ESP-IDF 5.4.3、打包、烧录、串口和 log.txt 复盘出的硬件问题。
+9. [Hardboard Agent 运行文档](../runtime/hardboard/doc/README.md)：Agent 在运行时可读的硬件工程、烧录和工具调用规则。
 
 ## 现有历史文档
 
