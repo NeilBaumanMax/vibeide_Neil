@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { app, dialog } from 'electron';
 import { logger } from './worker/logger';
-import { getApiKeyPath, isDev, isPackaged, getResourcesDir, getAppRoot } from './paths';
+import { getApiKeyPath, getResourcesDir, getRuntimeDir } from './paths';
 
 /**
  * 首次启动检查 — 确保 App 所需环境就绪。
@@ -72,8 +72,8 @@ function tryCopyKeyFromResources(destPath: string): boolean {
 
 /** 检查 Playwright 浏览器是否存在 */
 function checkPlaywright(): boolean {
-  // 在打包模式下，浏览器在 resources/playwright/ 下
-  const pwDir = getResourcesDir('playwright');
+  // Runtime 浏览器资源随 extraResources 放在 runtime/playwright。
+  const pwDir = path.join(getRuntimeDir(), 'playwright');
   if (!fs.existsSync(pwDir)) return false;
 
   // 检查 chromium 核心是否存在
