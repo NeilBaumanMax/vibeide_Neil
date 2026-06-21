@@ -304,6 +304,16 @@ export class Orchestrator {
       return;
     }
 
+    if (p.type === 'thinking') {
+      logger.debug('ui:push', {
+        channel: 'chat:message',
+        type: p.type,
+        content: p.content.slice(0, 300),
+        hidden: true,
+      });
+      return;
+    }
+
     if (p.type === 'result') {
       const task = this.pendingTasks[0] ?? this.currentTask;
       if (p.isError && p.content) {
@@ -327,7 +337,7 @@ export class Orchestrator {
 
     logger.debug('ui:push', { channel: 'chat:message', type: p.type, tool: p.toolName, content: p.content.slice(0, 300) });
     this.pushUI('chat:message', {
-      text: p.type === 'thinking' ? `[Agent 思考]\n${p.content}` : p.content,
+      text: p.content,
       timestamp: Date.now(),
       error: isError,
     });

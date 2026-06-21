@@ -78,6 +78,27 @@ export function loadURL(url: string): void {
 }
 
 export function openTabUrl(url: string, activate = true): void {
+  const placeholder = tabs.length === 1 ? tabs[0] : null;
+  const placeholderUrl = placeholder?.view.webContents.getURL() || 'about:blank';
+  if (placeholder && (placeholderUrl === 'about:blank' || placeholderUrl === '')) {
+    logger.warn('browser:view-event', {
+      event: 'replace-placeholder-tab',
+      url,
+      tabId: placeholder.id,
+      activate,
+    });
+    if (activate) {
+      activeTabId = placeholder.id;
+      attachActiveTab();
+      setBrowserViewBounds();
+    }
+    placeholder.view.webContents.loadURL(url).catch(() => {
+      // Ignore aborted transitions when a newer navigation replaces the current one.
+    });
+    emitTabs();
+    return;
+  }
+
   const tab = createTabEntry(url);
   tabs.push(tab);
   logger.warn('browser:view-event', {
