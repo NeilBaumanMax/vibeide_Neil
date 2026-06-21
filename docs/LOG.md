@@ -45,6 +45,12 @@
   - `cd electron && npm run verify:session` 通过
   - `cd electron && npm run smoke:workbench` 通过，打开目标：`README.md`
   - 本机 Electron 构建产物可启动并截图确认 NES UI，截图：`/tmp/vibeide-nes-ui.png`
+  - Windows `C:\vibeide` 从 GitHub clone 到 `8746cca`
+  - Windows `npm --prefix runtime run typecheck && npm --prefix runtime run build` 通过
+  - Windows `npm --prefix electron run typecheck && npm --prefix electron run build:main && npm --prefix electron run build:renderer` 通过
+  - Windows `npm --prefix electron run verify:session` 通过
+  - Windows `npm --prefix electron run smoke:workbench` 通过，打开目标：`C:\vibeide\README.md`
+  - Windows `scripts\start_electron_desktop.ps1` 短时启动通过：runtime health OK、Vite 5173 ready、Electron 进程启动
 
 ## 2026-06-21 — GitHub 接力与文档重构
 

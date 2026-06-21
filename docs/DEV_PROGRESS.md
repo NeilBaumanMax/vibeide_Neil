@@ -22,6 +22,7 @@
 - [x] 右侧工作台文件 / 目录现在可点击，会在右侧浏览页层打开 `file://` 地址
 - [x] 新增 Electron 工作台点击烟测：`cd electron && npm run smoke:workbench`
 - [x] 新增 Claude 软件会话记忆烟测：`cd electron && npm run verify:session`
+- [x] Windows `C:\vibeide` 已从 GitHub clone 到提交 `8746cca` 并通过构建 / 会话 / 工作台点击烟测
 - [x] 应用图标已新增像素风 `electron/assets/icon.svg/png/ico`
 - [x] 打包规则已改为 `vibeide` appId/productName/icon，并停止把真实 `apikey.txt` 打进安装包
 - [x] runtime/electron/agent package 命名已从 `@coffecat/*` 迁移到 `@vibeide/*`
@@ -102,8 +103,8 @@ UI -> Gateway -> Worker -> Agent -> MCP -> Runtime -> Electron Chromium
 
 ## 下一步
 
-1. 在 Windows 实机运行新 NES UI，并执行 `npm run smoke:workbench` / `npm run verify:session`。
-2. 明确旧 Python scaffold 是否保留，统一测试口径。
+1. 明确旧 Python scaffold 是否保留，统一测试口径。
+2. 在 Windows 上继续用真实 Agent 对话压测 Claude Code CLI 的模型侧续聊效果。
 3. 继续压测 Worker 搜索预处理在更多平台、更多自然语言表达下的稳定性。
 4. 继续验证右侧 `workbench + host + tabs` 模型的稳定性。
 5. 给更多平台补统一搜索 URL 工具和专项 workflow。
