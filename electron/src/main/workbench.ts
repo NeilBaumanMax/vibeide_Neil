@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { getResourcesDir, getAppRoot, getRecordingsDir, getWorkflowsDir, getAgentDir } from './paths';
+import { getAppRoot, getRecordingsDir, getWorkflowsDir, getAgentWorkspaceDir } from './paths';
 
 export interface WorkbenchItem {
   name: string;
@@ -41,6 +41,7 @@ const PROJECT_ROOT = getAppRoot();
 function allowedWorkbenchRoots(): string[] {
   return [
     PROJECT_ROOT,
+    getAgentWorkspaceDir(),
     getRecordingsDir(),
     getWorkflowsDir(),
     path.join(PROJECT_ROOT, 'agent', 'tools'),
@@ -160,6 +161,14 @@ export function getWorkbenchOverview(): WorkbenchOverview {
       },
       {
         id: 'tools',
+        title: '生成',
+        description: 'Agent 生成的 HTML、代码和临时文件',
+        folderPath: getAgentWorkspaceDir(),
+        items: listDirectory(getAgentWorkspaceDir(), { limit: 24 }),
+        emptyText: '还没有生成文件',
+      },
+      {
+        id: 'agent-tools',
         title: '工具',
         description: 'Agent 可执行脚本与辅助工具',
         folderPath: path.join(PROJECT_ROOT, 'agent', 'tools'),

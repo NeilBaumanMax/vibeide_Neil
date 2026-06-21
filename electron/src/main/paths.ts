@@ -72,6 +72,11 @@ export function getAgentDir(): string {
     : path.join(process.resourcesPath, 'agent');
 }
 
+/** Agent 生成文件工作区（持久、可写，不随打包覆盖） */
+export function getAgentWorkspaceDir(): string {
+  return getRuntimeDataDir('agent-workspace');
+}
+
 /** Runtime 目录（runtime/） */
 export function getRuntimeDir(): string {
   return isDev()

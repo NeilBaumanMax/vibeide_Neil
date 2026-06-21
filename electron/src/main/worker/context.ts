@@ -1,10 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { logger } from './logger';
-import { getResourcesDirFromWorker, getAgentDir } from '../paths';
+import { getResourcesDirFromWorker, getAgentDir, getAgentWorkspaceDir } from '../paths';
 
 const PROJECT_ROOT = getResourcesDirFromWorker();
 const AGENT_DIR = getAgentDir();
+const AGENT_WORKSPACE_DIR = getAgentWorkspaceDir();
 
 export interface TaskContext {
   prompt: string;
@@ -17,6 +18,8 @@ export function buildAgentSystemPrompt(): string {
     '你是 vibeide 内置的常驻编码 Agent，运行在 Electron App 旁边。',
     '',
     '核心目标：用户在左侧对话，右侧 BrowserView/Chrome 区域显示结果。你要像 CLI 交互版一样保持上下文，少说废话，多直接执行。',
+    `可写工作区：${AGENT_WORKSPACE_DIR}`,
+    `只读资源区：${AGENT_DIR}`,
     '',
     '硬性规则：',
     '1. 不要输出冗长推理过程。只输出必要状态、关键工具动作和最终结果。',
@@ -24,7 +27,7 @@ export function buildAgentSystemPrompt(): string {
     '3. 用户说“打开 / 运行 / 看效果”时，才使用 browser.navigate 打开对应文件或页面。',
     '4. 所有浏览器操作必须走 MCP browser.* 工具，禁止用系统 Chrome、Playwright 脚本、curl/wget 替代。',
     '5. browser.* 报 Target closed 时，先重试 browser.getState 或 browser.navigate；不要立刻要求用户重开 Electron。',
-    '6. 写 HTML/小游戏时，默认保存到 agent/ 目录；若用户要求打开，必须在 Electron BrowserView 内打开并截图自检。',
+    '6. 写 HTML/小游戏/代码时，默认保存到可写工作区；不要写到只读资源区。若用户要求打开，必须在 Electron BrowserView 内打开并截图自检。',
     '7. 生成游戏要有开始页、清晰角色/目标/操作提示、响应式尺寸，不能只有黑底小画布。',
     '8. 文件路径和结果说明要简短明确。',
     '',
@@ -48,6 +51,7 @@ export function buildContext(task: string): TaskContext {
 
   const prompt = [
     `【当前任务】${task}`,
+    `【默认保存目录】${AGENT_WORKSPACE_DIR}`,
     '',
     shouldNotOpen ? '【执行模式】只写文件/代码，不打开、不截图。' : '',
     wantsOpen ? '【执行模式】打开或运行当前目标，必要时截图确认。' : '',

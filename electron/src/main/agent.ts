@@ -4,6 +4,7 @@ import path from 'path';
 import { logger } from './worker/logger';
 import {
   getAgentDir,
+  getAgentWorkspaceDir,
   getClaudeBin,
   getApiKeyPath,
   getRuntimeDir,
@@ -17,6 +18,7 @@ import {
 import { buildAgentSystemPrompt } from './worker/context';
 
 const AGENT_DIR = getAgentDir();
+const AGENT_WORKSPACE_DIR = getAgentWorkspaceDir();
 const CLAUDE_BIN = getClaudeBin();
 const API_KEY_FILE = getApiKeyPath();
 const DEFAULT_DEEPSEEK_BASE_URL = 'https://api.deepseek.com/anthropic';
@@ -34,8 +36,9 @@ export function ensureAgentProcess(): ChildProcess {
   const seq = ++agentSeq;
 
   // 动态生成 MCP 配置（不依赖静态文件）
+  fs.mkdirSync(AGENT_WORKSPACE_DIR, { recursive: true });
   const mcpConfig = buildMcpConfig();
-  let mcpConfigPath = path.join(AGENT_DIR, `.mcp-config-${seq}.json`);
+  let mcpConfigPath = path.join(AGENT_WORKSPACE_DIR, `.mcp-config-${seq}.json`);
   try {
     fs.writeFileSync(mcpConfigPath, JSON.stringify(mcpConfig, null, 2), 'utf-8');
   } catch (err) {
@@ -74,7 +77,7 @@ export function ensureAgentProcess(): ChildProcess {
       '--verbose',
       '--replay-user-messages',
     ],
-    cwd: AGENT_DIR,
+    cwd: AGENT_WORKSPACE_DIR,
     mcpConfigPath,
     seq,
   });
@@ -82,7 +85,7 @@ export function ensureAgentProcess(): ChildProcess {
   const env = buildAgentEnv();
 
   agentProcess = spawn(CLAUDE_BIN, args, {
-    cwd: AGENT_DIR,
+    cwd: AGENT_WORKSPACE_DIR,
     env,
     stdio: ['pipe', 'pipe', 'pipe'],
   });
