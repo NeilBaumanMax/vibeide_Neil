@@ -31,6 +31,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   listBrowserRecordings: () => ipcRenderer.invoke('browser:listRecordings'),
   listBrowserRecordingSummaries: () => ipcRenderer.invoke('browser:listRecordingSummaries'),
   listHardboardDevices: () => ipcRenderer.invoke('hardboard:listDevices'),
+  startSerialMonitor: (options: { port: string; baudRate: number; encoding: string }) => ipcRenderer.invoke('hardboard:serialStart', options),
+  stopSerialMonitor: () => ipcRenderer.invoke('hardboard:serialStop'),
+  getSerialMonitorStatus: () => ipcRenderer.invoke('hardboard:serialStatus'),
+  onSerialData: (cb: (chunk: { text: string; timestamp: number }) => void) => {
+    ipcRenderer.on('hardboard:serial-data', (_event, chunk) => cb(chunk));
+  },
+  onSerialExit: (cb: (result: { code: number | null; signal: string | null }) => void) => {
+    ipcRenderer.on('hardboard:serial-exit', (_event, result) => cb(result));
+  },
   onBrowserTabs: (cb: (result: { tabs: Array<{ id: string; title: string; url: string; active: boolean }> }) => void) => {
     ipcRenderer.on('browser:tabs', (_event, result) => cb(result));
   },

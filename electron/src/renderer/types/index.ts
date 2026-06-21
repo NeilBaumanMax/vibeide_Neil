@@ -95,6 +95,11 @@ export interface WindowAPI {
   listBrowserRecordings: () => Promise<{ files: string[] }>;
   listBrowserRecordingSummaries: () => Promise<{ recordings: RecordingSummary[] }>;
   listHardboardDevices: () => Promise<{ devices: HardboardDevice[] }>;
+  startSerialMonitor: (options: { port: string; baudRate: number; encoding: string }) => Promise<{ ok: boolean; running: boolean; error?: string }>;
+  stopSerialMonitor: () => Promise<{ ok: boolean; running: boolean }>;
+  getSerialMonitorStatus: () => Promise<{ running: boolean }>;
+  onSerialData: (cb: (chunk: { text: string; timestamp: number }) => void) => void;
+  onSerialExit: (cb: (result: { code: number | null; signal: string | null }) => void) => void;
   onBrowserTabs: (cb: (result: { tabs: BrowserTab[] }) => void) => void;
 }
 

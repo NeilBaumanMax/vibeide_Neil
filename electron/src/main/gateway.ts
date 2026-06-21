@@ -5,7 +5,7 @@ import { handleTask, getOrchestrator } from './worker';
 import { activateTab, closeTab, listTabs, openTabUrl, setBrowserTabsEmitter, setBrowserViewBoundsFromRenderer } from './browser-view';
 import { listBrowserRecordingSummaries, listBrowserRecordings, replayBrowserRecording, replayLatestBrowserRecording, startBrowserRecording, stopBrowserRecording } from './browser-recorder';
 import { getWorkbenchOverview, openWorkbenchItem } from './workbench';
-import { listHardboardDevices } from './hardboard';
+import { isSerialMonitorRunning, listHardboardDevices, startSerialMonitor, stopSerialMonitor } from './hardboard';
 
 export function startGateway(mainWindow: BrowserWindow): void {
   // Gateway 提供 pushUI 能力 — Worker 通过它推消息到 UI
@@ -137,5 +137,23 @@ export function startGateway(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('hardboard:listDevices', async () => {
     return { devices: await listHardboardDevices() };
+  });
+
+  ipcMain.handle('hardboard:serialStart', async (_event, options: { port: string; baudRate: number; encoding: string }) => {
+    const result = startSerialMonitor(options, (chunk) => {
+      mainWindow.webContents.send('hardboard:serial-data', chunk);
+    }, (exit) => {
+      mainWindow.webContents.send('hardboard:serial-exit', exit);
+    });
+    return { ...result, running: isSerialMonitorRunning() };
+  });
+
+  ipcMain.handle('hardboard:serialStop', async () => {
+    stopSerialMonitor();
+    return { ok: true, running: false };
+  });
+
+  ipcMain.handle('hardboard:serialStatus', async () => {
+    return { running: isSerialMonitorRunning() };
   });
 }
