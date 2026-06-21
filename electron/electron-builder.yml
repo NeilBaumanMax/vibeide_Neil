@@ -42,6 +42,7 @@ extraResources:
       - "!**/build/**"
       - "!**/.git/**"
       - "!**/.cache/**"
+      - "!esptools/esp-idf-v*/esp-idf/examples/**"
       - "!logs/**"
   - from: ../scripts
     to: scripts
