@@ -82,4 +82,4 @@
 - `runtime/hardboard/projects/hello_world_esp32s3` 已完成 set-target/build。
 - ESP32-S3 板子在 `COM3` 烧录成功。
 - 打包产物正式名使用 `奥德赛0.0`，目录仍是 `win-unpacked`。
-- 打包版 runtime 已验证 compact JSON 输出不会溢出 Agent；`hardboard\projects\wifi_connect_fmai` 的打包版 build 最近遇到 `bits/c++config.h`，runtime 已加 C++ include 注入，仍需重新打包验证 build/flash。
+- 打包版 runtime 已验证 compact JSON 输出不会溢出 Agent；`hardboard\projects\wifi_connect_fmai` 的打包版 build/flash/serial 均已通过，串口能抓到连续 `sin:<number>` 数据。

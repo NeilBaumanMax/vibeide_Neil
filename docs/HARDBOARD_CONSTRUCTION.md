@@ -166,14 +166,17 @@ find <project> -path '*/build' -prune -o -type f -print
   - `electron/dist-package/奥德赛0.0-0.3.0-win-x64.exe`
   - `electron/dist-package/奥德赛0.0-0.3.0-win-x64.exe.blockmap`
 - 打包版 runtime 的输出压缩机制已验证：`hardboard:build` 会返回 compact JSON 和 `stdoutLogPath` / `stderrLogPath`，不会再把 15 万字符直接塞回 Agent。
-- 最近一次打包版 runtime 相对路径编译暴露了新的 C++ multilib include 问题；runtime 已增加 target-aware `CPLUS_INCLUDE_PATH` 注入，下一位接力必须重新打包复测后才能宣称通过：
+- 打包版 runtime 相对路径编译已通过；之前的 C++ multilib include 问题已通过 target-aware `CPLUS_INCLUDE_PATH` 注入修复：
   - 命令：`node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai`
   - `cwd`：`%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard\projects\wifi_connect_fmai`
-  - 失败症状：`fatal error: bits/c++config.h: No such file or directory`
-  - 处理方向：清理 build 后复测；若仍失败，检查 runtime toolchain C++ include 注入或工程 CMake workaround，再重新打包。
-- 打包版 runtime 烧录只有在上述 build 重新通过后才允许继续跑：
+  - `exitCode`：`0`
+  - `stdoutBytes`：约 150KB，返回时已压缩为 `stdoutTail` + log path。
+- 打包版 runtime 烧录已通过：
   - 命令：`node dist\index.js hardboard:flash hardboard\projects\wifi_connect_fmai COM3`
-  - 成功标准：`COM3` 识别为 ESP32-S3，写入和 hash verified 均成功。
+  - `COM3` 识别为 ESP32-S3，写入和 hash verified 均成功。
+- 打包版 runtime 串口抓取已通过：
+  - 命令：`node dist\index.js hardboard:serial COM3 8 115200`
+  - 输出包含连续 `sin:<number>` 数据，可用于 IDE 串口监视器曲线测试。
 
 ## 随包环境策略
 
