@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { RUNTIME_DIRS } from './paths.js';
+import { RUNTIME_DIRS, RUNTIME_SOURCE_DIRS } from './paths.js';
 
 const execFileAsync = promisify(execFile);
 const DEFAULT_IDF_VERSION = '5.4.3';
@@ -241,8 +241,13 @@ export function createHardboardSnapshot(projectDir: string, label = ''): Hardboa
   return { projectDir: resolvedProjectDir, snapshotDir, filesCopied };
 }
 
-export async function runIdfCommand(projectDir: string, args: string[], version = DEFAULT_IDF_VERSION): Promise<HardboardCommandResult> {
-  const resolvedProjectDir = path.resolve(projectDir || RUNTIME_DIRS.hardboardProjects);
+export async function runIdfCommand(
+  projectDir: string,
+  args: string[],
+  version = DEFAULT_IDF_VERSION,
+  allowPathRetry = true,
+): Promise<HardboardCommandResult> {
+  const resolvedProjectDir = resolveProjectDir(projectDir || RUNTIME_DIRS.hardboardProjects);
   if (!fs.existsSync(resolvedProjectDir)) {
     throw new Error(`ESP-IDF 项目目录不存在: ${resolvedProjectDir}`);
   }
@@ -277,6 +282,10 @@ export async function runIdfCommand(projectDir: string, args: string[], version 
     };
   } catch (error) {
     const err = error as NodeJS.ErrnoException & { stdout?: string; stderr?: string; code?: number };
+    if (allowPathRetry && shouldRetryAfterBuildPathChange(err.stdout ?? '', err.stderr ?? '', args)) {
+      fs.rmSync(path.join(resolvedProjectDir, 'build'), { recursive: true, force: true });
+      return runIdfCommand(resolvedProjectDir, args, version, false);
+    }
     return {
       command: `${python} ${commandArgs.join(' ')}`,
       cwd: resolvedProjectDir,
@@ -323,12 +332,49 @@ function resolveIdfPath(version: string): string | null {
 }
 
 function resolveProjectDir(projectDir: string): string {
-  const candidate = path.resolve(projectDir || '');
+  const candidate = resolveHardboardProjectPath(projectDir || '');
   const defaultProject = path.join(RUNTIME_DIRS.hardboardProjects, 'hello_world_esp32s3');
   if (!projectDir || candidate === path.resolve(RUNTIME_DIRS.hardboardProjects)) {
     return fs.existsSync(defaultProject) ? defaultProject : RUNTIME_DIRS.hardboardProjects;
   }
   return candidate;
+}
+
+function resolveHardboardProjectPath(projectDir: string): string {
+  if (!projectDir) return path.resolve(projectDir);
+
+  const normalized = path.normalize(projectDir);
+  const hardboardPrefix = `hardboard${path.sep}`;
+  if (!path.isAbsolute(normalized) && (normalized === 'hardboard' || normalized.startsWith(hardboardPrefix))) {
+    const relativeToHardboard = normalized === 'hardboard' ? '' : normalized.slice(hardboardPrefix.length);
+    return path.resolve(path.join(RUNTIME_DIRS.hardboard, relativeToHardboard));
+  }
+
+  return rewriteSourceHardboardPath(path.resolve(projectDir));
+}
+
+function rewriteSourceHardboardPath(candidate: string): string {
+  const sourceHardboard = path.resolve(RUNTIME_SOURCE_DIRS.hardboard);
+  const runtimeHardboard = path.resolve(RUNTIME_DIRS.hardboard);
+  if (sourceHardboard.toLowerCase() === runtimeHardboard.toLowerCase()) return candidate;
+  if (!isSameOrInside(candidate, sourceHardboard)) return candidate;
+
+  const relative = path.relative(sourceHardboard, candidate);
+  return path.resolve(path.join(runtimeHardboard, relative));
+}
+
+function isSameOrInside(candidate: string, parent: string): boolean {
+  const resolvedCandidate = path.resolve(candidate).toLowerCase();
+  const resolvedParent = path.resolve(parent).toLowerCase();
+  return resolvedCandidate === resolvedParent || resolvedCandidate.startsWith(`${resolvedParent.toLowerCase()}${path.sep}`);
+}
+
+function shouldRetryAfterBuildPathChange(stdout: string, stderr: string, args: string[]): boolean {
+  if (args.includes('fullclean')) return false;
+  const output = `${stdout}\n${stderr}`;
+  return output.includes('Run \'idf.py fullclean\'')
+    || output.includes('Run "idf.py fullclean"')
+    || output.includes('was configured with');
 }
 
 function resolveIdfPy(idfPath: string): string {
