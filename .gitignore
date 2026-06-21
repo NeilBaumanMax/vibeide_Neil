@@ -17,6 +17,7 @@ runtime/hardboard/**/build/
 runtime/hardboard/**/managed_components/
 runtime/hardboard/**/dependencies.lock
 runtime/hardboard/**/sdkconfig
+runtime/hardboard/**/wifi_secrets.h
 runtime/hardboard/esptools/esp-idf-v*/
 runtime/hardboard/esptools/idf-tools/
 workplaces/
