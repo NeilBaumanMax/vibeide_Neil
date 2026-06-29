@@ -280,25 +280,6 @@ export function getWorkbenchOverview(): WorkbenchOverview {
         emptyText: '还没有参考代码',
       },
       {
-        id: 'construction-docs',
-        title: '施工文档',
-        description: 'runtime、hardboard 和 UI 施工记录',
-        folderPath: path.join(PROJECT_ROOT, 'docs'),
-        items: [
-          ...listFilesRecursive(path.join(PROJECT_ROOT, 'docs'), {
-            limit: 16,
-            include: /\.md$/i,
-            category: 'doc',
-          }),
-          ...listFilesRecursive(getHardboardDir('doc'), {
-            limit: 8,
-            include: /\.md$/i,
-            category: 'doc',
-          }),
-        ].slice(0, 20),
-        emptyText: '还没有施工文档',
-      },
-      {
         id: 'skills',
         title: 'Skills',
         description: 'Agent skills、工具说明和可编辑 Markdown',
