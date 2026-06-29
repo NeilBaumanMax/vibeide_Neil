@@ -10,6 +10,7 @@ runtime/pids/
 runtime/logs/
 runtime/state.json
 runtime/ports.json
+runtime/workbench-imports.json
 /state.json
 /ports.json
 runtime/recordings/
