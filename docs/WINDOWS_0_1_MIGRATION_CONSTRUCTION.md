@@ -2,7 +2,7 @@
 
 ## 目标
 
-把当前 Linux 工作区里的 runtime eventbus、任务管理器、编辑器多文件标签、仓库导入文件夹能力移植到 Windows 实机 `C:\vibeide`。Windows 目录里已有上一版本，施工前先把当前工作备份到 GitHub `git@github.com:howtion0/vibeide.git`，再在 Windows 上编译、打包 `0.1` 版本 exe，并使用插在 Windows 上的 ESP32-S3 做硬件验证。
+把当前 Linux 工作区里的 runtime eventbus、任务管理器、编辑器多文件标签、仓库导入文件夹能力移植到 Windows 实机。施工时先同步到 `C:\vibeide`，随后按用户要求把源码和 unpacked 包迁移到 E 盘：`E:\vibeide`、`E:\vibeide-0.1-win-unpacked`。施工前先把当前工作备份到 GitHub `git@github.com:howtion0/vibeide.git`，再在 Windows 上编译、打包 `0.1` 版本 exe，并使用插在 Windows 上的 ESP32-S3 做硬件验证。
 
 ## 施工顺序
 
@@ -25,7 +25,7 @@ npm --prefix electron run build:renderer
 npm --prefix electron run pack:win
 ```
 
-6. 在 Windows 上检查 `electron\dist-package\win-unpacked\奥德赛0.0.exe`。
+6. 在 Windows 上检查 `electron\dist-package\win-unpacked\奥德赛0.0.exe`，并将可测 unpacked 包镜像到 `E:\vibeide-0.1-win-unpacked`。
 7. 使用 Windows 上插入的 ESP32-S3 验证串口、build、flash、serial。
 8. 写入 `docs/LOG.md` 和测试报告。
 
@@ -59,7 +59,7 @@ npm --prefix electron run pack:win
 
 ## Windows 验收
 
-必须在 Windows `C:\vibeide` 验证：
+必须在 Windows 验证；当前 0.1 最终源码目录是 `E:\vibeide`，最终 unpacked 包是 `E:\vibeide-0.1-win-unpacked`：
 
 ```powershell
 node electron\scripts\stamp_win_exe_version.cjs electron\dist-package\win-unpacked\奥德赛0.0.exe
@@ -76,11 +76,11 @@ ProductVersion: 0.1.0
 ESP32-S3 验证：
 
 ```powershell
-cd C:\vibeide\electron\dist-package\win-unpacked\resources\runtime
+cd E:\vibeide-0.1-win-unpacked\resources\runtime
 node dist\index.js hardboard:devices
 node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai
-node dist\index.js hardboard:flash hardboard\projects\wifi_connect_fmai COM3
-node dist\index.js hardboard:serial COM3 10 115200
+node dist\index.js hardboard:flash hardboard\projects\wifi_connect_fmai COM7
+node dist\index.js hardboard:serial COM7 10 115200
 ```
 
-实际端口以 `hardboard:devices` 或 Windows 设备管理器结果为准，不强行假设 COM3。
+实际测试中 `COM7` 经 esptool 确认为 ESP32-S3。后续仍应以 `hardboard:devices` 或 Windows 设备管理器结果为准，不强行假设固定端口。

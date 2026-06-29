@@ -36,8 +36,8 @@ runtime/hardboard/
 2. 从 `examples/get-started/hello_world` 复制工程。
 3. 进入工程目录后执行 `idf.py set-target esp32s3`。
 4. 执行 `idf.py build`。
-5. 选择串口，例如 Windows 下 `COM3`。
-6. 执行 `idf.py -p COM3 flash`。
+5. 选择串口，例如 Windows 下当前实测 ESP32-S3 为 `COM7`。
+6. 执行 `idf.py -p COM7 flash`。
 
 奥德赛0.0 对应工具：
 
@@ -89,7 +89,7 @@ fatal error: bits/stl_iterator_base_types.h: No such file or directory
 排查顺序：
 
 ```cmd
-cd /d C:\vibeide\electron\dist-package\win-unpacked\resources\runtime
+cd /d E:\vibeide-0.1-win-unpacked\resources\runtime
 node dist\index.js hardboard:env
 rmdir /S /Q hardboard\projects\wifi_connect_fmai\build
 node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai
@@ -98,7 +98,7 @@ node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai
 runtime 会根据工程 `sdkconfig` / `sdkconfig.defaults` 识别 `CONFIG_IDF_TARGET`，并把对应 Xtensa GCC C++ multilib include 目录注入 `CPLUS_INCLUDE_PATH`。如果仍然报 `bits/c++config.h` 或 `bits/stl_iterator_base_types.h`，不要继续改业务源码；应先检查 runtime 注入的 include 路径是否存在，必要时再在具体 ESP-IDF 工程顶层 `CMakeLists.txt` 临时补 workaround，并重新打包验证。修复后用打包版 runtime 执行：
 
 ```cmd
-cd /d C:\vibeide\electron\dist-package\win-unpacked\resources\runtime
+cd /d E:\vibeide-0.1-win-unpacked\resources\runtime
 node dist\index.js hardboard:env
 node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai
 ```
@@ -145,38 +145,32 @@ find <project> -path '*/build' -prune -o -type f -print
 
 ## 当前接力状态
 
-- Windows 仓库：`C:\vibeide`。
-- 当前 GitHub main：以仓库 `main` 分支为准。
-- Windows 发现串口：`COM3`、`COM8`、`COM9`。
-- ESP32-S3 实测端口：`COM3`。
-- `npm --prefix runtime run smoke:hardboard` 已通过：
-  - `hardboard.env_status` 找到 ESP-IDF 5.4.3、Python venv、IDF tools。
-  - `hardboard.devices_list` 能列出 Windows 串口。
-  - `hardboard.idf_set_target` 通过。
-  - `hardboard.idf_build` 通过，输出 `hardboard build smoke ok`。
-- `hardboard.idf_flash` 已在 Windows 真实烧录 ESP32-S3 成功：
-  - 芯片识别：ESP32-S3 QFN56 revision v0.2。
+- Windows 源码目录：`C:\vibeide`、`E:\vibeide`。
+- Windows 0.1 unpacked 包：`E:\vibeide-0.1-win-unpacked`。
+- 当前硬件测试报告：`docs/WINDOWS_0_1_TEST_REPORT.md`。
+- Windows 发现串口：`COM7`、`COM8`、`COM9`。
+- ESP32-S3 实测烧录端口：`COM7`。
+- `COM7` 经 esptool 识别为 ESP32-S3 QFN56 revision v0.2：
   - 特性：Wi-Fi、BT 5 LE、Dual Core + LP Core、240MHz、Embedded PSRAM 8MB。
   - USB 模式：USB-Serial/JTAG。
-  - MAC：`cc:ba:97:01:3a:dc`。
-  - bootloader、app、partition table 均 hash verified。
-- `hardboard.serial_capture` 用于 SSH/Agent 下非交互读取串口日志，替代需要 TTY 的 `idf.py monitor`。
-- Windows 打包已通过：
-  - `electron/dist-package/win-unpacked/奥德赛0.0.exe`
-  - `electron/dist-package/奥德赛0.0-0.3.0-win-x64.exe`
-  - `electron/dist-package/奥德赛0.0-0.3.0-win-x64.exe.blockmap`
-- 打包版 runtime 的输出压缩机制已验证：`hardboard:build` 会返回 compact JSON 和 `stdoutLogPath` / `stderrLogPath`，不会再把 15 万字符直接塞回 Agent。
-- 打包版 runtime 相对路径编译已通过；之前的 C++ multilib include 问题已通过 target-aware `CPLUS_INCLUDE_PATH` 注入修复：
-  - 命令：`node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai`
-  - `cwd`：`%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard\projects\wifi_connect_fmai`
-  - `exitCode`：`0`
-  - `stdoutBytes`：约 150KB，返回时已压缩为 `stdoutTail` + log path。
+  - MAC：`94:a9:90:30:50:00`。
+- Windows 打包版 0.1 已验证：
+  - `E:\vibeide-0.1-win-unpacked\奥德赛0.0.exe`
+  - `FileVersion=0.1.0`
+  - `ProductVersion=0.1.0`
+- 打包版 runtime 的输出压缩机制已验证：`hardboard:build` 会返回 compact JSON 和 `stdoutLogPath` / `stderrLogPath`，不会再把大段 Ninja 输出直接塞回 Agent。
+- 打包版 runtime 相对路径编译已通过：
+  - `node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai`
+  - `node dist\index.js hardboard:build hardboard\projects\hello_world_esp32s3`
+  - 两个工程均 `exitCode=0`、`ok=true`。
 - 打包版 runtime 烧录已通过：
-  - 命令：`node dist\index.js hardboard:flash hardboard\projects\wifi_connect_fmai COM3`
-  - `COM3` 识别为 ESP32-S3，写入和 hash verified 均成功。
-- 打包版 runtime 串口抓取已通过：
-  - 命令：`node dist\index.js hardboard:serial COM3 8 115200`
-  - 输出包含连续 `sin:<number>` 数据，可用于 IDE 串口监视器曲线测试。
+  - `node dist\index.js hardboard:flash hardboard\projects\wifi_connect_fmai COM7`
+  - `node dist\index.js hardboard:flash hardboard\projects\hello_world_esp32s3 COM7`
+  - bootloader、app、partition table 均 hash verified。
+- 串口剩余问题：
+  - `hardboard:serial` 能打开 `COM7` / `COM8` 并生成日志，但当前没有抓到应用层输出。
+  - `COM9` 打开失败，Windows 返回串口超时。
+  - 下一步应修复 reset/open 时序或 console 接口配置，不能把串口应用输出记录为已通过。
 
 ## 随包环境策略
 

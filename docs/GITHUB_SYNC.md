@@ -2,27 +2,30 @@
 
 ## 目标
 
-把 GitHub 仓库 `git@github.com:howtio/vibeide.git` 作为源码真相源，避免 Windows 裸目录和本机源码镜像长期分叉。
+把 GitHub 备份仓库 `git@github.com:howtion0/vibeide.git` 作为当前接力源码真相源，避免 Windows C/E 盘目录和本机源码镜像长期分叉。
 
 ## 当前拓扑
 
 ```text
 Windows 实机
   C:\vibeide
+  E:\vibeide
+  E:\vibeide-0.1-win-unpacked
       ↑↓ SSH / scp
 Linux 本机
-  /run/media/howtion/thinkplus/hardvibecoding/vibeide
+  /home/howtion/桌面/hardvibecoding/vibeide
       ↑↓ git
 GitHub
-  git@github.com:howtio/vibeide.git
+  git@github.com:howtion0/vibeide.git
 ```
 
 ## 已完成
 
 - GitHub SSH 访问已验证。
-- 本机已 clone `git@github.com:howtio/vibeide.git`。
+- 本机已推送当前接力结果到 `git@github.com:howtion0/vibeide.git`。
 - Windows SSH 已连通。
-- Windows 源码已同步到本机，并排除了依赖、构建产物、运行态和密钥。
+- Windows 源码已同步到 `C:\vibeide` 和 `E:\vibeide`。
+- Windows 0.1 unpacked 包已同步到 `E:\vibeide-0.1-win-unpacked`。
 - 本机私有连接信息已写入 `.local-secrets/HANDOFF_PRIVATE.md`，该目录不会提交。
 
 ## 推荐长期流程
@@ -39,30 +42,30 @@ git pull --ff-only origin main
 git status --short
 git add <明确文件>
 git commit -m "docs: refresh vibeide handoff and development docs"
-git push origin main
+git push backup main
 ```
 
 3. Windows 端改为从 GitHub clone/pull：
 
 ```powershell
 cd C:\
-git clone git@github.com:howtio/vibeide.git vibeide
+git clone git@github.com:howtion0/vibeide.git vibeide
 cd C:\vibeide
 npm --prefix runtime install
 npm --prefix electron install
 npm --prefix agent install
 ```
 
-4. Windows 正式开发目录是 `C:\vibeide`。如果机器上仍有旧目录 `C:\vibeide`，只作为历史备份，不再手工双向改。
+4. Windows 源码目录当前同时有 `C:\vibeide` 和 `E:\vibeide`。如果要运行/打包，优先使用 E 盘目录；如果要兼容旧脚本，可同步 C 盘目录。
 
 ## 从 Windows 裸目录重新同步源码
 
-仅在 Windows 工作目录有新改动、且尚未进入 GitHub 时使用。当前应优先在 `C:\vibeide` 里直接 `git pull` / `git status` / `git diff`。
+仅在 Windows 工作目录有新改动、且尚未进入 GitHub 时使用。当前应优先在 `E:\vibeide` 里直接 `git status` / `git diff`，或从本机用 `git archive` 同步明确文件。
 
 主源码包：
 
 ```bash
-ssh hp@192.168.137.1 "tar -a -cf C:\Users\HP\AppData\Local\Temp\vibeide-source.zip --exclude=./electron/node_modules --exclude=./electron/dist-package --exclude=./electron/dist-package.zip --exclude=./agent/node_modules --exclude=./agent/logs --exclude=./agent/screenshots --exclude=./agent/recordings --exclude=./_bundled --exclude=./apikey.txt -C C:\vibeide ."
+ssh hp@192.168.137.1 "tar -a -cf C:\Users\HP\AppData\Local\Temp\vibeide-source.zip --exclude=./electron/node_modules --exclude=./electron/dist-package --exclude=./electron/dist-package.zip --exclude=./agent/node_modules --exclude=./agent/logs --exclude=./agent/screenshots --exclude=./agent/recordings --exclude=./_bundled --exclude=./apikey.txt -C E:\vibeide ."
 scp hp@192.168.137.1:/C:/Users/HP/AppData/Local/Temp/vibeide-source.zip ../vibeide-source.zip
 unzip -o ../vibeide-source.zip
 ```
@@ -70,7 +73,7 @@ unzip -o ../vibeide-source.zip
 Runtime 源码包：
 
 ```bash
-ssh hp@192.168.137.1 "tar -a -cf C:\Users\HP\AppData\Local\Temp\vibeide-runtime-source.zip --exclude=./node_modules --exclude=./dist --exclude=./chrome_profile --exclude=./recordings --exclude=./workflows -C C:\vibeide\runtime ."
+ssh hp@192.168.137.1 "tar -a -cf C:\Users\HP\AppData\Local\Temp\vibeide-runtime-source.zip --exclude=./node_modules --exclude=./dist --exclude=./chrome_profile --exclude=./recordings --exclude=./workflows -C E:\vibeide\runtime ."
 scp hp@192.168.137.1:/C:/Users/HP/AppData/Local/Temp/vibeide-runtime-source.zip ../vibeide-runtime-source.zip
 mkdir -p runtime
 unzip -o ../vibeide-runtime-source.zip -d runtime
@@ -109,7 +112,7 @@ git check-ignore -v .local-secrets/HANDOFF_PRIVATE.md .claude/settings.local.jso
 
 ## 初次入库建议
 
-当前 GitHub 仓库原始内容只有 README。第一次正式入库建议只提交：
+首次入库已完成。后续提交仍建议只提交：
 
 - 源码：`electron/src/`、`runtime/src/`、`agent/skills/`、`agent/tools/`
 - 配置：`config/`、`electron/package.json`、`runtime/package.json`、`agent/package.json`

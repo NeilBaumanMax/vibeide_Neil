@@ -7,13 +7,13 @@
 - Node.js 22+
 - npm
 - Python 3.11+
-- Git SSH 可访问 `git@github.com:howtio/vibeide.git`
+- Git SSH 可访问 `git@github.com:howtion0/vibeide.git`
 - Windows 实机用于最终运行验证
 
 ## 开工检查
 
 ```bash
-cd /run/media/howtion/thinkplus/hardvibecoding/vibeide
+cd /home/howtion/桌面/hardvibecoding/vibeide
 git branch --show-current
 git status --short
 git remote -v
@@ -62,12 +62,14 @@ bash scripts/start_electron_desktop.sh
 Windows PowerShell：
 
 ```powershell
+cd E:\vibeide
 powershell -ExecutionPolicy Bypass -File scripts\start_electron_desktop.ps1
 ```
 
 Windows CMD：
 
 ```cmd
+cd /d E:\vibeide
 scripts\start_electron_desktop.cmd
 ```
 
@@ -143,4 +145,3 @@ git check-ignore -v .local-secrets/HANDOFF_PRIVATE.md .claude/settings.local.jso
 
 - `docs/ARCHITECTURE.md`
 - `docs/REFACTOR_PLAN.md`
-

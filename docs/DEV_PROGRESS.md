@@ -6,14 +6,14 @@
 
 ## 当前版本
 
-奥德赛0.0 / 内部版本 `0.3.x` 开发中
+奥德赛0.0 / Windows 0.1 包已生成，当前 Electron package 版本 `0.1.0`
 
 ---
 
 ## 当前已落地
 
-- [x] GitHub 仓库 `git@github.com:howtio/vibeide.git` 已作为目标源码仓库接入本机
-- [x] 已从 Windows `C:\vibeide` 同步源码镜像到本机，排除依赖、构建产物、运行态和密钥
+- [x] GitHub 备份仓库 `git@github.com:howtion0/vibeide.git` 已作为当前接力源码仓库接入本机
+- [x] 已同步源码到 Windows `C:\vibeide` 和 `E:\vibeide`，排除依赖、构建产物、运行态和密钥
 - [x] README 已重写为奥德赛0.0 当前 Electron + Runtime + Agent 主线，`vibeide` 保留为仓库和内部工程代号
 - [x] 新文档体系已建立：INDEX / ARCHITECTURE / DEVELOPMENT / GITHUB_SYNC / REFACTOR_PLAN / SECURITY / HANDOFF
 - [x] Claude CLI 已接入软件级持续会话上下文，最近轮次持久化到 `runtime/claude-session/`
@@ -22,7 +22,7 @@
 - [x] 右侧工作台文件 / 目录现在可点击，会在右侧浏览页层打开 `file://` 地址
 - [x] 新增 Electron 工作台点击烟测：`cd electron && npm run smoke:workbench`
 - [x] 新增 Claude 软件会话记忆烟测：`cd electron && npm run verify:session`
-- [x] Windows `C:\vibeide` 已从 GitHub clone 到提交 `8746cca` 并通过构建 / 会话 / 工作台点击烟测
+- [x] Windows `E:\vibeide` 已同步到 0.1 接力版本；`E:\vibeide-0.1-win-unpacked` 已通过 exe 版本、编译和烧录验证
 - [x] 应用图标已新增像素风 `electron/assets/icon.svg/png/ico`
 - [x] 打包规则已改为奥德赛0.0 productName/icon，并停止把真实 `apikey.txt` 打进安装包
 - [x] runtime/electron/agent package 命名已从 `@coffecat/*` 迁移到 `@vibeide/*`
@@ -56,6 +56,9 @@
 - [x] hardboard runtime 打包版已使用短路径 `%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard`，支持相对项目路径
 - [x] `hardboard.idf_build` / `hardboard.idf_flash` 已改为 compact 输出，完整 stdout/stderr 写入 `runtime/hardboard/logs/*.log`
 - [x] `agent/skills/espidf_hardboard.md` 已补齐 docsDir/projectsDir、排除 build、先读 `main/CMakeLists.txt` 的文件定位规则
+- [x] Runtime task / pid / eventbus / heartbeat / hardboard build-flash events 已接入任务管理器
+- [x] 编辑器页支持多文件标签，仓库页支持导入和移除文件夹
+- [ ] `hardboard:serial` 在 Windows 0.1 包中能打开端口但未抓到应用层输出，需要后续修复 reset/open 时序
 
 ---
 
@@ -63,10 +66,12 @@
 
 ```text
 Electron Window
-├── 左侧 36%：Chat + Progress + Result
-└── 右侧：Workbench + Browser Pages
-    ├── 工作台主页（文件 / 工具 / 录制 / 重放）
-    └── WebContentsView tabs
+├── Agent 对话与任务输出
+├── 工作台：浏览器工作台、URL、HTML 运行、浏览器 tab
+├── 仓库：默认分组 + 可导入/移除文件夹
+├── 监视器：串口监视器
+├── 任务管理器：runtime task、pid、build/flash、eventbus
+└── 编辑器：源码/Markdown 多文件标签
 ```
 
 ```text

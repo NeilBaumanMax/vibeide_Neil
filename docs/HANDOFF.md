@@ -1,104 +1,105 @@
 # 奥德赛0.0 接力开发文档
 
-> 本文记录当前接手状态、架构规则、开发流程和同步方式。敏感账号密码不写在本文，见本机私有文件 `.local-secrets/HANDOFF_PRIVATE.md`，该目录已被 `.gitignore` 排除。
+> 本文是下一次 Codex 接力的第一入口。敏感账号密码不写在本文，见本机私有文件 `.local-secrets/HANDOFF_PRIVATE.md`，该目录已被 `.gitignore` 排除。
 
-## 当前位置
+## 当前事实
 
-- GitHub 仓库：`git@github.com:howtio/vibeide.git`
-- Windows 实机目录：`C:\vibeide`
-- 本机工作目录：`/run/media/howtion/thinkplus/hardvibecoding/vibeide`
-- Windows SSH：`hp@192.168.137.1`
-- Windows 机器名：`LAPTOP-JQQD9L56`
+- 当前日期：2026-06-29。
+- 正式产品名：奥德赛0.0。
+- 内部工程代号：`vibeide`。
+- 当前本机工作目录：`/home/howtion/桌面/hardvibecoding/vibeide`。
+- Windows SSH：`hp@192.168.137.1`。
+- Windows 机器名：`LAPTOP-JQQD9L56`。
+- Windows 源码目录：
+  - `C:\vibeide`
+  - `E:\vibeide`
+- Windows 0.1 unpacked 包：
+  - `E:\vibeide-0.1-win-unpacked`
+  - `E:\vibeide-0.1-win-unpacked\奥德赛0.0.exe`
+- 备份 GitHub：`git@github.com:howtion0/vibeide.git`，`main` 已推到 `e3572e5`。
+- 旧 GitHub/历史源：`git@github.com:howtio/vibeide.git` 仍可能出现在旧文档或 remote 里，当前接力优先以 `howtion0/vibeide` 的备份结果为准。
 
-## 当前状态
+## 当前版本和验证
 
-- 正式项目名：奥德赛0.0。
-- 内部工程代号 / GitHub 仓库：`vibeide`。
-- Windows 正式目录：`C:\vibeide`，已经是 Git 仓库，后续以 GitHub `main` 为源码真相源。
-- Linux 本机目录：`/run/media/howtion/thinkplus/hardvibecoding/vibeide`，用于主要改代码、提交和推送。
-- Windows 端用于真实 Electron、ESP-IDF、ESP32-S3、串口和打包验证。
-- 新文档体系：
-  - `docs/INDEX.md`
-  - `docs/ARCHITECTURE.md`
-  - `docs/DEVELOPMENT.md`
-  - `docs/GITHUB_SYNC.md`
-  - `docs/REFACTOR_PLAN.md`
-  - `docs/SECURITY.md`
-- 已排除大体积运行产物和依赖：
-  - `electron/node_modules`
-  - `electron/dist`
-  - `electron/dist-package`
-  - `electron/dist-package.zip`
-  - `agent/node_modules`
-  - `agent/logs`
-  - `agent/screenshots`
-  - `agent/recordings`
-  - `runtime/node_modules`
-  - `runtime/dist`
-  - `runtime/chrome_profile`
-  - `runtime/recordings`
-  - `runtime/workflows`
-  - `_bundled`
-  - `apikey.txt`
+- Electron package 版本：`0.1.0`。
+- Windows exe PE 版本已验证：
+  - `FileVersion=0.1.0`
+  - `ProductVersion=0.1.0`
+- E 盘源码里已有测试报告：
+  - `E:\vibeide\docs\WINDOWS_0_1_TEST_REPORT.md`
+- 本机对应报告：
+  - `docs/WINDOWS_0_1_TEST_REPORT.md`
 
-## 当前验证状态
+已通过：
 
-- `log.txt` 复盘出的文档定位、文件扫描、源码文件名猜测、MCP build 输出过大问题已经落到 hardboard skill、runtime compact output 和文档规则里。
-- Windows 已能重新打包出 `奥德赛0.0` 产物，打包名已从用户视角统一。
-- 打包版 `hardboard:build hardboard\projects\wifi_connect_fmai` 已通过，返回 compact JSON：
-  - `exitCode: 0`
-  - `ok: true`
-  - `stdoutBytes` 约 150KB，但只返回 `stdoutTail` 和 `stdoutLogPath`，不会再把超长输出塞回 Agent。
-- 之前的 `bits/c++config.h` / `bits/stl_iterator_base_types.h` 问题已通过 runtime target-aware `CPLUS_INCLUDE_PATH` 注入修复。
-- 打包版 `hardboard:flash hardboard\projects\wifi_connect_fmai COM3` 已通过，ESP32-S3 写入和 hash verified 成功。
-- 打包版 `hardboard:serial COM3 8 115200` 已抓到连续 `sin:<number>` 数据，可用于 IDE 串口监视器曲线测试。
-- Windows 工作区仍有一个本地未提交文件：`runtime/hardboard/projects/wifi_connect_fmai/main/wifi_connect_main.c`。这是硬件测试固件内容，不要用 `git checkout --` 覆盖；如需入库，先阅读再决定是否提交。
+- Windows `npm --prefix runtime run build`
+- Windows `npm --prefix electron run typecheck`
+- Windows `npm --prefix electron run build:main`
+- Windows `npm --prefix electron run build:renderer`
+- Windows `npm --prefix electron run pack:win`
+- 打包版 runtime `hardboard:env`
+- 打包版 runtime `hardboard:devices`
+- `wifi_connect_fmai` 编译通过
+- `wifi_connect_fmai` 烧录 `COM7` 通过，hash verified
+- `hello_world_esp32s3` 编译通过
+- `hello_world_esp32s3` 烧录 `COM7` 通过，hash verified
 
-## 接力操作手册
+剩余问题：
 
-### 1. 开始前
+- `hardboard:serial` 可以打开 `COM7` / `COM8` 并生成日志，但当前没有抓到应用层 `Hello world!` 输出。
+- `COM9` 打开失败，Windows 返回串口超时。
+- 后续应给串口工具增加明确的 reset/open 时序选项，例如 `none`、`rts`、`idf-monitor`，并在 UI 上把“端口已打开但无数据”显示清楚。
+
+## 当前 UI 状态
+
+- 顶部页签：工作台、仓库、监视器、任务管理器、编辑器。
+- 工作台：已复原为浏览器工作台。
+- 监视器：已复原为串口监视器。
+- 任务管理器：合并了编译/烧录控制、进度、runtime 事件、任务/进程日志。
+- 编辑器：用于代码和 Markdown 阅读/编辑，支持多文件标签、切换、保存、关闭。
+- 仓库：默认分组不显示施工文档；支持导入文件夹，导入分组支持移除。
+- 运行态导入文件记录在 `runtime/workbench-imports.json`，该文件已被 `.gitignore` 忽略。
+
+## 必读顺序
 
 ```bash
-cd /run/media/howtion/thinkplus/hardvibecoding/vibeide
-git pull --ff-only origin main
+sed -n '1,220p' docs/HANDOFF.md
+sed -n '1,220p' docs/INDEX.md
+sed -n '1,220p' docs/LOG.md
+sed -n '1,240p' docs/WINDOWS_0_1_TEST_REPORT.md
+sed -n '1,220p' docs/WINDOWS_0_1_MIGRATION_CONSTRUCTION.md
+```
+
+如涉及硬件：
+
+```bash
+sed -n '1,240p' docs/HARDBOARD_CONSTRUCTION.md
+sed -n '1,220p' runtime/hardboard/doc/README.md
+```
+
+## 开工检查
+
+```bash
+cd /home/howtion/桌面/hardvibecoding/vibeide
 git status --short
+git branch --show-current
+git remote -v
+git log --oneline -5
 ```
 
-必须先读：
+不要使用 `git reset --hard` 或 `git checkout --` 回滚文件，除非用户明确要求。
+
+## Windows SSH 模式
+
+从本机执行 Windows 命令：
 
 ```bash
-sed -n '1,220p' README.md
-sed -n '1,260p' docs/HANDOFF.md
-sed -n '1,260p' docs/HARDBOARD_CONSTRUCTION.md
-sed -n '1,180p' agent/skills/espidf_hardboard.md
+SSHPASS='<本机私有密码>' sshpass -e ssh -o StrictHostKeyChecking=no hp@192.168.137.1 "cmd /d /s /c \"cd /d E:\\vibeide && git status --short\""
 ```
 
-### 2. Windows SSH 链路
+密码只从 `.local-secrets/HANDOFF_PRIVATE.md` 读取，不写入公开文档、提交信息或最终回复。
 
-Windows 主机：
-
-```text
-hp@192.168.137.1
-C:\vibeide
-```
-
-从 Linux 执行 Windows 命令的模式：
-
-```bash
-SSHPASS='<本机私有密码>' sshpass -e ssh -o StrictHostKeyChecking=no hp@192.168.137.1 "cmd /d /s /c \"cd /d C:\\vibeide && git status --short\""
-```
-
-密码和 API key 只在 `.local-secrets/HANDOFF_PRIVATE.md` 或用户本机环境中保存，不写入公开文档、提交信息、日志摘要或 issue。
-
-### 3. 改代码原则
-
-- 主要在 Linux 本机改源码。
-- 用 `apply_patch` 精确改文件，不用 `git checkout --` 回滚用户改动。
-- 不提交 `node_modules`、`dist`、`dist-package`、runtime logs、Chrome profile、密钥。
-- hardboard 工程文件不要扫 `build/**`，查源码先读 `main/CMakeLists.txt` 的 `SRCS`。
-- hardboard 工具调用优先使用相对路径：`hardboard\projects\<project>`。
-
-### 4. 本机验证
+## 本机验证
 
 ```bash
 npm --prefix runtime run build
@@ -107,261 +108,81 @@ npm --prefix electron run build:main
 npm --prefix electron run build:renderer
 ```
 
-如果改了 Agent skill/context：
+如果改了 Agent session 或 hardboard context：
 
 ```bash
 npm --prefix electron run verify:session
 npm --prefix electron run verify:hardboard
 ```
 
-### 5. GitHub 同步
+## Windows 验证
+
+源码验证：
 
 ```bash
-git status --short
-git add <明确文件>
-git commit -m "<type>: <summary>"
-git push origin main
+SSHPASS='<本机私有密码>' sshpass -e ssh -o StrictHostKeyChecking=no hp@192.168.137.1 "cmd /d /s /c \"cd /d E:\\vibeide && npm --prefix runtime run build && npm --prefix electron run typecheck && npm --prefix electron run build:main && npm --prefix electron run build:renderer\""
 ```
 
-Windows 拉取：
+打包：
 
 ```bash
-SSHPASS='<本机私有密码>' sshpass -e ssh -o StrictHostKeyChecking=no hp@192.168.137.1 "cmd /d /s /c \"cd /d C:\\vibeide && git pull --ff-only origin main\""
+SSHPASS='<本机私有密码>' sshpass -e ssh -o StrictHostKeyChecking=no hp@192.168.137.1 "cmd /d /s /c \"cd /d E:\\vibeide && npm --prefix electron run pack:win\""
 ```
 
-### 6. Windows 编译和打包
-
-快速验证源码：
-
-```bash
-SSHPASS='<本机私有密码>' sshpass -e ssh -o StrictHostKeyChecking=no hp@192.168.137.1 "cmd /d /s /c \"cd /d C:\\vibeide && npm --prefix runtime run build && npm --prefix electron run typecheck && npm --prefix electron run build:main && npm --prefix electron run build:renderer\""
-```
-
-完整 Windows 打包：
-
-```bash
-SSHPASS='<本机私有密码>' sshpass -e ssh -o StrictHostKeyChecking=no hp@192.168.137.1 "cmd /d /s /c \"cd /d C:\\vibeide && npm --prefix electron run dist:win\""
-```
-
-当前正式产品名是奥德赛0.0；打包产物文件名会使用该产品名。
-
-### 7. Hardboard 验证
+打包版 runtime 验证：
 
 ```cmd
-cd /d C:\vibeide\electron\dist-package\win-unpacked\resources\runtime
+cd /d E:\vibeide-0.1-win-unpacked\resources\runtime
 node dist\index.js hardboard:env
-node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai
 node dist\index.js hardboard:devices
-node dist\index.js hardboard:flash hardboard\projects\wifi_connect_fmai COM3
-node dist\index.js hardboard:serial COM3 10 115200
+node dist\index.js hardboard:build hardboard\projects\hello_world_esp32s3
+node dist\index.js hardboard:flash hardboard\projects\hello_world_esp32s3 COM7
+node dist\index.js hardboard:serial COM7 10 115200
 ```
 
-期望：
+注意：当前 `hardboard:serial` 无应用输出是已知剩余问题，不要把它记录成通过。
 
-- `hardboard:env` 的 `hardboardRoot` 指向 `%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard`。
-- build/flash 返回 compact JSON，包含 `exitCode`、`ok`、`stdoutTail`、`stderrTail`、`stdoutLogPath`、`stderrLogPath`。
-- 完整 Ninja / esptool 输出在 `runtime/hardboard/logs/*.log`。
+## 同步策略
 
-### 8. 日志问题处理
+当前接力以本机源码为编辑主场：
 
-如果用户提供 `log.txt`：
-
-- 先完整阅读日志，不只看首尾。
-- 从日志中提炼工具问题、skill 问题、路径问题和 UI/文档漂移问题。
-- 对应修复必须落到代码或文档规则里，不能只解释。
-- 如果 MCP 输出过大，应优先修工具返回格式，让 Agent 不需要读取 Claude 自己保存的超长 tool-result 文件。
-
-## 架构概览
-
-```text
-Electron Window
-├── Renderer UI
-│   ├── ChatPanel
-│   ├── TaskProgress
-│   ├── ResultPanel
-│   └── BrowserPanel / WorkspacePanel
-├── Gateway
-│   └── IPC 唯一入口
-├── Worker / Orchestrator
-│   ├── 快捷任务
-│   ├── 搜索预处理
-│   ├── 任务上下文构造
-│   └── 拉起 Claude Agent
-├── Agent 工作区
-│   ├── agent/CLAUDE.md
-│   ├── agent/skills/*.md
-│   └── agent/tools/*
-└── Runtime
-    ├── CDP 连接 Electron Chromium
-    ├── MCP Server
-    ├── browser.* tools
-    ├── storage.* tools
-    └── 录制 / 回放 / workflow
-```
-
-核心链路：
-
-```text
-UI -> Gateway -> Worker -> Agent -> MCP -> Runtime -> Electron Chromium
-```
-
-## 关键规则
-
-1. Gateway 是唯一 IPC 入口。
-2. Runtime 不调 LLM，只做浏览器连接、动作、提取、录制、回放和存储。
-3. Agent 不直接碰 Playwright，不写脚本操作浏览器，所有浏览器操作必须走 MCP。
-4. Agent 可读 `agent/skills/`，可写 `agent/tools/`，不要修改 `runtime/`、`electron/`、`scripts/`。
-5. 搜索任务优先用 `agent/tools/build_platform_search_url.mjs` 生成站内 URL，再 `browser.navigate`。
-6. 录制、回放、复用流程优先使用 `browser.recording_*` 和 `browser.workflow_*`。
-7. API key、cookie、Chrome profile、录制运行产物、依赖目录不进 Git。
-8. 真实账号密码只放 `.local-secrets/`，不要提交、不要 push。
-
-## 主要目录
-
-```text
-electron/                  Electron 桌面端
-electron/src/main/          主进程、Gateway、Worker、BrowserView
-electron/src/renderer/      React UI
-runtime/                   Runtime MCP 与 CDP 控制层
-runtime/src/mcp/            MCP tools 注册
-agent/                     Claude Agent 工作区
-agent/skills/              平台知识与操作规则
-agent/tools/               跨平台辅助脚本
-config/                    YAML 配置
-docs/                      项目文档
-scripts/                   启动、报告和辅助脚本
-tests/                     Python scaffold / 结构测试
-```
-
-## 关键文件
-
-- `CLAUDE.md`：总开发规则。
-- `agent/CLAUDE.md`：Agent 运行规则，强调所有浏览器操作必须走 MCP。
-- `electron/src/main/index.ts`：Electron 启动、窗口、CDP 端口、BrowserView 初始化。
-- `electron/src/main/gateway.ts`：IPC 注册和 Worker 转发。
-- `electron/src/main/worker/orchestrator.ts`：任务编排、快捷任务、搜索预处理、Agent 生命周期。
-- `electron/src/main/worker/context.ts`：按任务选择 skills 并构造 Agent prompt。
-- `electron/src/main/agent.ts`：拉起 Claude Code、生成 MCP 配置、读取 DeepSeek API key。
-- `electron/src/main/browser-view.ts`：右侧 WebContentsView tabs、持久 session、bounds 同步。
-- `electron/src/main/browser-recorder.ts`：Electron 侧录制和回放桥接。
-- `runtime/src/mcp/browser.tool.ts`：注册 `browser.*` MCP tools。
-- `runtime/src/browser.ts`：CDP 连接和页面选择。
-- `runtime/src/record.ts` / `runtime/src/replay.ts`：Runtime 侧录制和回放。
-- `runtime/src/workflows.ts`：workflow 持久化。
-
-## 开发前检查
-
-```bash
-cd /run/media/howtion/thinkplus/hardvibecoding/vibeide
-git status --short
-git branch --show-current
-sed -n '1,220p' docs/INDEX.md
-sed -n '1,260p' docs/ARCHITECTURE.md
-sed -n '1,260p' docs/REFACTOR_PLAN.md
-```
-
-如果要开始实质改动，建议先建备份分支：
-
-```bash
-git checkout -b backup/$(date +%Y%m%d)-before-work
-git push -u origin HEAD
-git checkout main
-```
-
-## 本机验证命令
-
-```bash
-# Python 结构测试
-pytest tests/
-
-# Runtime typecheck
-cd runtime
-npm install
-npm run typecheck
-
-# Electron typecheck / build
-cd ../electron
-npm install
-npm run typecheck
-npm run build:main
-npm run build:renderer
-```
-
-注意：历史文档记录 `pytest tests/` 曾因缺少旧 `src/coddecat` scaffold 实现失败；当前代码应以 `tests/test_project.py` 的结构测试为主要参考，`tests/test_scaffold.py` 属于旧 scaffold 测试。
-
-## Windows 实机运行
-
-Windows 上项目目录：
-
-```powershell
-cd C:\vibeide
-```
-
-推荐启动：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\start_electron_desktop.ps1
-```
-
-或：
-
-```cmd
-scripts\start_electron_desktop.cmd
-```
-
-## GitHub 同步策略
-
-推荐把 GitHub 作为源码真相源：
-
-1. 本机修改源码。
+1. 本机改代码和文档。
 2. 本机验证。
-3. 提交并 push 到 `git@github.com:howtio/vibeide.git`。
-4. Windows 端后续改为 clone/pull 该仓库，或者从本机同步变更文件回 `C:\vibeide`。
+3. 提交到 Git。
+4. 推送到 `git@github.com:howtion0/vibeide.git`。
+5. 如需 Windows 运行，使用 `git archive` / `robocopy` / `scp` 同步到 `C:\vibeide` 和 `E:\vibeide`。
 
-不要把 Windows 当前整目录直接提交，因为里面有依赖、构建产物、运行态和密钥。
+不要提交：
 
-详细流程见 `docs/GITHUB_SYNC.md`。
+- `.local-secrets/`
+- `node_modules/`
+- `electron/dist/`
+- `electron/dist-package/`
+- `runtime/dist/`
+- `runtime/chrome_profile/`
+- `runtime/recordings/`
+- `runtime/workflows/`
+- `runtime/workbench-imports.json`
+- `agent/logs/`
+- `agent/screenshots/`
+- `apikey.txt`
+- `.env`
 
-## 从 Windows 重新同步源码
+## 架构边界
 
-如果 Windows 原目录有新改动，可重新打源码包。注意继续排除依赖、产物、运行态和密钥：
-
-```bash
-ssh hp@192.168.137.1 "tar -a -cf C:\Users\HP\AppData\Local\Temp\vibeide-source.zip --exclude=./electron/node_modules --exclude=./electron/dist-package --exclude=./electron/dist-package.zip --exclude=./agent/node_modules --exclude=./agent/logs --exclude=./agent/screenshots --exclude=./agent/recordings --exclude=./_bundled --exclude=./apikey.txt -C C:\vibeide ."
-scp hp@192.168.137.1:/C:/Users/HP/AppData/Local/Temp/vibeide-source.zip ../vibeide-source.zip
-unzip -o ../vibeide-source.zip
+```text
+Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / ESP-IDF hardboard
 ```
 
-`runtime/` 要单独同步源码，避免把运行态一起带进来：
-
-```bash
-ssh hp@192.168.137.1 "tar -a -cf C:\Users\HP\AppData\Local\Temp\vibeide-runtime-source.zip --exclude=./node_modules --exclude=./dist --exclude=./chrome_profile --exclude=./recordings --exclude=./workflows -C C:\vibeide\runtime ."
-scp hp@192.168.137.1:/C:/Users/HP/AppData/Local/Temp/vibeide-runtime-source.zip ../vibeide-runtime-source.zip
-mkdir -p runtime
-unzip -o ../vibeide-runtime-source.zip -d runtime
-```
-
-## 敏感信息规则
-
-- `apikey.txt` 不提交。
-- `.env` 不提交。
-- `.local-secrets/` 不提交。
-- `runtime/chrome_profile/` 不提交。
-- `runtime/recordings/` 和 `runtime/workflows/` 默认视为运行态，不提交，除非用户明确要求保存某个示例 workflow。
-- 如果要记录账号密码，只写入 `.local-secrets/HANDOFF_PRIVATE.md`。
-
-## 当前读码结论
-
-- 这个项目目前更像 Electron + Runtime + Agent 的桌面采集原型，而不是 README 里旧的纯 Python `coddecat` scaffold。
-- `pyproject.toml` 和 `tests/test_scaffold.py` 仍保留旧 Python scaffold 叙事，可能与当前主链路不一致。
-- `README.md`、`CLAUDE.md` 已先统一成 `奥德赛0.0` 当前主线。
-- 代码、package、UI、部分注释中仍有旧名 `coffecat/coddecat`，后续按 `docs/REFACTOR_PLAN.md` 分阶段处理。
-- `electron/dist/` 已被同步出来，但属于构建产物，后续应从 Git 中排除。
-- 中文文件名文档在当前 Linux 外置盘解包时出现编码/权限问题，必要时应从 Windows 远程读取或重命名为 ASCII 文件名后再入库。
+- Gateway 是唯一 IPC 入口。
+- Runtime 不调 LLM，只负责 MCP tools、CDP、硬件命令、录制回放和存储。
+- Agent 不直接碰 Playwright，不写脚本操作浏览器，浏览器操作必须走 MCP。
+- hardboard 工具调用优先使用相对路径：`hardboard\projects\<project>`。
+- 查 hardboard 工程文件不要扫 `build/**`，先读 `main/CMakeLists.txt` 的 `SRCS`。
 
 ## 下一步建议
 
-1. 先清理 Git 跟踪范围：只提交源码、配置、文档，不提交 `electron/dist/` 和私有配置。
-2. 提交并 push 当前源码和文档到 `git@github.com:howtio/vibeide.git`。
-3. 明确 Python scaffold 是否还保留；如果不保留，应同步调整 `pyproject.toml` 和测试。
-4. 在 Windows 上用 Git clone 方式替代原裸目录，之后统一通过 GitHub 接力。
+1. 修复 `hardboard:serial` 的 reset/open 时序和 UI 状态呈现。
+2. 给任务管理器补一条 Windows packaged runtime smoke，覆盖 build/flash/serial 三个入口。
+3. 清理旧文档中仍作为历史记录出现的 `0.3.0`、`Runtime UI v2`、`howtio` 描述，保留时必须标明“历史记录”。
+4. 如果继续发布 Windows 包，把版本从 `0.1.0` 递增，并同步更新 `docs/WINDOWS_0_1_TEST_REPORT.md` 或新建对应版本报告。

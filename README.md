@@ -12,11 +12,12 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 
 ## 当前状态
 
-- GitHub 仓库：`git@github.com:howtio/vibeide.git`
+- 当前备份 GitHub：`git@github.com:howtion0/vibeide.git`
 - 主开发分支：`main`
-- Windows 实机目录：`C:\vibeide`
-- 本机开发目录：`/run/media/howtion/thinkplus/hardvibecoding/vibeide`
-- 当前代码来源：已从 Windows 实机同步源码，排除了依赖、构建产物、运行态和密钥。
+- Windows 源码目录：`C:\vibeide`、`E:\vibeide`
+- Windows 0.1 unpacked 包：`E:\vibeide-0.1-win-unpacked`
+- 本机开发目录：`/home/howtion/桌面/hardvibecoding/vibeide`
+- 当前代码来源：Linux 本机源码已同步到 Windows C/E 盘并备份到 GitHub。
 
 ## 能力边界
 
@@ -32,21 +33,21 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 ### Windows
 
 ```powershell
-cd C:\vibeide
+cd E:\vibeide
 powershell -ExecutionPolicy Bypass -File scripts\start_electron_desktop.ps1
 ```
 
 或：
 
 ```cmd
-cd /d C:\vibeide
+cd /d E:\vibeide
 scripts\start_electron_desktop.cmd
 ```
 
 ### Linux / macOS
 
 ```bash
-cd /run/media/howtion/thinkplus/hardvibecoding/vibeide
+cd /home/howtion/桌面/hardvibecoding/vibeide
 bash scripts/start_electron_desktop.sh
 ```
 
@@ -111,6 +112,7 @@ pytest tests/test_project.py
 - [Hardboard 施工文档](docs/HARDBOARD_CONSTRUCTION.md)
 - [开发进度](docs/DEV_PROGRESS.md)
 - [施工日志](docs/LOG.md)
+- [Windows 0.1 测试报告](docs/WINDOWS_0_1_TEST_REPORT.md)
 - [Hardboard Agent 运行文档](runtime/hardboard/doc/README.md)
 
 ## Git 策略
@@ -134,6 +136,6 @@ pytest tests/test_project.py
 
 ## 下一步
 
-1. 继续按 [接力开发文档](docs/HANDOFF.md) 维护 Linux 本机、Windows 实机、GitHub 三方同步。
-2. 完成串口监视器的 Electron smoke，覆盖 COM/baud/encoding/实时曲线。
+1. 继续按 [接力开发文档](docs/HANDOFF.md) 维护 Linux 本机、Windows C/E 盘、GitHub 三方同步。
+2. 修复 `hardboard:serial` 在 ESP32-S3 上的 reset/open 时序，避免端口打开但无应用输出。
 3. 按 [重构计划](docs/REFACTOR_PLAN.md) 清理旧 scaffold、整理 Runtime / Agent / Electron 边界。

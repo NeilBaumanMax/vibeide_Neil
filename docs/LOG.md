@@ -33,7 +33,7 @@
   - `COM9` 打开失败，Windows 返回串口超时。
   - 已写入详细测试报告：`docs/WINDOWS_0_1_TEST_REPORT.md`。
 
-## 2026-06-29 — Runtime UI v2 打包、日志与 asar 验证
+## 2026-06-29 — Runtime UI v2 打包、日志与 asar 验证（历史记录，已被 0.1 E 盘包取代）
 
 - 用户反馈 Linux 预览变化明显，但 Windows unpacked exe 观感未变化，判断风险点是继续打开了旧 `win-unpacked` 目录。
 - 用户继续反馈 `dist-package` 没有变化、exe 版本仍像旧版本；因此最终改为直接刷新原始 `electron/dist-package/win-unpacked`，不再只依赖旁边复制目录。
@@ -53,7 +53,7 @@
 - 新包内写入 `RUNTIME_UI_V2_BUILD.txt`，窗口顶部页签和工作台标题显示 `Runtime UI v2 · 2026-06-29 19:05`。
 - 已解包检查原目录 `resources/app.asar`，确认 renderer bundle 内含 `Runtime UI v2`、`任务管理器`、`编辑器`、`硬件编译/烧录工作台`，main bundle 内含 `resolveSelectedProjectDir`。
 - 已验证原目录 `resources/runtime/dist/hardboard/runner.js` 包含 `failBeforeProcess` 和失败 stderr 写入 `hardboard.build.completed / hardboard.flash.completed`。
-- 新增 `electron/scripts/stamp_win_exe_version.cjs`，用 `resedit` 直接写 `win-unpacked/奥德赛0.0.exe` 的 PE 版本资源；当前 `ProductName=奥德赛0.0`、`FileVersion=0.3.0`、`ProductVersion=0.3.0`。
+- 新增 `electron/scripts/stamp_win_exe_version.cjs`，用 `resedit` 直接写 `win-unpacked/奥德赛0.0.exe` 的 PE 版本资源；当时历史包 `ProductName=奥德赛0.0`、`FileVersion=0.3.0`、`ProductVersion=0.3.0`。当前 0.1 包以 `docs/WINDOWS_0_1_TEST_REPORT.md` 为准。
 - 新增 `electron/scripts/pack_win_unpacked.cjs`，`npm --prefix electron run pack:win` 在 Linux 上遇到 Wine 签名失败但 `win-unpacked` 已生成时，会继续执行版本资源 stamp 并返回成功，避免再次漏改 exe 文件属性。
 - zip 打包时排除 `runtime/hardboard/events/*`，避免把本机历史运行态事件带进交付目录。
 
@@ -136,7 +136,7 @@
 
 ## 2026-06-21 — GitHub 接力与文档重构
 
-- 仓库：
+- 历史仓库：
   - `git@github.com:howtio/vibeide.git`
 - 新增：
   - `docs/INDEX.md`

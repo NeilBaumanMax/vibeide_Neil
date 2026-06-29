@@ -142,7 +142,9 @@ node node_modules/electron-builder/cli.js --win --x64 --dir
 
 如果 Linux 上最后仍因 wine 签名失败，只要 `dist-package/win-unpacked/奥德赛0.0.exe` 已生成，就以该目录作为测试对象。
 
-## 2026-06-29 打包验收记录
+## 2026-06-29 历史打包验收记录
+
+> 本节是 Runtime UI v2 阶段的历史记录，已被 Windows 0.1 E 盘包取代。当前可测对象见 `docs/WINDOWS_0_1_TEST_REPORT.md`：`E:\vibeide-0.1-win-unpacked\奥德赛0.0.exe`，PE 版本为 `0.1.0`。
 
 本轮最终交付对象是用户实际测试的原始 unpacked 目录：
 
@@ -165,7 +167,7 @@ electron/dist-package/奥德赛0.0-runtime-ui-v2-win-unpacked.zip
 Runtime UI v2 · 2026-06-29 19:05
 ```
 
-如果用户打开 exe 后看不到这个标识，就不是本轮重新编译出的包。
+如果用户正在验证 0.1 包，不再用这个标识作为判断标准，应改看 exe PE 版本 `0.1.0` 和 `docs/WINDOWS_0_1_TEST_REPORT.md`。
 
 已执行验证：
 
@@ -205,3 +207,4 @@ ProductVersion: 0.3.0
 ```
 
 - 已验证原目录 `resources/runtime/dist/hardboard/runner.js` 包含早期失败事件写入逻辑，`resources/app.asar` 包含 `resolveSelectedProjectDir` 和 Runtime UI v2 前端。
+- 当前 0.1 包已在 Windows 上重新打包并迁移到 `E:\vibeide-0.1-win-unpacked`，不要继续把上面的 0.3.0 历史版本当成当前交付版本。

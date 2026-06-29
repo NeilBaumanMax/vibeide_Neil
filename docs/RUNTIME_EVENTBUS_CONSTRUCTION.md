@@ -406,5 +406,5 @@ npm --prefix electron run build:renderer
 
 ```cmd
 node runtime\dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai
-node runtime\dist\index.js hardboard:flash hardboard\projects\wifi_connect_fmai COM3
+node runtime\dist\index.js hardboard:flash hardboard\projects\wifi_connect_fmai COM7
 ```

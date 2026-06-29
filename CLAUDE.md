@@ -56,7 +56,7 @@ git check-ignore -v .local-secrets/HANDOFF_PRIVATE.md .claude/settings.local.jso
 ```
 
 4. 精确 `git add`，不要用 `git add -A` 把运行态和私有文件扫进去。
-5. 提交并推送到 `git@github.com:howtio/vibeide.git`。
+5. 提交并推送到当前备份仓库 `git@github.com:howtion0/vibeide.git`。
 
 ## 验证命令
 
