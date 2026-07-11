@@ -4,19 +4,11 @@
 
 ## 当前事实
 
-- 当前日期：2026-06-29。
+- 当前日期：2026-07-11。
 - 正式产品名：奥德赛0.0。
 - 内部工程代号：`vibeide`。
-- 当前本机工作目录：`/home/howtion/桌面/hardvibecoding/vibeide`。
-- Windows SSH：`hp@192.168.137.1`。
-- Windows 机器名：`LAPTOP-JQQD9L56`。
-- Windows 源码目录：
-  - `C:\vibeide`
-  - `E:\vibeide`
-- Windows 0.1 unpacked 包：
-  - `E:\vibeide-0.1-win-unpacked`
-  - `E:\vibeide-0.1-win-unpacked\奥德赛0.0.exe`
-- 备份 GitHub：`git@github.com:howtion0/vibeide.git`，`main` 已推到 `e3572e5`。
+- 当前本机工作目录：`D:\vibeide`（Windows 实机）。
+- 备份 GitHub：`git@github.com:howtion0/vibeide.git`，`main` 已推到 `b348a5e`。
 - 旧 GitHub/历史源：`git@github.com:howtio/vibeide.git` 仍可能出现在旧文档或 remote 里，当前接力优先以 `howtion0/vibeide` 的备份结果为准。
 
 ## 当前版本和验证
@@ -25,18 +17,23 @@
 - Windows exe PE 版本已验证：
   - `FileVersion=0.1.0`
   - `ProductVersion=0.1.0`
-- E 盘源码里已有测试报告：
-  - `E:\vibeide\docs\WINDOWS_0_1_TEST_REPORT.md`
-- 本机对应报告：
-  - `docs/WINDOWS_0_1_TEST_REPORT.md`
+- 本机源码目录：`D:\vibeide`
+- 打包 exe 位置：`D:\vibeide\electron\dist-package\win-unpacked\奥德赛0.0.exe`
+- 产线 API key：`%APPDATA%\vibeide\apikey.txt`（DeepSeek）
+- 仓库 remote：`git@github.com:howtion0/vibeide.git`
+- SSH key：`~/.ssh/id_ed25519`，已配置 `git config core.sshCommand` 绕过中文路径编码问题
 
-已通过：
+已通过（本机 D:\vibeide）：
 
-- Windows `npm --prefix runtime run build`
-- Windows `npm --prefix electron run typecheck`
-- Windows `npm --prefix electron run build:main`
-- Windows `npm --prefix electron run build:renderer`
-- Windows `npm --prefix electron run pack:win`
+- `npm --prefix runtime run build` — runtime TypeScript 编译通过
+- `npm --prefix electron run typecheck` — 类型检查通过
+- `npm --prefix electron run build:main` — 主进程编译通过
+- `npm --prefix electron run build:renderer` — React UI (Vite) 构建通过
+- `npm --prefix electron run pack:win` — electron-builder win-unpacked 打包完成
+- `奥德赛0.0.exe` 启动验证通过（进程正常启动，无崩溃）
+
+已通过（历史 E 盘验证）：
+
 - 打包版 runtime `hardboard:env`
 - 打包版 runtime `hardboard:devices`
 - `wifi_connect_fmai` 编译通过
@@ -48,7 +45,7 @@
 
 - `hardboard:serial` 可以打开 `COM7` / `COM8` 并生成日志，但当前没有抓到应用层 `Hello world!` 输出。
 - `COM9` 打开失败，Windows 返回串口超时。
-- 后续应给串口工具增加明确的 reset/open 时序选项，例如 `none`、`rts`、`idf-monitor`，并在 UI 上把“端口已打开但无数据”显示清楚。
+- 后续应给串口工具增加明确的 reset/open 时序选项，例如 `none`、`rts`、`idf-monitor`，并在 UI 上把”端口已打开但无数据”显示清楚。
 
 ## 当前 UI 状态
 
@@ -80,7 +77,7 @@ sed -n '1,220p' runtime/hardboard/doc/README.md
 ## 开工检查
 
 ```bash
-cd /home/howtion/桌面/hardvibecoding/vibeide
+cd /d/vibeide
 git status --short
 git branch --show-current
 git remote -v
@@ -89,23 +86,24 @@ git log --oneline -5
 
 不要使用 `git reset --hard` 或 `git checkout --` 回滚文件，除非用户明确要求。
 
-## Windows SSH 模式
+## SSH 注意事项
 
-从本机执行 Windows 命令：
+Windows 中文用户名（刘天凯）路径导致 Git Bash 中 ssh.exe 编码异常：
 
 ```bash
-SSHPASS='<本机私有密码>' sshpass -e ssh -o StrictHostKeyChecking=no hp@192.168.137.1 "cmd /d /s /c \"cd /d E:\\vibeide && git status --short\""
+# ~/.ssh/config 已配置 IdentityFile，但需额外设置：
+git config --global core.sshCommand 'ssh -i /d/ssh-home/.ssh/id_ed25519 -o UserKnownHostsFile=/d/ssh-home/.ssh/known_hosts'
 ```
 
-密码只从 `.local-secrets/HANDOFF_PRIVATE.md` 读取，不写入公开文档、提交信息或最终回复。
-
-## 本机验证
+## 验证命令
 
 ```bash
 npm --prefix runtime run build
 npm --prefix electron run typecheck
 npm --prefix electron run build:main
 npm --prefix electron run build:renderer
+npm --prefix electron run pack:win
+npm --prefix electron run stamp:win -- "dist-package/win-unpacked/奥德赛0.0.exe"
 ```
 
 如果改了 Agent session 或 hardboard context：
@@ -115,24 +113,10 @@ npm --prefix electron run verify:session
 npm --prefix electron run verify:hardboard
 ```
 
-## Windows 验证
-
-源码验证：
-
-```bash
-SSHPASS='<本机私有密码>' sshpass -e ssh -o StrictHostKeyChecking=no hp@192.168.137.1 "cmd /d /s /c \"cd /d E:\\vibeide && npm --prefix runtime run build && npm --prefix electron run typecheck && npm --prefix electron run build:main && npm --prefix electron run build:renderer\""
-```
-
-打包：
-
-```bash
-SSHPASS='<本机私有密码>' sshpass -e ssh -o StrictHostKeyChecking=no hp@192.168.137.1 "cmd /d /s /c \"cd /d E:\\vibeide && npm --prefix electron run pack:win\""
-```
-
-打包版 runtime 验证：
+## 打包版 runtime 验证
 
 ```cmd
-cd /d E:\vibeide-0.1-win-unpacked\resources\runtime
+cd /d D:\vibeide\electron\dist-package\win-unpacked\resources\runtime
 node dist\index.js hardboard:env
 node dist\index.js hardboard:devices
 node dist\index.js hardboard:build hardboard\projects\hello_world_esp32s3
@@ -144,13 +128,13 @@ node dist\index.js hardboard:serial COM7 10 115200
 
 ## 同步策略
 
-当前接力以本机源码为编辑主场：
+当前接力以 `D:\vibeide`（Windows 实机）为编辑主场：
 
 1. 本机改代码和文档。
-2. 本机验证。
+2. 本机验证（typecheck / build / pack）。
 3. 提交到 Git。
 4. 推送到 `git@github.com:howtion0/vibeide.git`。
-5. 如需 Windows 运行，使用 `git archive` / `robocopy` / `scp` 同步到 `C:\vibeide` 和 `E:\vibeide`。
+5. `git config core.sshCommand` 已配置解决中文路径问题。
 
 不要提交：
 
@@ -184,5 +168,6 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 
 1. 修复 `hardboard:serial` 的 reset/open 时序和 UI 状态呈现。
 2. 给任务管理器补一条 Windows packaged runtime smoke，覆盖 build/flash/serial 三个入口。
-3. 清理旧文档中仍作为历史记录出现的 `0.3.0`、`Runtime UI v2`、`howtio` 描述，保留时必须标明“历史记录”。
+3. 清理旧文档中仍作为历史记录出现的 `0.3.0`、`Runtime UI v2`、`howtio` 描述，保留时必须标明”历史记录”。
 4. 如果继续发布 Windows 包，把版本从 `0.1.0` 递增，并同步更新 `docs/WINDOWS_0_1_TEST_REPORT.md` 或新建对应版本报告。
+5. 如切换到 Windows 实机开发，移除 HANDOFF.md 中的 Windows SSH 接力描述（已在当前版本清理干净）。

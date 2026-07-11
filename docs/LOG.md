@@ -2,6 +2,24 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-11 — D:\vibeide DeepSeek API 配置、重建打包与 exe 验证
+
+- 确认 `apikey.txt` 已配置 DeepSeek API key（密钥内容写入手记，不写日志）。
+- 修复 Windows 中文用户名路径导致 SSH 连接失败的问题：
+  - Git Bash `~` 展开为 `/c/Users/刘天凯/`，ssh.exe 对 UTF-8 中文路径编码异常。
+  - 解决方法：配置 `git config --global core.sshCommand` 使用显式路径参数绕过。
+- SSH key (`ed25519`) 已生成并配置，远程已从 `howtio/vibeide` 改为 `howtion0/vibeide`。
+- 执行施工文档构建流程：
+  - `npm --prefix runtime run build` — runtime TypeScript 编译通过
+  - `npm --prefix electron run typecheck` — 类型检查通过
+  - `npm --prefix electron run build:main` — 主进程编译通过
+  - `npm --prefix electron run build:renderer` — React UI (Vite) 构建通过
+  - `npm --prefix electron run pack:win` — electron-builder win-unpacked 打包完成（签名步骤因无证书跳过，stamp 成功）
+- exe 文件属性已验证：`ProductName=奥德赛0.0`、`FileVersion=0.1.0`、`ProductVersion=0.1.0`。
+- exe 启动测试通过：`D:\vibeide\electron\dist-package\win-unpacked\奥德赛0.0.exe` 进程正常启动，无崩溃。
+- 产线 API key 已部署到 `%APPDATA%\vibeide\apikey.txt`。
+- 远程仓库已从 `howtio/vibeide` 更正为 `howtion0/vibeide`，合并远程 6 个提交后推送成功。
+
 ## 2026-06-29 — Windows C:\vibeide 0.1 迁移启动
 
 - 按用户要求先写施工文档：`docs/WINDOWS_0_1_MIGRATION_CONSTRUCTION.md`。
