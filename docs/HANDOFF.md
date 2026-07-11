@@ -8,7 +8,7 @@
 - 正式产品名：奥德赛0.0。
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`D:\vibeide`（Windows 实机）。
-- 备份 GitHub：`git@github.com:howtion0/vibeide.git`，`main` 已推到 `b348a5e`。
+- 备份 GitHub：`git@github.com:howtion0/vibeide.git`，`main` 已推到 `3e6d5da`。
 - 旧 GitHub/历史源：`git@github.com:howtio/vibeide.git` 仍可能出现在旧文档或 remote 里，当前接力优先以 `howtion0/vibeide` 的备份结果为准。
 
 ## 当前版本和验证
@@ -31,6 +31,11 @@
 - `npm --prefix electron run build:renderer` — React UI (Vite) 构建通过
 - `npm --prefix electron run pack:win` — electron-builder win-unpacked 打包完成
 - `奥德赛0.0.exe` 启动验证通过（进程正常启动，无崩溃）
+- **修复 ESP-IDF 编译三大问题**（2026-07-11）：
+  - 中文路径 GCC linker 乱码 → junction 改用 `C:\vibeide-hw`
+  - Python venv 绑定旧机器 HP 路径 → 优先系统 Python
+  - 缺少 `espidf.constraints` → 运行时自动生成
+  - 便携 Python 3.12.9 + ESP-IDF 56 依赖包已装好
 
 已通过（历史 E 盘验证）：
 
@@ -170,4 +175,5 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 2. 给任务管理器补一条 Windows packaged runtime smoke，覆盖 build/flash/serial 三个入口。
 3. 清理旧文档中仍作为历史记录出现的 `0.3.0`、`Runtime UI v2`、`howtio` 描述，保留时必须标明”历史记录”。
 4. 如果继续发布 Windows 包，把版本从 `0.1.0` 递增，并同步更新 `docs/WINDOWS_0_1_TEST_REPORT.md` 或新建对应版本报告。
-5. 如切换到 Windows 实机开发，移除 HANDOFF.md 中的 Windows SSH 接力描述（已在当前版本清理干净）。
+5. 在 ESP-IDF 真实编译测试通过后，补全 `WINDOWS_0_1_TEST_REPORT.md` 的中文路径修复验证项。
+6. 考虑把便携 Python 打包到 `resources/runtime/python/` 作为 ESP-IDF 编译的默认 Python（当前优先系统 Python）。
