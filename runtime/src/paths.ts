@@ -20,8 +20,9 @@ function resolveShortHardboardRoot(hardboardRoot: string): string {
   if (process.platform !== 'win32') return resolved;
   if (!resolved.toLowerCase().includes(`${path.sep}resources${path.sep}runtime${path.sep}hardboard`)) return resolved;
 
-  const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
-  const aliasRoot = path.join(localAppData, 'vibeide-hardboard-runtime');
+  // Use a path WITHOUT Chinese characters to avoid GCC/linker encoding issues.
+  // Chinese username paths (刘天凯) get garbled when passed through CMake→GCC→ld.exe.
+  const aliasRoot = 'C:\\vibeide-hw';
   const aliasHardboard = path.join(aliasRoot, 'hardboard');
 
   try {
@@ -43,7 +44,14 @@ function resolveShortHardboardRoot(hardboardRoot: string): string {
     }
     return aliasHardboard;
   } catch {
-    return resolved;
+    // Fallback: try TEMP if C:\ is not writable
+    try {
+      const tmpAlias = path.join(process.env.TEMP || 'C:\\tmp', 'vibeide-hw', 'hardboard');
+      fs.mkdirSync(path.dirname(tmpAlias), { recursive: true });
+      return resolved;
+    } catch {
+      return resolved;
+    }
   }
 }
 

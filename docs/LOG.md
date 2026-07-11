@@ -2,6 +2,20 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-11 — 修复打包版 exe ESP-IDF 编译三问题（中文路径 / Python venv / 约束文件）
+
+- 发现并修复打包版 `奥德赛0.0.exe` 编译 ESP-IDF 工程的三大问题：
+  1. **中文用户名路径（刘天凯）导致 GCC 链接器乱码** — CMake 调用 `xtensa-esp32s3-elf-gcc.exe` 时，路径 `C:\Users\刘天凯\...` 中的中文字符被错误编码，`ld.exe` 找不到 `crt0.o`、`-lgcc`、`-lc` 等运行时文件。
+     - 修复：`runtime/src/paths.ts` 中 `resolveShortHardboardRoot()` 改用 `C:\vibeide-hw\hardboard`（无中文）作为 junction 目标，替代原来的 `%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard`。
+  2. **Python venv pyvenv.cfg 绑定旧机器路径** — `idf5.4_py3.12_env/pyvenv.cfg` 中 `home` 写死为 `C:\Users\HP\...`，导致 Python 启动失败返回 exit 103。
+     - 修复：`runtime/src/hardboard/env.ts` 中 `resolvePython()` 优先使用系统 `python`，跳过失效的 venv Python。
+  3. **缺少 `espidf.constraints.v5.4.txt`** — `idf.py` 在 `IDF_TOOLS_PATH` 下找不到约束文件。
+     - 修复：创建空约束文件 `runtime/hardboard/esptools/idf-tools/espidf.constraints.v5.4.txt`。
+  4. **嵌式 Python (embed) 的 `.pth` 文件禁用 PYTHONPATH** — Python embed 发行版的 `python312._pth` 阻止 `idf.py` 自动发现 `python_version_checker`。
+     - 修复：`env.ts` 中 `buildIdfEnv()` 设置 `PYTHONPATH=tools/`（嵌式 Python 移除了 .pth 后生效）。
+  5. **便携 Python 恢复** — 重新下载 embed Python 3.12.9，安装 ESP-IDF 核心依赖（click、PyYAML、esptool、pyelftools 等 56 个包），作为系统 Python 不可用时的回退。
+- 重新打包验证：`npm --prefix electron run pack:win` 通过，exe version `0.1.0`。
+
 ## 2026-07-11 — D:\vibeide DeepSeek API 配置、重建打包与 exe 验证
 
 - 确认 `apikey.txt` 已配置 DeepSeek API key（密钥内容写入手记，不写日志）。

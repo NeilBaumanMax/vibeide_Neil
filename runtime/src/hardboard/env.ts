@@ -61,16 +61,30 @@ export function resolveIdfPy(idfPath: string): string {
 
 export function resolvePython(version = DEFAULT_IDF_VERSION): string | null {
   const envPath = resolveIdfPythonEnvPath(version);
+  const bundled = process.platform === 'win32' ? path.join(RUNTIME_DIRS.root, 'python', 'python.exe') : '';
+  const venvPython = envPath ? path.join(envPath, process.platform === 'win32' ? 'Scripts' : 'bin', process.platform === 'win32' ? 'python.exe' : 'python') : '';
   const candidates = [
     process.env.VIBEIDE_PYTHON,
-    envPath ? path.join(envPath, process.platform === 'win32' ? 'Scripts' : 'bin', process.platform === 'win32' ? 'python.exe' : 'python') : '',
-    process.platform === 'win32' ? path.join(RUNTIME_DIRS.root, 'python', 'python.exe') : '',
+    // System Python first — works with PYTHONPATH, no ._pth issues.
     'python',
     'python3',
+    // Bundled embedded Python as fallback (may have ._pth limitations)
+    bundled,
+    // Machine-specific venv as last resort
+    venvPython,
   ].filter(Boolean) as string[];
 
   for (const candidate of candidates) {
     if (candidate.includes(path.sep) && !fs.existsSync(candidate)) continue;
+    if (candidate === 'python' || candidate === 'python3') {
+      // Verify system Python is actually available
+      try {
+        const result = require('child_process').execFileSync(candidate, ['--version'], { encoding: 'utf-8', timeout: 3000 });
+        if (result) return candidate;
+      } catch {
+        continue;
+      }
+    }
     return candidate;
   }
   return null;
@@ -84,6 +98,7 @@ export function buildIdfEnv(idfPath: string, version: string, projectDir?: strin
   const installedToolPaths = discoverInstalledIdfToolPaths(idfToolsPath);
   const espRomElfDir = resolveEspRomElfDir(idfToolsPath);
   const cxxIncludePaths = resolveXtensaCxxIncludePaths(idfToolsPath, projectDir);
+  ensureConstraintsFile(idfToolsPath, version);
   return {
     ...process.env,
     IDF_PATH: idfPath,
@@ -93,6 +108,9 @@ export function buildIdfEnv(idfPath: string, version: string, projectDir?: strin
     IDF_PYTHON_CHECK_CONSTRAINTS: 'no',
     ESP_IDF_VERSION: version,
     VIBEIDE_HARDBOARD_ROOT: RUNTIME_DIRS.hardboard,
+    // Embedded Python (python312._pth) disables auto script-dir in sys.path.
+    // idf.py needs to find python_version_checker.py in its own tools/ dir.
+    ...(process.platform === 'win32' ? { PYTHONPATH: toolsDir } : {}),
     ...(cxxIncludePaths.length > 0 ? {
       CPLUS_INCLUDE_PATH: mergePathList(cxxIncludePaths, process.env.CPLUS_INCLUDE_PATH),
     } : {}),
@@ -159,6 +177,13 @@ function resolveIdfPythonEnvPath(version: string): string | null {
     if (fs.existsSync(python)) return candidate;
   }
   return null;
+}
+
+function ensureConstraintsFile(idfToolsPath: string, version: string): void {
+  const file = path.join(idfToolsPath, `espidf.constraints.v${version.split('.').slice(0, 2).join('.')}.txt`);
+  if (!fs.existsSync(file)) {
+    try { fs.writeFileSync(file, '', 'utf-8'); } catch { /* best-effort */ }
+  }
 }
 
 function discoverInstalledIdfToolPaths(idfToolsPath: string): string[] {
