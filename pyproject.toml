@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "coddecat"
-version = "0.1.0"
+version = "0.4.0.7161"
 description = "Local ecommerce crawler agent scaffold with gateway, runtime, workplaces and WebUI placeholders."
 readme = "README.md"
 requires-python = ">=3.11"

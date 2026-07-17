@@ -1,6 +1,7 @@
 appId: com.vibeide.app
-productName: 奥德赛0.0
-artifactName: "${productName}-${version}-${os}-${arch}.${ext}"
+productName: 奥德赛0.4.0.7161
+buildVersion: 0.4.0.7161
+artifactName: "${productName}-${os}-${arch}.${ext}"
 
 directories:
   output: dist-package

@@ -3,7 +3,8 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const electronRoot = path.resolve(__dirname, '..');
-const exePath = path.join(electronRoot, 'dist-package', 'win-unpacked', '奥德赛0.0.exe');
+const versionInfo = JSON.parse(fs.readFileSync(path.join(electronRoot, '..', 'config', 'version.json'), 'utf-8'));
+const exePath = path.join(electronRoot, 'dist-package', 'win-unpacked', `${versionInfo.productName}.exe`);
 const builder = path.join(electronRoot, 'node_modules', 'electron-builder', 'cli.js');
 const stamp = path.join(electronRoot, 'scripts', 'stamp_win_exe_version.cjs');
 

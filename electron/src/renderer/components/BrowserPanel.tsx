@@ -26,7 +26,7 @@ interface Props {
 }
 
 type PanelMode = 'workbench' | 'repo' | 'monitor' | 'tasks' | 'editor';
-const UI_BUILD_LABEL = 'Runtime UI v2 · 2026-06-29 19:05';
+const UI_BUILD_LABEL = '奥德赛0.4.0.7161';
 
 interface SerialSample {
   x: number;

@@ -2,6 +2,16 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-17 — 产品和发布版本统一为 0.4.0.7161
+
+- 产品命名规则确定为“奥德赛 + 版本号”，当前正式产品名为 `奥德赛0.4.0.7161`。
+- Windows `FileVersion` / `ProductVersion` / electron-builder `buildVersion` 使用四段版本 `0.4.0.7161`。
+- npm 受 SemVer 语法限制，Electron、Runtime、Agent 的 package/lock 文件使用等价映射 `0.4.0-7161`。
+- 新增 `config/version.json` 作为打包和 PE stamp 的单一版本清单，并增加 `npm --prefix electron run verify:version` 一致性检查。
+- 历史 Windows v0.1.0 测试报告和 Runtime UI v2 记录不改写，继续作为历史事实保留。
+- Runtime/Electron typecheck、主进程/Renderer build 和 `npm.cmd --prefix electron run pack:win` 均通过。
+- 已生成 `electron/dist-package/win-unpacked/奥德赛0.4.0.7161.exe`，PE 元数据中的产品名、文件版本、产品版本和原始文件名均已验证。
+
 ## 2026-07-17 — GitHub 真相源切换到 vibeide_Neil
 
 - 当前 GitHub 切换为 `https://github.com/NeilBaumanMax/vibeide_Neil.git`。

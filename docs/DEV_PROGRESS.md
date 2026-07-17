@@ -6,7 +6,7 @@
 
 ## 当前版本
 
-奥德赛0.0 / Windows 0.1 包已生成，当前 Electron package 版本 `0.1.0`
+奥德赛0.4.0.7161；当前发布版本 `0.4.0.7161`，npm/lock 文件使用 `0.4.0-7161`
 
 ---
 
@@ -14,7 +14,7 @@
 
 - [x] GitHub 仓库 `https://github.com/NeilBaumanMax/vibeide_Neil.git` 已作为当前接力源码仓库接入本机
 - [x] 已同步源码到 Windows `C:\vibeide` 和 `E:\vibeide`，排除依赖、构建产物、运行态和密钥
-- [x] README 已重写为奥德赛0.0 当前 Electron + Runtime + Agent 主线，`vibeide` 保留为仓库和内部工程代号
+- [x] README 已重写为奥德赛0.4.0.7161 当前 Electron + Runtime + Agent 主线，`vibeide` 保留为仓库和内部工程代号
 - [x] 新文档体系已建立：INDEX / ARCHITECTURE / DEVELOPMENT / GITHUB_SYNC / REFACTOR_PLAN / SECURITY / HANDOFF
 - [x] Claude CLI 已接入软件级持续会话上下文，最近轮次持久化到 `runtime/claude-session/`
 - [x] Claude CLI 启动增加 `--continue` 续接策略，并用 prompt 注入作为兜底
@@ -24,7 +24,7 @@
 - [x] 新增 Claude 软件会话记忆烟测：`cd electron && npm run verify:session`
 - [x] Windows `E:\vibeide` 已同步到 0.1 接力版本；`E:\vibeide-0.1-win-unpacked` 已通过 exe 版本、编译和烧录验证
 - [x] 应用图标已新增像素风 `electron/assets/icon.svg/png/ico`
-- [x] 打包规则已改为奥德赛0.0 productName/icon，并停止把真实 `apikey.txt` 打进安装包
+- [x] 产品名、Windows PE 版本和 npm SemVer 已统一映射到奥德赛0.4.0.7161，并停止把真实 `apikey.txt` 打进安装包
 - [x] API Key 路径收敛到 `resources/apikey.txt`（与应用同目录），移除 `%APPDATA%` 持久化，删包即删 key
 - [x] runtime/electron/agent package 命名已从 `@coffecat/*` 迁移到 `@vibeide/*`
 - [x] Electron 33 + Vite 6 + React 18
@@ -59,7 +59,7 @@
 - [x] `agent/skills/espidf_hardboard.md` 已补齐 docsDir/projectsDir、排除 build、先读 `main/CMakeLists.txt` 的文件定位规则
 - [x] Runtime task / pid / eventbus / heartbeat / hardboard build-flash events 已接入任务管理器
 - [x] 编辑器页支持多文件标签，仓库页支持导入和移除文件夹
-- [ ] `hardboard:serial` 在 Windows 0.1 包中能打开端口但未抓到应用层输出，需要后续修复 reset/open 时序
+- [ ] `hardboard:serial` 在历史 Windows v0.1.0 包中能打开端口但未抓到应用层输出，需要后续修复 reset/open 时序
 
 ---
 

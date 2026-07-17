@@ -2,7 +2,7 @@
 
 ## 目标
 
-把奥德赛0.0 重构为硬件 vibecoding 专用 IDE：
+把奥德赛0.4.0.7161 重构为硬件 vibecoding 专用 IDE：
 
 - 左侧 Agent 负责写 ESP-IDF 代码、解释步骤、调用工具、处理编译/烧录错误。
 - 右侧 BrowserView 保留，用于打开乐鑫文档、GitHub、工作台文件和调试页面。
@@ -39,7 +39,7 @@ runtime/hardboard/
 5. 选择串口，例如 Windows 下当前实测 ESP32-S3 为 `COM7`。
 6. 执行 `idf.py -p COM7 flash`。
 
-奥德赛0.0 对应工具：
+奥德赛0.4.0.7161 对应工具：
 
 ```text
 hardboard.env_status
@@ -184,7 +184,7 @@ find <project> -path '*/build' -prune -o -type f -print
 - `PATH`：自动追加 Python venv、ESP-IDF tools、已安装工具链 bin 目录。
 - `CPLUS_INCLUDE_PATH`：自动追加当前 target 对应的 Xtensa GCC C++ multilib include，例如 `xtensa-esp-elf/include/c++/14.2.0/xtensa-esp-elf/esp32s3/no-rtti`。
 
-Windows 打包配置包含 `runtime/hardboard`，但排除 ESP-IDF 自带 `examples/**`，避免 NSIS/7zip 处理 Unix 脚本路径时报错。奥德赛0.0 自己的 `runtime/hardboard/example/**` 保留。
+Windows 打包配置包含 `runtime/hardboard`，但排除 ESP-IDF 自带 `examples/**`，避免 NSIS/7zip 处理 Unix 脚本路径时报错。奥德赛0.4.0.7161 自己的 `runtime/hardboard/example/**` 保留。
 
 ## Agent 开发规则
 

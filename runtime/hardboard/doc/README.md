@@ -1,6 +1,6 @@
-# 奥德赛0.0 Hardboard Vibecoding Agent Guide
+# 奥德赛0.4.0.7161 Hardboard Vibecoding Agent Guide
 
-奥德赛0.0 当前定位为 ESP-IDF 硬件 vibecoding IDE。Agent 写代码、调用 ESP-IDF、解释错误；右侧 BrowserView 用于文档、网页、工作台文件和调试页面。仓库和内部工程代号仍为 `vibeide`。
+奥德赛0.4.0.7161 当前定位为 ESP-IDF 硬件 vibecoding IDE。Agent 写代码、调用 ESP-IDF、解释错误；右侧 BrowserView 用于文档、网页、工作台文件和调试页面。仓库和内部工程代号仍为 `vibeide`。
 
 ## 目录
 
@@ -63,7 +63,7 @@ Windows `C:\vibeide` 下已完成：
 - `npm --prefix runtime run smoke:hardboard` 通过，输出 `hardboard build smoke ok`。
 - `hardboard.idf_flash` 对 `COM3` 烧录 hello_world 成功。
 - `hardboard.serial_capture` 用于 SSH/Agent 下非交互抓取串口日志，替代需要 TTY 的 `idf.py monitor`。
-- 打包产物正式名使用 `奥德赛0.0`。
+- 打包产物正式名使用 `奥德赛0.4.0.7161`。
 - 打包版 `hardboard:build hardboard\projects\wifi_connect_fmai` 已验证 compact JSON 输出正常，`bits/c++config.h` 问题已通过 runtime C++ include 注入修复。
 - 打包版 `hardboard:flash hardboard\projects\wifi_connect_fmai COM3` 已验证写入和 hash verified 成功。
 - 打包版 `hardboard:serial COM3 8 115200` 已验证能抓到连续 `sin:<number>` 数据，可用于 IDE 串口监视器曲线测试。
