@@ -24,7 +24,7 @@ export async function tryHandleQuickTask(task: string, view: BrowserSurface): Pr
     return {
       handled: true,
       label: '本地问答',
-      message: '我是奥德赛0.4.0.7161，运行在 Electron 里的本地采集助手。你可以直接叫我打开网页、搜索内容，或者生成并打开一个本地页面。',
+      message: '我是奥德赛0.4.0-7171，运行在 Electron 里的本地采集助手。你可以直接叫我打开网页、搜索内容，或者生成并打开一个本地页面。',
     };
   }
 

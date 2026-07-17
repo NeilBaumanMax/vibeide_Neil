@@ -1,6 +1,6 @@
 {
   "name": "@vibeide/agent",
-  "version": "0.4.0-7161",
+  "version": "0.4.0-7171",
   "private": true,
   "dependencies": {
     "@anthropic-ai/claude-code": "^2.1.167"

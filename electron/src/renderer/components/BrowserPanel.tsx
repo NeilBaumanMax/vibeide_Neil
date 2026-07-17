@@ -26,7 +26,7 @@ interface Props {
 }
 
 type PanelMode = 'workbench' | 'repo' | 'monitor' | 'tasks' | 'editor';
-const UI_BUILD_LABEL = '奥德赛0.4.0.7161';
+const UI_BUILD_LABEL = '奥德赛0.4.0-7171';
 
 interface SerialSample {
   x: number;
@@ -398,7 +398,6 @@ export default function BrowserPanel({
   return (
     <div className="browser-panel nes-container is-rounded">
       <div className="workbench-mode-tabs nes-container is-dark">
-        <button type="button" className={`nes-btn${mode === 'workbench' ? ' is-primary' : ''}`} onClick={() => setMode('workbench')}>工作台</button>
         <button type="button" className={`nes-btn${mode === 'repo' ? ' is-primary' : ''}`} onClick={() => setMode('repo')}>仓库</button>
         <button type="button" className={`nes-btn${mode === 'monitor' ? ' is-primary' : ''}`} onClick={() => setMode('monitor')}>监视器</button>
         <button type="button" className={`nes-btn${mode === 'tasks' ? ' is-primary' : ''}`} onClick={() => setMode('tasks')}>任务管理器</button>

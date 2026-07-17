@@ -1,8 +1,8 @@
-# 奥德赛0.4.0.7161
+# 奥德赛0.4.0-7171
 
-`奥德赛0.4.0.7161` 是一个面向硬件 vibecoding 的本地桌面 IDE 原型。它把 Electron 内置浏览器、Claude Code Agent、Runtime MCP 工具、ESP-IDF hardboard 工具链和可复用录制工作流放在同一个桌面应用里，用来完成 ESP32/ESP32-S3 工程编写、编译、烧录、串口监视、文档查看和网页辅助检索。
+`奥德赛0.4.0-7171` 是一个面向硬件 vibecoding 的本地桌面 IDE 原型。它把 Electron 内置浏览器、Claude Code Agent、Runtime MCP 工具、ESP-IDF hardboard 工具链和可复用录制工作流放在同一个桌面应用里，用来完成 ESP32/ESP32-S3 工程编写、编译、烧录、串口监视、文档查看和网页辅助检索。
 
-当前 GitHub 仓库和内部 npm 包名仍沿用 `vibeide`，作为工程代号和迁移兼容名；用户可见正式产品名统一为 `奥德赛0.4.0.7161`。
+当前 GitHub 仓库和内部 npm 包名仍沿用 `vibeide`，作为工程代号和迁移兼容名；用户可见正式产品名统一为 `奥德赛0.4.0-7171`。
 
 当前主线不是旧的纯 Python scaffold，而是：
 
@@ -14,7 +14,7 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
 - 主开发分支：`main`
-- 当前发布版本：`0.4.0.7161`（npm/lock 文件使用 SemVer 映射 `0.4.0-7161`）
+- 当前发布版本：`0.4.0-7171`（Windows PE 四段版本映射为 `0.4.0.7171`）
 - Windows 源码目录：`C:\vibeide`、`E:\vibeide`
 - 上一版 Windows v0.1.0 unpacked 包：`E:\vibeide-0.1-win-unpacked`（历史验证对象）
 - 本机开发目录：`/home/howtion/桌面/hardvibecoding/vibeide`
@@ -22,7 +22,7 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 
 ## 能力边界
 
-- Electron 桌面窗口提供聊天区、任务进度、右侧工作台、内置浏览器页和硬件 Build/Flash 入口。
+- Electron 桌面窗口提供聊天区、任务进度、仓库、串口监视、任务管理和代码编辑入口；浏览器工作台前端入口当前隐藏，相关后端能力暂时保留。
 - Worker 负责快捷任务、搜索预处理、任务上下文构造和 Agent 生命周期。
 - Agent 负责推理和任务执行规划，但所有浏览器操作必须通过 MCP 工具完成。
 - Runtime 通过 CDP 连接 Electron Chromium，提供 `browser.*`、`storage.*` 和 `hardboard.*` MCP tools。

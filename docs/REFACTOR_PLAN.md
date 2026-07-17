@@ -10,7 +10,7 @@
 
 目标：
 
-- README 改成奥德赛0.4.0.7161 当前真实主线。
+- README 改成奥德赛0.4.0-7171 当前真实主线。
 - 新建统一 docs 体系。
 - 排除敏感信息、依赖、构建产物、运行态。
 - 把 GitHub 作为源码真相源。
@@ -26,7 +26,7 @@
 
 状态：
 
-- 用户可见正式名：奥德赛0.4.0.7161。
+- 用户可见正式名：奥德赛0.4.0-7171。
 - GitHub 仓库和内部工程代号：`vibeide`。
 - Electron package/runtime/agent npm 包名仍为 `@vibeide/*`，这是当前兼容策略。
 - 旧 `coffecat/coddecat` 只应出现在历史记录、legacy 测试或迁移说明中。
@@ -40,7 +40,7 @@
 验收：
 
 - `grep -R "coffecat\\|coddecat" README.md docs electron runtime agent package*.json pyproject.toml` 只剩兼容说明或迁移注释。
-- Electron 启动后 UI 显示 `奥德赛0.4.0.7161`。
+- Electron 启动后 UI 显示 `奥德赛0.4.0-7171`。
 
 ## 阶段 2：旧 Python scaffold 决策
 

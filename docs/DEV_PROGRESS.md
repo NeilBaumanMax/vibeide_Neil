@@ -6,7 +6,7 @@
 
 ## 当前版本
 
-奥德赛0.4.0.7161；当前发布版本 `0.4.0.7161`，npm/lock 文件使用 `0.4.0-7161`
+奥德赛0.4.0-7171；当前发布版本 `0.4.0-7171`，Windows PE 四段版本映射为 `0.4.0.7171`
 
 ---
 
@@ -14,7 +14,7 @@
 
 - [x] GitHub 仓库 `https://github.com/NeilBaumanMax/vibeide_Neil.git` 已作为当前接力源码仓库接入本机
 - [x] 已同步源码到 Windows `C:\vibeide` 和 `E:\vibeide`，排除依赖、构建产物、运行态和密钥
-- [x] README 已重写为奥德赛0.4.0.7161 当前 Electron + Runtime + Agent 主线，`vibeide` 保留为仓库和内部工程代号
+- [x] README 已重写为奥德赛0.4.0-7171 当前 Electron + Runtime + Agent 主线，`vibeide` 保留为仓库和内部工程代号
 - [x] 新文档体系已建立：INDEX / ARCHITECTURE / DEVELOPMENT / GITHUB_SYNC / REFACTOR_PLAN / SECURITY / HANDOFF
 - [x] Claude CLI 已接入软件级持续会话上下文，最近轮次持久化到 `runtime/claude-session/`
 - [x] Claude CLI 启动增加 `--continue` 续接策略，并用 prompt 注入作为兜底
@@ -24,7 +24,8 @@
 - [x] 新增 Claude 软件会话记忆烟测：`cd electron && npm run verify:session`
 - [x] Windows `E:\vibeide` 已同步到 0.1 接力版本；`E:\vibeide-0.1-win-unpacked` 已通过 exe 版本、编译和烧录验证
 - [x] 应用图标已新增像素风 `electron/assets/icon.svg/png/ico`
-- [x] 产品名、Windows PE 版本和 npm SemVer 已统一映射到奥德赛0.4.0.7161，并停止把真实 `apikey.txt` 打进安装包
+- [x] 产品名、Windows PE 版本和 npm SemVer 已统一映射到奥德赛0.4.0-7171，并停止把真实 `apikey.txt` 打进安装包
+- [x] 右侧“工作台”前端入口已隐藏，早期浏览器工作台 React/IPC/WebContentsView 后端链路暂时保留
 - [x] API Key 路径收敛到 `resources/apikey.txt`（与应用同目录），移除 `%APPDATA%` 持久化，删包即删 key
 - [x] runtime/electron/agent package 命名已从 `@coffecat/*` 迁移到 `@vibeide/*`
 - [x] Electron 33 + Vite 6 + React 18
@@ -68,11 +69,11 @@
 ```text
 Electron Window
 ├── Agent 对话与任务输出
-├── 工作台：浏览器工作台、URL、HTML 运行、浏览器 tab
 ├── 仓库：默认分组 + 可导入/移除文件夹
 ├── 监视器：串口监视器
 ├── 任务管理器：runtime task、pid、build/flash、eventbus
-└── 编辑器：源码/Markdown 多文件标签
+├── 编辑器：源码/Markdown 多文件标签
+└── 工作台后端：浏览器、录制和 WebContentsView 链路保留，前端入口隐藏
 ```
 
 ```text

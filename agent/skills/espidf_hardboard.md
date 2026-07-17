@@ -81,5 +81,5 @@
 - Windows `C:\vibeide` 下 ESP-IDF 5.4.3 可用。
 - `runtime/hardboard/projects/hello_world_esp32s3` 已完成 set-target/build。
 - ESP32-S3 板子在 `COM3` 烧录成功。
-- 打包产物正式名使用 `奥德赛0.4.0.7161`，目录仍是 `win-unpacked`。
+- 打包产物正式名使用 `奥德赛0.4.0-7171`，目录仍是 `win-unpacked`。
 - 打包版 runtime 已验证 compact JSON 输出不会溢出 Agent；`hardboard\projects\wifi_connect_fmai` 的打包版 build/flash/serial 均已通过，串口能抓到连续 `sin:<number>` 数据。

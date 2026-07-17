@@ -1,6 +1,6 @@
 appId: com.vibeide.app
-productName: 奥德赛0.4.0.7161
-buildVersion: 0.4.0.7161
+productName: 奥德赛0.4.0-7171
+buildVersion: 0.4.0.7171
 artifactName: "${productName}-${os}-${arch}.${ext}"
 
 directories:

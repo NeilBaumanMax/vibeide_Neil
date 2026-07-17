@@ -60,7 +60,7 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     backgroundColor: '#1a1b26',
-    title: '奥德赛0.4.0.7161',
+    title: '奥德赛0.4.0-7171',
     icon: path.join(getResourcesDir(), 'electron', 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'index.js'),

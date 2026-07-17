@@ -1,24 +1,24 @@
-# 奥德赛0.4.0.7161 接力开发文档
+# 奥德赛0.4.0-7171 接力开发文档
 
 > 本文是下一次 Codex 接力的第一入口。敏感账号密码不写在本文，见本机私有文件 `.local-secrets/HANDOFF_PRIVATE.md`，该目录已被 `.gitignore` 排除。
 
 ## 当前事实
 
 - 当前日期：2026-07-17。
-- 正式产品名：奥德赛0.4.0.7161。
+- 正式产品名：奥德赛0.4.0-7171。
 - 内部工程代号：`vibeide`。
-- 当前本机工作目录：`D:\vibeide`（Windows 实机）。
+- 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`，接管时远端 `main` 位于 `63820a3`。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
 
-- 当前发布版本：`0.4.0.7161`；npm/lock 文件使用 SemVer 映射 `0.4.0-7161`。
+- 当前发布版本：`0.4.0-7171`；Windows PE 四段版本映射为 `0.4.0.7171`。
 - 上一版 Windows exe PE 版本已验证（历史 v0.1.0）：
   - `FileVersion=0.1.0`
   - `ProductVersion=0.1.0`
-- 本机源码目录：`D:\vibeide`
-- 当前本地打包 exe：`electron\dist-package\win-unpacked\奥德赛0.4.0.7161.exe`
+- 本机源码目录：`E:\Agent\vibeide\vibeide`
+- 目标打包 exe：`electron\dist-package\win-unpacked\奥德赛0.4.0-7171.exe`
 - 产线 API key：`resources\apikey.txt`（DeepSeek，与应用同目录，删包即删 key）
 - 仓库 remote：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
 - SSH key：`~/.ssh/id_ed25519`，已配置 `git config core.sshCommand` 绕过中文路径编码问题
@@ -37,13 +37,15 @@
   - 缺少 `espidf.constraints` → 运行时自动生成
   - 便携 Python 3.12.9 + ESP-IDF 56 依赖包已装好
 
-已通过（当前工作区，2026-07-17）：
+已通过（上一发布版本 0.4.0.7161，2026-07-17）：
 
 - `npm.cmd --prefix electron run verify:version`
 - Runtime / Electron typecheck 与 build
 - `npm.cmd --prefix electron run pack:win`
 - `奥德赛0.4.0.7161.exe` PE 元数据：`ProductName=奥德赛0.4.0.7161`、`FileVersion=0.4.0.7161`、`ProductVersion=0.4.0.7161`
 - 本轮尚未重新执行 exe 启动和 ESP32-S3 实机闭环，详见 `docs/WINDOWS_0_4_0_7161_TEST_REPORT.md`
+
+当前 `0.4.0-7171` 正在 `electron_fix_neil` 分支施工，版本一致性、编译和打包结果以本轮完成后的验证记录为准。
 
 已通过（历史 E 盘验证）：
 
@@ -62,8 +64,8 @@
 
 ## 当前 UI 状态
 
-- 顶部页签：工作台、仓库、监视器、任务管理器、编辑器。
-- 工作台：已复原为浏览器工作台。
+- 顶部可见页签：仓库、监视器、任务管理器、编辑器。
+- 工作台：前端入口已隐藏；React 内部逻辑、IPC、`WebContentsView` 和主进程后端暂时保留，避免贸然删除早期链路。
 - 监视器：已复原为串口监视器。
 - 任务管理器：合并了编译/烧录控制、进度、runtime 事件、任务/进程日志。
 - 编辑器：用于代码和 Markdown 阅读/编辑，支持多文件标签、切换、保存、关闭。
@@ -116,7 +118,7 @@ npm --prefix electron run typecheck
 npm --prefix electron run build:main
 npm --prefix electron run build:renderer
 npm --prefix electron run pack:win
-npm --prefix electron run stamp:win -- "dist-package/win-unpacked/奥德赛0.4.0.7161.exe"
+npm --prefix electron run stamp:win -- "dist-package/win-unpacked/奥德赛0.4.0-7171.exe"
 ```
 
 如果改了 Agent session 或 hardboard context：
@@ -182,6 +184,6 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 1. 修复 `hardboard:serial` 的 reset/open 时序和 UI 状态呈现。
 2. 给任务管理器补一条 Windows packaged runtime smoke，覆盖 build/flash/serial 三个入口。
 3. 清理旧文档中仍作为历史记录出现的 `0.3.0`、`Runtime UI v2`、`howtio` 描述，保留时必须标明”历史记录”。
-4. 发布 `0.4.0.7161` Windows 包后，新建对应版本报告；`docs/WINDOWS_0_1_TEST_REPORT.md` 继续保留为历史实测。
+4. 发布 `0.4.0-7171` Windows 包后，新建对应版本报告；旧版本报告继续保留为历史实测。
 5. 在 ESP-IDF 真实编译测试通过后，补全 `WINDOWS_0_1_TEST_REPORT.md` 的中文路径修复验证项。
 6. 考虑把便携 Python 打包到 `resources/runtime/python/` 作为 ESP-IDF 编译的默认 Python（当前优先系统 Python）。
