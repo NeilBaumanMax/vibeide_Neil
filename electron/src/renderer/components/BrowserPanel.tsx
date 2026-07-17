@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import WorkspacePanel from './WorkspacePanel';
-import type { BrowserTab, HardboardDevice, HardboardRuntimeState, RecordingSummary, RuntimeEvent, WorkbenchItem, WorkbenchOverview } from '../types';
+import type { BrowserTab, HardboardDevice, HardboardRuntimeState, RecordingSummary, RuntimeEvent, WorkbenchOverview } from '../types';
 
 interface Props {
   url: string;
@@ -26,6 +26,7 @@ interface Props {
 }
 
 type PanelMode = 'workbench' | 'repo' | 'monitor' | 'tasks' | 'editor';
+type RuntimeCard = 'live' | 'full' | 'events';
 const UI_BUILD_LABEL = '奥德赛0.4.0-7171';
 
 interface SerialSample {
@@ -39,6 +40,78 @@ interface EditorTab {
   text: string;
   message: string;
   dirty: boolean;
+}
+
+interface ProjectOption {
+  value: string;
+}
+
+interface TaskHistoryItem {
+  taskId: string;
+  kind: 'hardboard.build' | 'hardboard.flash';
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  projectDir: string;
+  port: string;
+  startedAt: number;
+  endedAt: number | null;
+  exitCode: number | null;
+}
+
+interface TaskLogFocus {
+  taskId: string;
+  kind: TaskHistoryItem['kind'];
+  status: TaskHistoryItem['status'];
+}
+
+function taskHistoryFromEvents(events: RuntimeEvent[]): TaskHistoryItem[] {
+  const tasks = new Map<string, TaskHistoryItem>();
+  for (const event of events) {
+    const payloadTask = event.payload?.task;
+    if (!payloadTask || typeof payloadTask !== 'object') continue;
+    const task = payloadTask as Record<string, unknown>;
+    const kind = task.kind;
+    if (kind !== 'hardboard.build' && kind !== 'hardboard.flash') continue;
+    const taskId = typeof task.taskId === 'string' ? task.taskId : event.taskId;
+    if (!taskId) continue;
+    const status = task.status;
+    const normalizedStatus = status === 'running' || status === 'completed' || status === 'failed' || status === 'cancelled'
+      ? status
+      : 'pending';
+    tasks.set(taskId, {
+      taskId,
+      kind,
+      status: normalizedStatus,
+      projectDir: typeof task.projectDir === 'string' ? task.projectDir : event.projectDir || '',
+      port: typeof task.port === 'string' ? task.port : '',
+      startedAt: typeof task.startedAt === 'number' ? task.startedAt : event.time,
+      endedAt: typeof task.endedAt === 'number' ? task.endedAt : null,
+      exitCode: typeof task.exitCode === 'number' ? task.exitCode : null,
+    });
+  }
+  return [...tasks.values()]
+    .sort((a, b) => (b.endedAt || b.startedAt) - (a.endedAt || a.startedAt));
+}
+
+function relativeProjectPath(value: string): string {
+  const normalized = value.replace(/\\/g, '/');
+  const match = normalized.match(/(?:^|\/)hardboard\/projects\/([^/]+)|(?:^|\/)projects\/([^/]+)/i);
+  const name = match?.[1] || match?.[2];
+  return name ? `hardboard/projects/${name}` : value || 'unknown';
+}
+
+function taskStatusLabel(status: TaskHistoryItem['status']): string {
+  if (status === 'completed') return '成功';
+  if (status === 'failed') return '失败';
+  if (status === 'running') return '运行中';
+  if (status === 'cancelled') return '已取消';
+  return '等待';
+}
+
+function taskDuration(task: TaskHistoryItem): string {
+  const end = task.endedAt || (task.status === 'running' ? Date.now() : task.startedAt);
+  const milliseconds = Math.max(0, end - task.startedAt);
+  if (milliseconds < 1000) return `${milliseconds}ms`;
+  return `${(milliseconds / 1000).toFixed(1)}s`;
 }
 
 function isPlaceholderTab(tab: BrowserTab, totalTabs: number): boolean {
@@ -97,14 +170,6 @@ function eventText(event: RuntimeEvent): string {
   return `[${event.seq}] ${event.kind}${progress}${port}${file}${exitCode}${event.pid ? ` pid=${event.pid}` : ''}${event.toolName ? ` ${event.toolName}` : ''}${message}`;
 }
 
-function fileExtRank(item: WorkbenchItem): number {
-  if (/CMakeLists\.txt$/i.test(item.name)) return 0;
-  if (/sdkconfig/i.test(item.name)) return 1;
-  if (/\.(c|cpp|h|hpp|S)$/i.test(item.name)) return 2;
-  if (/\.(bin|elf)$/i.test(item.name)) return 3;
-  return 9;
-}
-
 export default function BrowserPanel({
   url,
   onNavigate,
@@ -143,16 +208,18 @@ export default function BrowserPanel({
   const [runtimeEvents, setRuntimeEvents] = useState<RuntimeEvent[]>([]);
   const [runtimeSeq, setRuntimeSeq] = useState(0);
   const [projectDir, setProjectDir] = useState('');
-  const [selectedSourcePath, setSelectedSourcePath] = useState('');
-  const [selectedCmakePath, setSelectedCmakePath] = useState('');
-  const [selectedConfigPath, setSelectedConfigPath] = useState('');
-  const [selectedArtifactPath, setSelectedArtifactPath] = useState('');
-  const [sourcePreview, setSourcePreview] = useState('');
   const [runtimeMessage, setRuntimeMessage] = useState('');
+  const [runtimeCard, setRuntimeCard] = useState<RuntimeCard | null>(null);
+  const [taskLogFocus, setTaskLogFocus] = useState<TaskLogFocus | null>(null);
+  const [liveLogClearedSeq, setLiveLogClearedSeq] = useState(0);
+  const [fullLogClearedSeq, setFullLogClearedSeq] = useState(0);
+  const [eventCardsClearedSeq, setEventCardsClearedSeq] = useState(0);
+  const [taskHistoryClearedSeq, setTaskHistoryClearedSeq] = useState(0);
   const [editorTabs, setEditorTabs] = useState<EditorTab[]>([]);
   const [activeEditorFile, setActiveEditorFile] = useState('');
   const browserStageRef = useRef<HTMLDivElement | null>(null);
   const serialBottomRef = useRef<HTMLDivElement | null>(null);
+  const focusedLogLineRef = useRef<HTMLDivElement | null>(null);
 
   const visibleTabs = useMemo(
     () => tabs.filter((tab) => !isPlaceholderTab(tab, tabs.length)),
@@ -160,18 +227,33 @@ export default function BrowserPanel({
   );
   const activeTab = visibleTabs.find((tab) => tab.active) ?? null;
   const selectedTab = visibleTabs.find((tab) => tab.id === selectedTabId) ?? activeTab ?? null;
-  const repositoryItems = useMemo(() => workbench?.sections.flatMap((section) => section.items) || [], [workbench]);
-  const hardwareItems = useMemo(
-    () => repositoryItems
-      .filter((item) => item.category === 'hardware' || item.category === 'reference')
-      .sort((a, b) => fileExtRank(a) - fileExtRank(b) || a.name.localeCompare(b.name, 'zh-CN')),
-    [repositoryItems]
+  const projectOptions = useMemo<ProjectOption[]>(() => {
+    return (workbench?.hardboardProjects || [])
+      .map((name) => ({ value: `hardboard/projects/${name}` }));
+  }, [workbench]);
+  const availableRuntimeEvents = runtimeEvents.length ? runtimeEvents : runtimeState?.recent || [];
+  const visibleRuntimeEvents = useMemo(() => availableRuntimeEvents.slice(-500), [availableRuntimeEvents]);
+  const liveLogEvents = useMemo(
+    () => visibleRuntimeEvents.filter((event) => event.seq > liveLogClearedSeq),
+    [liveLogClearedSeq, visibleRuntimeEvents]
   );
-  const cmakeFiles = hardwareItems.filter((item) => /CMakeLists\.txt$/i.test(item.name));
-  const configFiles = hardwareItems.filter((item) => /sdkconfig/i.test(item.name));
-  const sourceFiles = hardwareItems.filter((item) => /\.(c|cpp|h|hpp|S)$/i.test(item.name));
-  const artifactFiles = hardwareItems.filter((item) => /\.(bin|elf)$/i.test(item.name));
-  const runtimeLogLines = useMemo(() => runtimeEvents.slice(-80).map(eventText), [runtimeEvents]);
+  const fullLogEvents = useMemo(
+    () => visibleRuntimeEvents.filter((event) => event.seq > fullLogClearedSeq || event.taskId === taskLogFocus?.taskId),
+    [fullLogClearedSeq, taskLogFocus, visibleRuntimeEvents]
+  );
+  const eventCardEvents = useMemo(
+    () => visibleRuntimeEvents.filter((event) => event.seq > eventCardsClearedSeq),
+    [eventCardsClearedSeq, visibleRuntimeEvents]
+  );
+  const runtimeLogLines = useMemo(() => liveLogEvents.map(eventText), [liveLogEvents]);
+  const focusedLogEventIndex = useMemo(
+    () => taskLogFocus ? fullLogEvents.findIndex((event) => event.taskId === taskLogFocus.taskId) : -1,
+    [fullLogEvents, taskLogFocus]
+  );
+  const taskHistory = useMemo(
+    () => taskHistoryFromEvents(availableRuntimeEvents.filter((event) => event.seq > taskHistoryClearedSeq)),
+    [availableRuntimeEvents, taskHistoryClearedSeq]
+  );
   const activeEditorTab = useMemo(
     () => editorTabs.find((tab) => tab.path === activeEditorFile) || editorTabs[0] || null,
     [activeEditorFile, editorTabs]
@@ -240,13 +322,7 @@ export default function BrowserPanel({
       if (!result || cancelled) return;
       setRuntimeState(result.state);
       setRuntimeSeq(result.state.lastSeq);
-      setRuntimeEvents((current) => [...current, ...result.events].slice(-80));
-      if (!projectDir && result.state.activeProjectDir) {
-        setProjectDir(result.state.activeProjectDir);
-      }
-      if (!selectedSourcePath && result.state.files[0]) {
-        setSelectedSourcePath(result.state.files[0].path);
-      }
+      setRuntimeEvents((current) => [...current, ...result.events].slice(-500));
     };
     void poll();
     const timer = window.setInterval(() => void poll(), 1000);
@@ -254,28 +330,25 @@ export default function BrowserPanel({
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [projectDir, runtimeSeq, selectedSourcePath]);
+  }, [projectDir, runtimeSeq]);
 
   useEffect(() => {
-    if (!selectedCmakePath && cmakeFiles[0]) setSelectedCmakePath(cmakeFiles[0].path);
-    if (!selectedConfigPath && configFiles[0]) setSelectedConfigPath(configFiles[0].path);
-    if (!selectedSourcePath && sourceFiles[0]) setSelectedSourcePath(sourceFiles[0].path);
-    if (!selectedArtifactPath && artifactFiles[0]) setSelectedArtifactPath(artifactFiles[0].path);
-  }, [artifactFiles, cmakeFiles, configFiles, selectedArtifactPath, selectedCmakePath, selectedConfigPath, selectedSourcePath, sourceFiles]);
-
-  useEffect(() => {
-    if (!selectedSourcePath) {
-      setSourcePreview('');
-      return;
+    if (!projectDir && projectOptions[0]) {
+      setProjectDir(projectOptions[0].value);
     }
-    window.electronAPI?.readHardboardSourceFile?.(selectedSourcePath).then((result) => {
-      setSourcePreview(result?.ok ? result.text || '' : result?.error || '读取文件失败');
-    });
-  }, [selectedSourcePath]);
+  }, [projectDir, projectOptions]);
 
   useEffect(() => {
     serialBottomRef.current?.scrollIntoView({ block: 'end' });
   }, [serialText]);
+
+  useEffect(() => {
+    if (runtimeCard !== 'full' || !taskLogFocus) return;
+    const frame = window.requestAnimationFrame(() => {
+      focusedLogLineRef.current?.scrollIntoView({ block: 'center' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [runtimeCard, taskLogFocus]);
 
   const handleNavigate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -316,9 +389,6 @@ export default function BrowserPanel({
   const handleManualBuild = async () => {
     const result = await window.electronAPI?.startHardboardBuild?.({
       projectDir: projectDir.trim() || undefined,
-      cmakeFile: selectedCmakePath || undefined,
-      configFile: selectedConfigPath || undefined,
-      sourceFile: selectedSourcePath || undefined,
     });
     setRuntimeMessage(result?.ok ? `Build 已启动，launcher pid=${result.pid ?? 'unknown'}` : result?.error || 'Build 启动失败');
   };
@@ -327,8 +397,6 @@ export default function BrowserPanel({
     const result = await window.electronAPI?.startHardboardFlash?.({
       projectDir: projectDir.trim() || undefined,
       port: selectedDevicePort.trim() || serialPort.trim(),
-      artifactFile: selectedArtifactPath || undefined,
-      configFile: selectedConfigPath || undefined,
     });
     setRuntimeMessage(result?.ok ? `Flash 已启动，launcher pid=${result.pid ?? 'unknown'}` : result?.error || 'Flash 启动失败');
   };
@@ -394,6 +462,32 @@ export default function BrowserPanel({
   };
 
   const progressValue = runtimeState?.progress ?? 0;
+  const runtimeBusy = runtimeState?.status === 'running';
+  const selectedPort = selectedDevicePort || serialPort;
+  const hasSelectedProject = projectOptions.some((project) => project.value === projectDir);
+  const toggleRuntimeCard = (card: RuntimeCard) => {
+    setTaskLogFocus(null);
+    setRuntimeCard((current) => current === card ? null : card);
+  };
+
+  const showTaskLog = (task: TaskHistoryItem) => {
+    setTaskLogFocus({ taskId: task.taskId, kind: task.kind, status: task.status });
+    setRuntimeCard('full');
+  };
+
+  const clearRuntimeCard = () => {
+    const latestSeq = visibleRuntimeEvents.at(-1)?.seq ?? runtimeSeq;
+    if (runtimeCard === 'live') setLiveLogClearedSeq(latestSeq);
+    if (runtimeCard === 'full') {
+      setFullLogClearedSeq(latestSeq);
+      setTaskLogFocus(null);
+    }
+    if (runtimeCard === 'events') setEventCardsClearedSeq(latestSeq);
+  };
+
+  const clearTaskHistory = () => {
+    setTaskHistoryClearedSeq(visibleRuntimeEvents.at(-1)?.seq ?? runtimeSeq);
+  };
 
   return (
     <div className="browser-panel nes-container is-rounded">
@@ -535,72 +629,118 @@ export default function BrowserPanel({
               <span>{runtimeState ? `${runtimeState.phase} / ${runtimeState.status}` : 'eventbus idle'}</span>
             </div>
             <div className="compile-control-grid">
-              <div className="compile-control-row nes-container is-rounded">
+              <div className="compile-control-row compile-control-row--build nes-container is-rounded">
                 <strong>Build</strong>
-                <input className="nes-input" value={projectDir} onChange={(e) => setProjectDir(e.target.value)} placeholder={runtimeState?.activeProjectDir || 'ESP-IDF project dir'} />
-                <select className="nes-select" value={selectedCmakePath} onChange={(e) => setSelectedCmakePath(e.target.value)}>
-                  <option value="">CMake</option>
-                  {cmakeFiles.map((file) => <option key={file.path} value={file.path}>{file.detail || file.name}</option>)}
+                <span className="compile-row-prompt">编译工程</span>
+                <select className="nes-select project-select" value={projectDir} onChange={(e) => setProjectDir(e.target.value)}>
+                  <option value="">请选择 hardboard 工程</option>
+                  {projectOptions.map((project) => (
+                    <option key={project.value} value={project.value}>{project.value}</option>
+                  ))}
                 </select>
-                <select className="nes-select" value={selectedConfigPath} onChange={(e) => setSelectedConfigPath(e.target.value)}>
-                  <option value="">配置</option>
-                  {configFiles.map((file) => <option key={file.path} value={file.path}>{file.detail || file.name}</option>)}
-                </select>
-                <select className="nes-select" value={selectedSourcePath} onChange={(e) => setSelectedSourcePath(e.target.value)}>
-                  <option value="">源码</option>
-                  {sourceFiles.map((file) => <option key={file.path} value={file.path}>{file.detail || file.name}</option>)}
-                </select>
-                <button className="nes-btn is-warning" type="button" onClick={handleManualBuild}>编译</button>
-                <div className="runtime-progress compile-row-progress"><span style={{ width: `${Math.max(0, Math.min(100, progressValue))}%` }} /></div>
+                <button className="nes-btn is-warning" type="button" onClick={handleManualBuild} disabled={!hasSelectedProject || runtimeBusy}>编译</button>
+                <span className="compile-action-status">
+                  {!hasSelectedProject ? '请先选择工作工程' : runtimeState?.phase === 'build' ? `${runtimeState.status} · ${progressValue}%` : '等待编译'}
+                </span>
+                <div className="runtime-progress compile-row-progress"><span style={{ width: `${runtimeState?.phase === 'build' ? Math.max(0, Math.min(100, progressValue)) : 0}%` }} /></div>
               </div>
-              <div className="compile-control-row nes-container is-rounded">
+              <div className="compile-control-row compile-control-row--flash nes-container is-rounded">
                 <strong>Flash</strong>
-                <input className="nes-input" value={projectDir} onChange={(e) => setProjectDir(e.target.value)} placeholder="flash project dir" />
-                <select className="nes-select" value={selectedArtifactPath} onChange={(e) => setSelectedArtifactPath(e.target.value)}>
-                  <option value="">烧录产物</option>
-                  {artifactFiles.map((file) => <option key={file.path} value={file.path}>{file.detail || file.name}</option>)}
-                </select>
-                <select className="nes-select" value={selectedConfigPath} onChange={(e) => setSelectedConfigPath(e.target.value)}>
-                  <option value="">烧录配置</option>
-                  {configFiles.map((file) => <option key={file.path} value={file.path}>{file.detail || file.name}</option>)}
-                </select>
-                <select className="nes-select" value={selectedDevicePort || serialPort} onChange={(e) => { setSelectedDevicePort(e.target.value); setSerialPort(e.target.value); }}>
+                <button className="nes-btn" type="button" onClick={onRefreshHardboardDevices}>刷新设备</button>
+                <select className="nes-select" value={selectedPort} onChange={(e) => { setSelectedDevicePort(e.target.value); setSerialPort(e.target.value); }}>
                   <option value="">串口</option>
                   {hardboardDevices.map((device) => <option key={device.port} value={device.port}>{device.port} · {device.label}</option>)}
                 </select>
-                <button className="nes-btn is-error" type="button" onClick={handleManualFlash}>烧录</button>
+                <button className="nes-btn is-error" type="button" onClick={handleManualFlash} disabled={!hasSelectedProject || !selectedPort || runtimeBusy}>烧录</button>
+                <span className="compile-action-status">
+                  {!hasSelectedProject ? '请先选择工作工程' : !selectedPort ? '请选择串口' : runtimeState?.phase === 'flash' ? `${runtimeState.status} · ${progressValue}%` : '等待烧录'}
+                </span>
                 <div className="runtime-progress compile-row-progress"><span style={{ width: `${runtimeState?.phase === 'flash' ? Math.max(0, Math.min(100, progressValue)) : 0}%` }} /></div>
               </div>
             </div>
-            <div className="workbench-code-area">
-              <pre className="runtime-source-preview">{sourcePreview || '选择 C / CMake / sdkconfig 文件后，这里显示当前待编译/烧录代码。'}</pre>
-              <pre className="runtime-live-log">{runtimeLogLines.slice(-24).join('\n') || '等待 runtime eventbus 消息...'}</pre>
+          </div>
+          <div className="task-manager-diagnostics">
+            <div className="diagnostic-toolbar nes-container is-rounded">
+              <button className={`nes-btn${runtimeCard === 'live' ? ' is-primary' : ''}`} type="button" onClick={() => toggleRuntimeCard('live')}>实时日志</button>
+              <button className={`nes-btn${runtimeCard === 'full' ? ' is-primary' : ''}`} type="button" onClick={() => toggleRuntimeCard('full')}>完整日志</button>
+              <button className={`nes-btn${runtimeCard === 'events' ? ' is-primary' : ''}`} type="button" onClick={() => toggleRuntimeCard('events')}>事件卡片</button>
+              <span>诊断信息按需查看</span>
             </div>
-          </div>
-          <div className="task-manager-summary nes-container is-rounded">
-            <div><strong>PID</strong><span>{runtimeState?.activePid ?? 'none'}</span></div>
-            <div><strong>Task</strong><span>{runtimeState?.activeTaskId ?? 'none'}</span></div>
-            <div><strong>Tool</strong><span>{runtimeState?.activeToolName ?? 'none'}</span></div>
-            <div><strong>Port</strong><span>{runtimeState?.currentPort ?? (selectedDevicePort || serialPort || 'none')}</span></div>
-            <div><strong>Project</strong><span>{runtimeState?.activeProjectDir ?? (projectDir || 'none')}</span></div>
-            <div><strong>Current</strong><span>{runtimeState?.currentFile ?? 'none'}</span></div>
-          </div>
-          <div className="task-manager-body">
-            <pre className="task-manager-log">
-              {runtimeLogLines.join('\n') || '暂无 runtime eventbus 消息'}
-            </pre>
-            <div className="task-manager-events">
-              {(runtimeEvents.length ? runtimeEvents : runtimeState?.recent || []).slice(-80).reverse().map((event) => (
-                <div key={`${event.seq}-${event.id}`} className={`task-event-card task-event-card--${event.kind.includes('stderr') || event.kind.includes('failed') ? 'error' : event.kind.includes('progress') ? 'progress' : 'normal'}`}>
-                  <div className="task-event-card-head">
-                    <strong>{event.kind}</strong>
-                    <span>#{event.seq}</span>
+            {runtimeCard ? (
+              <section className="diagnostic-card nes-container is-rounded">
+                <header>
+                  <strong>
+                    {runtimeCard === 'live' ? 'Runtime 实时日志' : runtimeCard === 'full' ? '完整 EventBus 日志' : 'Runtime 事件卡片'}
+                    {runtimeCard === 'full' && taskLogFocus ? ` · 已定位 ${taskLogFocus.kind === 'hardboard.build' ? 'Build' : 'Flash'} · ${taskStatusLabel(taskLogFocus.status)}` : ''}
+                  </strong>
+                  <div className="diagnostic-card-actions">
+                    <button className="nes-btn is-warning" type="button" onClick={clearRuntimeCard}>清除</button>
+                    <button className="nes-btn is-error" type="button" onClick={() => setRuntimeCard(null)}>关闭</button>
                   </div>
-                  <p>{eventText(event)}</p>
-                  <code>{event.taskId || 'no-task'}</code>
+                </header>
+                {runtimeCard === 'live' ? (
+                  <pre className="runtime-live-log">{runtimeLogLines.slice(-40).join('\n') || '等待 runtime eventbus 消息...'}</pre>
+                ) : null}
+                {runtimeCard === 'full' ? (
+                  <div className="task-manager-log">
+                    {fullLogEvents.length ? fullLogEvents.map((event, index) => {
+                      const focused = taskLogFocus?.taskId === event.taskId;
+                      return (
+                        <div
+                          key={`${event.seq}-${event.id}`}
+                          ref={focused && index === focusedLogEventIndex ? focusedLogLineRef : undefined}
+                          className={`task-log-line${focused ? ` task-log-line--focused task-log-line--${taskLogFocus?.status}` : ''}`}
+                        >
+                          {eventText(event)}
+                        </div>
+                      );
+                    }) : <div className="task-log-empty">暂无 runtime eventbus 消息</div>}
+                  </div>
+                ) : null}
+                {runtimeCard === 'events' ? (
+                  <div className="task-manager-events">
+                    {eventCardEvents.length ? eventCardEvents.slice(-80).reverse().map((event) => (
+                      <div key={`${event.seq}-${event.id}`} className={`task-event-card task-event-card--${event.kind.includes('stderr') || event.kind.includes('failed') ? 'error' : event.kind.includes('progress') ? 'progress' : 'normal'}`}>
+                        <div className="task-event-card-head">
+                          <strong>{event.kind}</strong>
+                          <span>#{event.seq}</span>
+                        </div>
+                        <p>{eventText(event)}</p>
+                        <code>{event.taskId || 'no-task'}</code>
+                      </div>
+                    )) : <div className="diagnostic-empty">暂无 Runtime 事件卡片，等待新事件...</div>}
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
+            <section className="task-history-panel nes-container is-rounded">
+              <header className="task-history-header">
+                <strong>最近任务与结果</strong>
+                <div className="task-history-header-actions">
+                  <span>{taskHistory.length ? `${taskHistory.length} 条 Build / Flash 记录` : '等待任务'}</span>
+                  <button className="nes-btn is-warning" type="button" onClick={clearTaskHistory}>清除</button>
                 </div>
-              ))}
-            </div>
+              </header>
+              <div className="task-history-table">
+                <div className="task-history-table-head">
+                  <span>状态</span><span>操作</span><span>工程</span><span>端口</span><span>开始时间</span><span>耗时</span><span>退出码</span><span>日志</span>
+                </div>
+                {taskHistory.length ? taskHistory.map((task) => (
+                  <div key={task.taskId} className={`task-history-row task-history-row--${task.status}`}>
+                    <span><i className={`task-status-badge task-status-badge--${task.status}`}>{taskStatusLabel(task.status)}</i></span>
+                    <strong>{task.kind === 'hardboard.build' ? 'Build' : 'Flash'}</strong>
+                    <code title={task.projectDir}>{relativeProjectPath(task.projectDir)}</code>
+                    <span>{task.port || '—'}</span>
+                    <span>{new Date(task.startedAt).toLocaleTimeString('zh-CN', { hour12: false })}</span>
+                    <span>{taskDuration(task)}</span>
+                    <span>{task.exitCode ?? (task.status === 'failed' ? 'error' : '—')}</span>
+                    <button className="nes-btn" type="button" onClick={() => showTaskLog(task)}>查看</button>
+                  </div>
+                )) : (
+                  <div className="task-history-empty">暂无编译或烧录记录。选择工程后执行 Build / Flash，结果会显示在这里。</div>
+                )}
+              </div>
+            </section>
           </div>
           <div className={`runtime-message${runtimeState?.lastError ? ' runtime-message--error' : ''}`}>
             {runtimeState?.lastError || runtimeMessage || '任务管理器正在订阅 runtime/hardboard/events'}

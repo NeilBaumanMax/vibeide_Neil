@@ -4,6 +4,20 @@ import BrowserPanel from './components/BrowserPanel';
 import TaskProgress from './components/TaskProgress';
 import type { BrowserTab, ChatMessage, HardboardDevice, RecordingSummary, TaskStep, WorkbenchOverview } from './types';
 
+const LEFT_PANEL_WIDTH_KEY = 'vibeide.ui.leftPanelWidth';
+const DEFAULT_LEFT_PANEL_WIDTH = 34;
+
+function clampLeftPanelWidth(value: number): number {
+  return Math.min(52, Math.max(24, value));
+}
+
+function readLeftPanelWidth(): number {
+  const stored = Number(window.localStorage.getItem(LEFT_PANEL_WIDTH_KEY));
+  return Number.isFinite(stored) && stored > 0
+    ? clampLeftPanelWidth(stored)
+    : DEFAULT_LEFT_PANEL_WIDTH;
+}
+
 export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [steps, setSteps] = useState<TaskStep[]>([]);
@@ -15,7 +29,39 @@ export default function App() {
   const [recordings, setRecordings] = useState<RecordingSummary[]>([]);
   const [hardboardDevices, setHardboardDevices] = useState<HardboardDevice[]>([]);
   const [workbench, setWorkbench] = useState<WorkbenchOverview | null>(null);
+  const [leftPanelWidth, setLeftPanelWidth] = useState(readLeftPanelWidth);
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const workbenchSmokeTriggered = useRef(false);
+
+  useEffect(() => {
+    window.localStorage.setItem(LEFT_PANEL_WIDTH_KEY, String(leftPanelWidth));
+  }, [leftPanelWidth]);
+
+  const handleDividerPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (leftPanelCollapsed || window.innerWidth <= 820) return;
+    event.preventDefault();
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const nextWidth = (moveEvent.clientX / window.innerWidth) * 100;
+      setLeftPanelWidth(clampLeftPanelWidth(nextWidth));
+    };
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      document.body.classList.remove('is-resizing-panels');
+    };
+
+    document.body.classList.add('is-resizing-panels');
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  }, [leftPanelCollapsed]);
+
+  const handleDividerKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const delta = event.key === 'ArrowLeft' ? -2 : 2;
+    setLeftPanelWidth((current) => clampLeftPanelWidth(current + delta));
+  }, []);
 
   const refreshWorkbench = useCallback(async () => {
     const [overview, recordingResult] = await Promise.all([
@@ -264,10 +310,38 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="app-body">
-        <div className="left-panel">
-          <ChatPanel messages={messages} onSend={handleSend} />
-          <TaskProgress steps={steps} />
+      <div
+        className={`app-body${leftPanelCollapsed ? ' app-body--left-collapsed' : ''}`}
+        style={{ '--left-panel-width': `${leftPanelWidth}%` } as React.CSSProperties}
+      >
+        {!leftPanelCollapsed ? (
+          <div className="left-panel">
+            <ChatPanel messages={messages} onSend={handleSend} />
+            <TaskProgress steps={steps} />
+          </div>
+        ) : null}
+        <div
+          className="panel-divider"
+          role="separator"
+          aria-label="调整对话区宽度"
+          aria-orientation="vertical"
+          aria-valuemin={24}
+          aria-valuemax={52}
+          aria-valuenow={Math.round(leftPanelWidth)}
+          tabIndex={leftPanelCollapsed ? -1 : 0}
+          onPointerDown={handleDividerPointerDown}
+          onKeyDown={handleDividerKeyDown}
+        >
+          <button
+            className="panel-divider-toggle"
+            type="button"
+            title={leftPanelCollapsed ? '展开对话区' : '收起对话区'}
+            aria-label={leftPanelCollapsed ? '展开对话区' : '收起对话区'}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={() => setLeftPanelCollapsed((current) => !current)}
+          >
+            {leftPanelCollapsed ? '›' : '‹'}
+          </button>
         </div>
         <div className="right-panel">
           <BrowserPanel

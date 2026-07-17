@@ -60,6 +60,12 @@
 - [x] `agent/skills/espidf_hardboard.md` 已补齐 docsDir/projectsDir、排除 build、先读 `main/CMakeLists.txt` 的文件定位规则
 - [x] Runtime task / pid / eventbus / heartbeat / hardboard build-flash events 已接入任务管理器
 - [x] 编辑器页支持多文件标签，仓库页支持导入和移除文件夹
+- [x] Electron 左右栏默认比例调整为 34%，支持拖动、键盘微调、宽度持久化和对话区收起/展开
+- [x] Electron 中文正文、日志、按钮和标签完成可读性与控件尺寸修正，代码/串口/日志统一使用等宽字体
+- [x] 任务管理器改为“先选相对工程，再 Build/Flash”，工程列表来自 `runtime/hardboard/projects`，两行控件、状态和进度统一对齐
+- [x] 任务管理器删除旧文件选择器、源码预览和进程摘要块；实时日志、完整日志、事件卡片改为按需诊断卡片
+- [x] 最近任务结果按 `taskId` 聚合并区分成功/失败颜色，支持滚动、独立清除、查看对应日志和按状态高亮定位
+- [x] 实时日志、完整日志、事件卡片和最近任务结果均支持独立前端清除，不删除后端 EventBus 数据
 - [ ] `hardboard:serial` 在历史 Windows v0.1.0 包中能打开端口但未抓到应用层输出，需要后续修复 reset/open 时序
 
 ---
@@ -71,7 +77,7 @@ Electron Window
 ├── Agent 对话与任务输出
 ├── 仓库：默认分组 + 可导入/移除文件夹
 ├── 监视器：串口监视器
-├── 任务管理器：runtime task、pid、build/flash、eventbus
+├── 任务管理器：相对工程选择、build/flash、状态进度、按需日志和最近任务结果
 ├── 编辑器：源码/Markdown 多文件标签
 └── 工作台后端：浏览器、录制和 WebContentsView 链路保留，前端入口隐藏
 ```

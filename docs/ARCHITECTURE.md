@@ -39,8 +39,8 @@ Electron Chromium / WebContentsView
 - `electron/src/main/browser-view.ts`：右侧 WebContentsView tabs、持久 session、bounds 同步。
 - `electron/src/main/browser-recorder.ts`：Electron 侧录制和回放。
 - `electron/src/main/workbench.ts`：右侧工作台文件、工具、录制、workflow 摘要。
-- `electron/src/renderer/App.tsx`：主 UI 状态。
-- `electron/src/renderer/components/BrowserPanel.tsx`：工作台/浏览页切换、录制控件。
+- `electron/src/renderer/App.tsx`：主 UI 状态，以及左右面板宽度持久化、拖动分隔和对话区收起/展开。
+- `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器、编辑器和保留的浏览器工作台页面；任务管理器负责相对工程选择、Build/Flash 控制、EventBus 诊断卡片和最近任务结果。
 
 ## Worker 层
 

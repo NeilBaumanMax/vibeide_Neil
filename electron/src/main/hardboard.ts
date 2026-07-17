@@ -189,7 +189,17 @@ export function readHardboardSourceFile(targetPath: string): { ok: boolean; path
 
 function resolveSelectedProjectDir(explicitProjectDir: string | undefined, selectedPaths: Array<string | undefined>): string {
   const explicit = explicitProjectDir?.trim();
-  if (explicit) return path.resolve(explicit);
+  if (explicit) {
+    const normalized = path.normalize(explicit);
+    const relativeParts = normalized.split(path.sep).filter(Boolean);
+    const isHardboardProjectReference = !path.isAbsolute(normalized)
+      && relativeParts.length === 3
+      && relativeParts[0].toLowerCase() === 'hardboard'
+      && relativeParts[1].toLowerCase() === 'projects'
+      && relativeParts[2] !== '..';
+    if (isHardboardProjectReference) return normalized;
+    return path.resolve(explicit);
+  }
 
   for (const selectedPath of selectedPaths) {
     if (!selectedPath) continue;

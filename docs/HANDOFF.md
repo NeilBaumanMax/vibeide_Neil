@@ -8,12 +8,14 @@
 - 正式产品名：奥德赛0.4.0-7171。
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
-- 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`，接管时远端 `main` 位于 `63820a3`。
+- 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
+- 当前施工分支：`electron_fix_neil`。版本/隐藏工作台提交为 `76a3683`，本轮 Electron UI 与文档漂移修正继续在该分支归档；按用户要求暂不推送远端。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
 
 - 当前发布版本：`0.4.0-7171`；Windows PE 四段版本映射为 `0.4.0.7171`。
+- `electron_fix_neil` 当前源码已通过 Runtime build、Electron typecheck、main/renderer build、版本一致性和 `git diff --check`；尚未执行本版本 Windows 打包及真实硬件回归。
 - 上一版 Windows exe PE 版本已验证（历史 v0.1.0）：
   - `FileVersion=0.1.0`
   - `ProductVersion=0.1.0`
@@ -67,7 +69,11 @@
 - 顶部可见页签：仓库、监视器、任务管理器、编辑器。
 - 工作台：前端入口已隐藏；React 内部逻辑、IPC、`WebContentsView` 和主进程后端暂时保留，避免贸然删除早期链路。
 - 监视器：已复原为串口监视器。
-- 任务管理器：合并了编译/烧录控制、进度、runtime 事件、任务/进程日志。
+- 主布局：左侧默认 34%，支持拖动、键盘微调、宽度持久化以及收起/展开对话区。
+- 可读性：中文正文改用系统字体，代码和日志使用等宽字体，按钮、下拉框和标签尺寸已与增大的字号同步。
+- 任务管理器：先从 `hardboard/projects/<name>` 相对路径选择工程，再执行对齐的 Build/Flash 控制；旧文件选择器、源码预览和 PID/Task/Tool 摘要块已移除。
+- 任务诊断：实时日志、完整日志、事件卡片按需打开；最近任务结果按 `taskId` 汇总，成功/失败颜色分离，支持滚动和独立清除。
+- 日志定位：点击某条任务的“查看”会在完整日志中自动定位对应 `taskId`，成功段绿色高亮、失败段红色高亮。
 - 编辑器：用于代码和 Markdown 阅读/编辑，支持多文件标签、切换、保存、关闭。
 - 仓库：默认分组不显示施工文档；支持导入文件夹，导入分组支持移除。
 - 运行态导入文件记录在 `runtime/workbench-imports.json`，该文件已被 `.gitignore` 忽略。

@@ -10,6 +10,18 @@
 - Windows PE `FileVersion` / `ProductVersion` / `buildVersion` 使用四段映射 `0.4.0.7171`。
 - Electron、Runtime、Agent 的 package/lock 文件统一使用 `0.4.0-7171`。
 - 旧 `0.4.0.7161` 测试报告和日志继续作为历史事实保留。
+- 主布局由固定约 42% 左栏改为默认 34%；新增可拖动分隔条、键盘左右微调、`localStorage` 宽度持久化和对话区收起/展开。
+- 完成前端可读性修正：中文正文使用系统字体，代码/串口/日志使用等宽字体；正文、按钮和标签字号提升，同时增大按钮、下拉框和工具栏尺寸，修复监视器等页面文字溢出。
+- 主进程工作台概览新增 `hardboardProjects`，直接枚举 `runtime/hardboard/projects`；Renderer 使用 `hardboard/projects/<name>` 相对路径，`resolveSelectedProjectDir` 保留安全相对引用供开发版和 packaged runtime 解析。
+- 任务管理器改为先选工程再执行：Build/Flash 两行统一为六列，对齐操作提示、工程/串口下拉、执行按钮、状态和进度；Flash 支持刷新设备。
+- 移除旧 CMake/config/source/artifact 选择器、源码预览及 PID/Task/Tool/Port/Project/Current 摘要块，避免重复信息和错误操作顺序。
+- 实时日志、完整日志、事件卡片改为按钮触发的诊断卡片；页面下半区新增“最近任务与结果”，按 `taskId` 聚合 Build/Flash 的状态、工程、端口、时间、耗时和退出码。
+- 状态颜色明确分离：成功绿色、失败红色、运行中蓝色、等待黄色、取消灰色；任务结果固定表头并提供纵向滚动，前端事件缓存提高到最近 500 条。
+- 点击任务“查看”会在完整 EventBus 日志中按 `taskId` 定位、自动滚动并高亮对应日志段；失败为红色、成功为绿色。
+- 实时日志、完整日志、事件卡片和最近任务结果均增加独立“清除”按钮；清除只更新前端显示游标，不删除后端 EventBus 文件，新事件继续显示。
+- 本轮漂移修正同步更新 `ARCHITECTURE.md`、`DEV_PROGRESS.md`、`HANDOFF.md`、`RUNTIME_TASK_MANAGER_UI_CONSTRUCTION.md` 和本日志；历史测试报告不改写。
+- 收尾验证通过：`npm.cmd --prefix runtime run build`、Electron `typecheck`、`build:main`、`build:renderer`、`verify:version` 和 `git diff --check`；版本输出为 release `0.4.0.7171`、package `0.4.0-7171`、product `奥德赛0.4.0-7171`。
+- Git：所有改动位于 `electron_fix_neil`，只精确暂存本轮源码和文档，不纳入 `electron/dist*`、runtime events/logs、硬件 build、密钥或其他运行态文件；按用户要求暂不推送远端。
 
 ## 2026-07-17 — 产品和发布版本统一为 0.4.0.7161
 

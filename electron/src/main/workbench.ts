@@ -29,6 +29,7 @@ export interface WorkbenchSection {
 
 export interface WorkbenchOverview {
   generatedAt: number;
+  hardboardProjects: string[];
   sections: WorkbenchSection[];
 }
 
@@ -243,6 +244,10 @@ function enrichWorkflow(item: WorkbenchItem): WorkbenchItem {
 export function getWorkbenchOverview(): WorkbenchOverview {
   return {
     generatedAt: Date.now(),
+    hardboardProjects: listDirectory(getHardboardDir('projects'), { limit: 100 })
+      .filter((item) => item.kind === 'dir')
+      .map((item) => item.name)
+      .sort((a, b) => a.localeCompare(b, 'zh-CN')),
     sections: [
       {
         id: 'agent-generated',

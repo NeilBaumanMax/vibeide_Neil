@@ -50,6 +50,7 @@ export interface WorkbenchSection {
 
 export interface WorkbenchOverview {
   generatedAt: number;
+  hardboardProjects: string[];
   sections: WorkbenchSection[];
 }
 
