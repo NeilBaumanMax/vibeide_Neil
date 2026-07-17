@@ -12,8 +12,8 @@
 
 ## 开工检查
 
-```bash
-cd /home/howtion/桌面/hardvibecoding/vibeide
+```powershell
+cd E:\Agent\vibeide\vibeide
 git branch --show-current
 git status --short
 git remote -v
@@ -62,14 +62,14 @@ bash scripts/start_electron_desktop.sh
 Windows PowerShell：
 
 ```powershell
-cd E:\vibeide
+cd E:\Agent\vibeide\vibeide
 powershell -ExecutionPolicy Bypass -File scripts\start_electron_desktop.ps1
 ```
 
 Windows CMD：
 
 ```cmd
-cd /d E:\vibeide
+cd /d E:\Agent\vibeide\vibeide
 scripts\start_electron_desktop.cmd
 ```
 

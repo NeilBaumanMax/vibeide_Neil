@@ -2,27 +2,25 @@
 
 ## 目标
 
-把 GitHub 仓库 `https://github.com/NeilBaumanMax/vibeide_Neil.git` 作为当前接力源码真相源，避免 Windows C/E 盘目录和本机源码镜像长期分叉。
+把 GitHub 仓库 `https://github.com/NeilBaumanMax/vibeide_Neil.git` 作为远端源码真相源，以 Windows 当前工作区 `E:\Agent\vibeide\vibeide` 为本地施工目录，避免旧迁移镜像继续分叉。
 
 ## 当前拓扑
 
 ```text
-Windows 实机
-  C:\vibeide
-  E:\vibeide
-  E:\vibeide-0.1-win-unpacked
-      ↑↓ SSH / scp
-Linux 本机
-  /home/howtion/桌面/hardvibecoding/vibeide
-      ↑↓ git
+Windows 当前工作区
+  E:\Agent\vibeide\vibeide
+      ↑↓ git（HTTPS）
 GitHub
   https://github.com/NeilBaumanMax/vibeide_Neil.git
 ```
 
+历史迁移曾使用 Linux `/home/howtion/桌面/hardvibecoding/vibeide`、Windows `C:\vibeide`、`E:\vibeide` 和 `E:\vibeide-0.1-win-unpacked`。这些路径只用于理解旧日志和测试报告，不再作为当前开工、启动或打包目录。
+
 ## 已完成
 
 - GitHub SSH 访问已验证。
-- 接管时已确认远端 `main` 与本地基线同为 `63820a3`。
+- 当前本机记录的 `origin/main` 为 `5e6ba3b`；`electron_fix_neil` 本地最新功能提交为 `b428a0e`。
+- `electron_fix_neil` 推送曾因 GitHub HTTPS 连接重置失败，远端分支是否存在必须以之后成功的 `git push -u origin electron_fix_neil` 为准。
 - Windows SSH 已连通。
 - Windows 源码已同步到 `C:\vibeide` 和 `E:\vibeide`。
 - Windows 0.1 unpacked 包已同步到 `E:\vibeide-0.1-win-unpacked`。
@@ -42,25 +40,25 @@ git pull --ff-only origin main
 git status --short
 git add <明确文件>
 git commit -m "docs: refresh vibeide handoff and development docs"
-git push backup main
+git push -u origin <当前分支>
 ```
 
-3. Windows 端改为从 GitHub clone/pull：
+3. 新 Windows 工作区从 GitHub clone/pull：
 
 ```powershell
-cd C:\
+cd E:\Agent\vibeide
 git clone https://github.com/NeilBaumanMax/vibeide_Neil.git vibeide
-cd C:\vibeide
+cd E:\Agent\vibeide\vibeide
 npm --prefix runtime install
 npm --prefix electron install
 npm --prefix agent install
 ```
 
-4. Windows 源码目录当前同时有 `C:\vibeide` 和 `E:\vibeide`。如果要运行/打包，优先使用 E 盘目录；如果要兼容旧脚本，可同步 C 盘目录。
+4. 日常只在 `E:\Agent\vibeide\vibeide` 修改、验证和提交。不要再把旧 C/E 盘镜像当作并行真相源。
 
-## 从 Windows 裸目录重新同步源码
+## 历史：从 Windows 裸目录重新同步源码
 
-仅在 Windows 工作目录有新改动、且尚未进入 GitHub 时使用。当前应优先在 `E:\vibeide` 里直接 `git status` / `git diff`，或从本机用 `git archive` 同步明确文件。
+以下命令只保留为 0.1 阶段的迁移记录，不用于当前 `E:\Agent\vibeide\vibeide` 工作区。当前应直接使用 Git 分支同步。
 
 主源码包：
 

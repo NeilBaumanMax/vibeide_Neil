@@ -9,7 +9,7 @@
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
-- 当前施工分支：`electron_fix_neil`。版本/隐藏工作台提交为 `76a3683`，本轮 Electron UI 与文档漂移修正继续在该分支归档；按用户要求暂不推送远端。
+- 当前施工分支：`electron_fix_neil`。版本/隐藏工作台提交为 `76a3683`，任务管理器 UI 与首轮文档同步提交为 `b428a0e`；远端推送曾因 GitHub HTTPS 连接重置失败，当前仍以本地 Git 日志为准。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
@@ -25,7 +25,7 @@
 - 仓库 remote：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
 - SSH key：`~/.ssh/id_ed25519`，已配置 `git config core.sshCommand` 绕过中文路径编码问题
 
-已通过（本机 D:\vibeide）：
+已通过（当前源码目录 `E:\Agent\vibeide\vibeide`，2026-07-17）：
 
 - `npm --prefix runtime run build` — runtime TypeScript 编译通过
 - `npm --prefix electron run typecheck` — 类型检查通过
@@ -97,8 +97,8 @@ sed -n '1,220p' runtime/hardboard/doc/README.md
 
 ## 开工检查
 
-```bash
-cd /d/vibeide
+```powershell
+cd E:\Agent\vibeide\vibeide
 git status --short
 git branch --show-current
 git remote -v
@@ -137,7 +137,7 @@ npm --prefix electron run verify:hardboard
 ## 打包版 runtime 验证
 
 ```cmd
-cd /d D:\vibeide\electron\dist-package\win-unpacked\resources\runtime
+cd /d E:\Agent\vibeide\vibeide\electron\dist-package\win-unpacked\resources\runtime
 node dist\index.js hardboard:env
 node dist\index.js hardboard:devices
 node dist\index.js hardboard:build hardboard\projects\hello_world_esp32s3
@@ -149,7 +149,7 @@ node dist\index.js hardboard:serial COM7 10 115200
 
 ## 同步策略
 
-当前接力以 `D:\vibeide`（Windows 实机）为编辑主场：
+当前接力以 `E:\Agent\vibeide\vibeide`（Windows 实机）为唯一编辑主场：
 
 1. 本机改代码和文档。
 2. 本机验证（typecheck / build / pack）。

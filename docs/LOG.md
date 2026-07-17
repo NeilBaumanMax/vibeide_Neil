@@ -23,6 +23,14 @@
 - 收尾验证通过：`npm.cmd --prefix runtime run build`、Electron `typecheck`、`build:main`、`build:renderer`、`verify:version` 和 `git diff --check`；版本输出为 release `0.4.0.7171`、package `0.4.0-7171`、product `奥德赛0.4.0-7171`。
 - Git：所有改动位于 `electron_fix_neil`，只精确暂存本轮源码和文档，不纳入 `electron/dist*`、runtime events/logs、硬件 build、密钥或其他运行态文件；按用户要求暂不推送远端。
 
+## 2026-07-17 — 接力路径与架构文档二次漂移修正
+
+- 当前唯一施工目录统一为 `E:\Agent\vibeide\vibeide`，修正 `HANDOFF.md` 和 `DEVELOPMENT.md` 中仍作为当前命令出现的 Linux、`D:\vibeide`、`E:\vibeide` 与 `/d/vibeide` 路径。
+- `GITHUB_SYNC.md` 当前拓扑改为 Windows 当前工作区通过 Git HTTPS 对接 `vibeide_Neil`；旧 Linux、C 盘、旧 E 盘和 0.1 unpacked 目录明确降级为历史迁移记录。
+- `HANDOFF.md` 明确功能提交 `b428a0e` 和 GitHub HTTPS 推送失败状态，不把早期提交 `76a3683` 误写为当前 HEAD。
+- `ARCHITECTURE.md` 补齐 Runtime hardboard/eventbus/process/task/MCP Server 与 Electron hardboard/paths/agent/first-run/tray/session-store，并明确工作台只是前端入口隐藏、内部实现仍保留。
+- 本次只修正文档事实，不改写历史测试报告，不清理旧代码引用；旧配置和孤立文件另行提交。
+
 ## 2026-07-17 — 产品和发布版本统一为 0.4.0.7161
 
 - 产品命名规则确定为“奥德赛 + 版本号”，当前正式产品名为 `奥德赛0.4.0.7161`。

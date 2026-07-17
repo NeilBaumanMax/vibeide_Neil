@@ -39,8 +39,14 @@ Electron Chromium / WebContentsView
 - `electron/src/main/browser-view.ts`：右侧 WebContentsView tabs、持久 session、bounds 同步。
 - `electron/src/main/browser-recorder.ts`：Electron 侧录制和回放。
 - `electron/src/main/workbench.ts`：右侧工作台文件、工具、录制、workflow 摘要。
+- `electron/src/main/hardboard.ts`：硬件设备、串口、Runtime EventBus、Build/Flash 的 IPC 桥接。
+- `electron/src/main/paths.ts`：开发版与 packaged 环境的资源、Runtime、Agent 和 API key 路径解析。
+- `electron/src/main/agent.ts`：Claude Agent 进程、动态 MCP 配置和生命周期管理。
+- `electron/src/main/first-run.ts`：首次运行目录与资源初始化。
+- `electron/src/main/tray.ts`：Windows 系统托盘和窗口显隐。
+- `electron/src/main/worker/session-store.ts`：Claude 会话上下文持久化。
 - `electron/src/renderer/App.tsx`：主 UI 状态，以及左右面板宽度持久化、拖动分隔和对话区收起/展开。
-- `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器、编辑器和保留的浏览器工作台页面；任务管理器负责相对工程选择、Build/Flash 控制、EventBus 诊断卡片和最近任务结果。
+- `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器和编辑器；工作台前端入口隐藏，但组件内部浏览器工作台实现保留。任务管理器负责相对工程选择、Build/Flash 控制、EventBus 诊断卡片和最近任务结果。
 
 ## Worker 层
 
@@ -103,6 +109,20 @@ Electron Chromium / WebContentsView
 - 注册 MCP tools。
 - 执行浏览器动作、截图、提取、录制、回放。
 - 保存 workspace 数据和 workflow 定义。
+- 通过 `hardboard/` 封装 ESP-IDF 环境、工程文件、Build/Flash runner 和输出解析。
+- 通过 `eventbus/` 持久化并消费 Runtime 事件，为 Electron 任务管理器提供状态来源。
+- 通过 `process/` 管理子进程、PID 注册、进程树终止和 stdout/stderr 生命周期。
+- 通过 `task/` 管理 Runtime 任务注册、状态转换和结果摘要。
+
+关键文件：
+
+- `runtime/src/mcp/server.ts`：MCP 服务入口。
+- `runtime/src/mcp/hardboard.tool.ts`：Hardboard MCP tools 注册。
+- `runtime/src/mcp/tool-events.ts`：MCP 工具事件写入 EventBus。
+- `runtime/src/hardboard/runner.ts`：ESP-IDF Build/Flash 进程执行。
+- `runtime/src/eventbus/event-store.ts`：EventBus JSONL 和最近状态持久化。
+- `runtime/src/process/process-runner.ts`：受管子进程生命周期。
+- `runtime/src/task/task-manager.ts`：Runtime 任务状态机。
 
 关键文件：
 
