@@ -18,7 +18,7 @@ async function main() {
   const targets = await get('/json');
   console.log('CDP targets:', targets.map(t => ({id: t.id, url: t.url, title: t.title})));
 
-  // Find the browser page (not coffecat UI)
+  // Find the browser page (not the vibeide renderer UI)
   const page = targets.find(t => t.url.startsWith('http') || t.url.startsWith('https'));
   if (!page) {
     console.log('No browser page found, using first page');

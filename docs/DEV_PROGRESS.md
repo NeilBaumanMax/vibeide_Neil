@@ -68,6 +68,7 @@
 - [x] 实时日志、完整日志、事件卡片和最近任务结果均支持独立前端清除，不删除后端 EventBus 数据
 - [x] 文档路径漂移已修正：当前 Windows 工作区统一为 `E:\Agent\vibeide\vibeide`，旧 Linux、`C:\vibeide`、`D:\vibeide` 和 `E:\vibeide` 路径仅作为历史迁移记录保留
 - [x] `ARCHITECTURE.md` 已补齐 Runtime hardboard/eventbus/process/task/MCP 子系统和 Electron hardboard/paths/agent/first-run/tray/session-store 模块
+- [x] 删除已被 Electron 动态 MCP 配置取代的 `runtime/mcp-config.json`、孤立根 `package-lock.json`，并清理活动脚本中的旧 `coffecat` 名称和绝对路径
 - [ ] `hardboard:serial` 在历史 Windows v0.1.0 包中能打开端口但未抓到应用层输出，需要后续修复 reset/open 时序
 
 ---

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGE_NAME="${COFFECAT_WINDOWS_SMOKE_IMAGE:-coffecat-windows-smoke:local}"
+IMAGE_NAME="${VIBEIDE_WINDOWS_SMOKE_IMAGE:-${COFFECAT_WINDOWS_SMOKE_IMAGE:-vibeide-windows-smoke:local}}"
 MODE="${1:-pack}"
 DOCKER_CMD="${DOCKER_CMD:-docker}"
 

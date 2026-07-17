@@ -14,7 +14,7 @@ runtime/hardboard/esptools/
       install.bat
 ```
 
-当前开发机已发现的 ESP-IDF：
+历史 Linux 开发机曾使用的 ESP-IDF（仅作迁移记录）：
 
 ```text
 /home/howtion/.esp/v5.4.3/esp-idf

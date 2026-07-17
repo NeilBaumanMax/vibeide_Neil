@@ -31,6 +31,16 @@
 - `ARCHITECTURE.md` 补齐 Runtime hardboard/eventbus/process/task/MCP Server 与 Electron hardboard/paths/agent/first-run/tray/session-store，并明确工作台只是前端入口隐藏、内部实现仍保留。
 - 本次只修正文档事实，不改写历史测试报告，不清理旧代码引用；旧配置和孤立文件另行提交。
 
+## 2026-07-17 — 旧配置、绝对路径和 coffecat 活动引用清理
+
+- 删除 `runtime/mcp-config.json`：其中的 `D:\coffecat-windows1.0` 静态配置已经被 `electron/src/main/agent.ts` 的逐任务动态 MCP 配置取代。
+- Runtime `health` 保留 `mcpConfig` 字段但改为 `generated-dynamically-by-electron`，避免继续返回不存在或不可移植的静态路径；同时删除 Electron 中未使用的 `getMcpConfigPath()`。
+- 删除仓库根目录孤立的 `package-lock.json`；根目录没有对应 `package.json`，该空锁文件只残留旧包名 `coffecat`。
+- `electron/bili_run.ts` 截图输出改为从当前工作目录解析 `agent/bilibili_search_result.png`，不再写死旧 Linux 用户目录。
+- `README.md` 的当前分支、Windows 施工目录和启动命令统一为 `electron_fix_neil` 与 `E:\Agent\vibeide\vibeide`；旧目录只保留为历史说明。
+- `build-portable.cmd`、Agent B 站工具、CDP 注释和 Docker smoke 默认镜像改用“奥德赛”或 `vibeide`；旧 `COFFECAT_WINDOWS_SMOKE_IMAGE` 仅作为环境变量兼容回退保留。
+- 验证通过：Runtime build、Electron typecheck/main build、两个 Agent `.mjs` 文件的 `node --check`、Runtime `health` 和 `git diff --check`。当前 PowerShell 环境没有 `bash`，因此未执行 `bash -n scripts/docker_windows_smoke.sh`。
+
 ## 2026-07-17 — 产品和发布版本统一为 0.4.0.7161
 
 - 产品命名规则确定为“奥德赛 + 版本号”，当前正式产品名为 `奥德赛0.4.0.7161`。

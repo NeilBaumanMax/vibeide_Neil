@@ -1,6 +1,7 @@
 // 临时脚本：B站搜索"星芯的美少女"
 import { connectBrowser } from '../runtime/src/browser.js';
 import * as fs from 'fs';
+import * as path from 'path';
 
 async function main() {
   const { browser, page: _page } = await connectBrowser(9230);
@@ -43,7 +44,8 @@ async function main() {
 
   const buf = await targetPage.screenshot({ type: 'png', fullPage: false });
   const b64 = buf.toString('base64');
-  const outPath = '/home/howtion/coffecat/agent/bilibili_search_result.png';
+  const outPath = path.resolve(process.cwd(), 'agent', 'bilibili_search_result.png');
+  fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, Buffer.from(b64, 'base64'));
   console.log('✅ 截图已保存:', outPath, `(${b64.length} 字符)`);
 }

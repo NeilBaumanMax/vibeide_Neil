@@ -30,7 +30,7 @@ export function isDev(): boolean {
 
 let _devProjectRoot: string | null = null;
 
-/** 开发模式下的项目根目录（D:\vibeide-windows1.0） */
+/** 开发模式下根据当前模块位置解析项目根目录，不依赖固定盘符。 */
 function devProjectRoot(): string {
   if (!_devProjectRoot) {
     // __dirname = electron/dist/main/
@@ -99,11 +99,6 @@ export function getClaudeBin(): string {
     'bin',
     'claude.exe',
   );
-}
-
-/** MCP 配置文件路径（动态生成时无需使用） */
-export function getMcpConfigPath(): string {
-  return path.join(getRuntimeDir(), 'mcp-config.json');
 }
 
 /** API Key 文件路径 — 始终在 resources/ 下，与应用同目录 */

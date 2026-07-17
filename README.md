@@ -13,12 +13,12 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 ## 当前状态
 
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
-- 主开发分支：`main`
+- 当前施工分支：`electron_fix_neil`（远端基线分支为 `main`）
 - 当前发布版本：`0.4.0-7171`（Windows PE 四段版本映射为 `0.4.0.7171`）
-- Windows 源码目录：`C:\vibeide`、`E:\vibeide`
+- 当前 Windows 源码目录：`E:\Agent\vibeide\vibeide`
 - 上一版 Windows v0.1.0 unpacked 包：`E:\vibeide-0.1-win-unpacked`（历史验证对象）
-- 本机开发目录：`/home/howtion/桌面/hardvibecoding/vibeide`
-- 当前代码来源：Linux 本机源码已同步到 Windows C/E 盘并备份到 GitHub。
+- 历史 Linux、`C:\vibeide` 和旧 `E:\vibeide` 路径仅用于迁移记录，不再作为当前施工目录。
+- 当前代码来源：Windows 工作区在 `electron_fix_neil` 分支持续施工；GitHub 推送状态以 `git branch -vv` 为准。
 
 ## 能力边界
 
@@ -34,21 +34,21 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 ### Windows
 
 ```powershell
-cd E:\vibeide
+cd E:\Agent\vibeide\vibeide
 powershell -ExecutionPolicy Bypass -File scripts\start_electron_desktop.ps1
 ```
 
 或：
 
 ```cmd
-cd /d E:\vibeide
+cd /d E:\Agent\vibeide\vibeide
 scripts\start_electron_desktop.cmd
 ```
 
 ### Linux / macOS
 
 ```bash
-cd /home/howtion/桌面/hardvibecoding/vibeide
+cd /path/to/vibeide
 bash scripts/start_electron_desktop.sh
 ```
 

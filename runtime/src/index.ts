@@ -46,7 +46,7 @@ async function runCli(): Promise<void> {
       ok: true,
       runtimeDir: RUNTIME_DIRS.root,
       cdpPort,
-      mcpConfig: path.resolve(RUNTIME_DIRS.root, 'mcp-config.json'),
+      mcpConfig: 'generated-dynamically-by-electron',
     };
     console.log(JSON.stringify(payload, null, 2));
     return;
