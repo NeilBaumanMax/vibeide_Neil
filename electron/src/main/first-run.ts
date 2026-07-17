@@ -1,14 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import { app, dialog } from 'electron';
 import { logger } from './worker/logger';
-import { getApiKeyPath, getResourcesDir, getRuntimeDir } from './paths';
+import { getApiKeyPath, getRuntimeDir } from './paths';
 
 /**
  * 首次启动检查 — 确保 App 所需环境就绪。
  *
  * 检查项：
- * 1. API Key 是否存在
+ * 1. API Key 是否存在（resources/apikey.txt）
  * 2. Playwright 浏览器是否存在
  * 3. 必要目录是否已创建
  */
@@ -32,7 +31,7 @@ export function checkStartupStatus(): StartupStatus {
   return { apiKeyReady, playwrightReady, firstRun };
 }
 
-/** 检查 API Key 是否存在，不存在则尝试从 resources 复制 */
+/** 检查 API Key 是否存在 — 直接检查 resources/apikey.txt */
 function checkApiKey(): boolean {
   const keyPath = getApiKeyPath();
   try {
@@ -43,31 +42,9 @@ function checkApiKey(): boolean {
       }
     }
   } catch {
-    // 继续尝试从 resources 复制
+    // ignore
   }
-
-  // 尝试从 resources/ 复制预置的 apikey.txt
-  return tryCopyKeyFromResources(keyPath);
-}
-
-/** 从 resources/ 目录复制预置的 API Key */
-function tryCopyKeyFromResources(destPath: string): boolean {
-  try {
-    const srcPath = getResourcesDir('apikey.txt');
-    if (!fs.existsSync(srcPath)) return false;
-
-    const content = fs.readFileSync(srcPath, 'utf-8').trim();
-    if (!isUsableApiKeyContent(content)) return false;
-
-    const dir = path.dirname(destPath);
-    fs.mkdirSync(dir, { recursive: true });
-    fs.copyFileSync(srcPath, destPath);
-    logger.info('first-run:apikey-copied-from-resources', { src: srcPath, dest: destPath });
-    return true;
-  } catch (err) {
-    logger.warn('first-run:apikey-copy-failed', { error: String(err) });
-    return false;
-  }
+  return false;
 }
 
 function isUsableApiKeyContent(content: string): boolean {

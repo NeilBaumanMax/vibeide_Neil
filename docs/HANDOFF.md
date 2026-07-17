@@ -8,8 +8,8 @@
 - 正式产品名：奥德赛0.0。
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`D:\vibeide`（Windows 实机）。
-- 备份 GitHub：`git@github.com:howtion0/vibeide.git`，`main` 已推到 `3e6d5da`。
-- 旧 GitHub/历史源：`git@github.com:howtio/vibeide.git` 仍可能出现在旧文档或 remote 里，当前接力优先以 `howtion0/vibeide` 的备份结果为准。
+- 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`，接管时远端 `main` 位于 `63820a3`。
+- 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
 
@@ -19,8 +19,8 @@
   - `ProductVersion=0.1.0`
 - 本机源码目录：`D:\vibeide`
 - 打包 exe 位置：`D:\vibeide\electron\dist-package\win-unpacked\奥德赛0.0.exe`
-- 产线 API key：`%APPDATA%\vibeide\apikey.txt`（DeepSeek）
-- 仓库 remote：`git@github.com:howtion0/vibeide.git`
+- 产线 API key：`resources\apikey.txt`（DeepSeek，与应用同目录，删包即删 key）
+- 仓库 remote：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
 - SSH key：`~/.ssh/id_ed25519`，已配置 `git config core.sshCommand` 绕过中文路径编码问题
 
 已通过（本机 D:\vibeide）：
@@ -138,7 +138,7 @@ node dist\index.js hardboard:serial COM7 10 115200
 1. 本机改代码和文档。
 2. 本机验证（typecheck / build / pack）。
 3. 提交到 Git。
-4. 推送到 `git@github.com:howtion0/vibeide.git`。
+4. 推送到 `https://github.com/NeilBaumanMax/vibeide_Neil.git`。
 5. `git config core.sshCommand` 已配置解决中文路径问题。
 
 不要提交：

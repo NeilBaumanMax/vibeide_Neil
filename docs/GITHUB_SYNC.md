@@ -2,7 +2,7 @@
 
 ## 目标
 
-把 GitHub 备份仓库 `git@github.com:howtion0/vibeide.git` 作为当前接力源码真相源，避免 Windows C/E 盘目录和本机源码镜像长期分叉。
+把 GitHub 仓库 `https://github.com/NeilBaumanMax/vibeide_Neil.git` 作为当前接力源码真相源，避免 Windows C/E 盘目录和本机源码镜像长期分叉。
 
 ## 当前拓扑
 
@@ -16,13 +16,13 @@ Linux 本机
   /home/howtion/桌面/hardvibecoding/vibeide
       ↑↓ git
 GitHub
-  git@github.com:howtion0/vibeide.git
+  https://github.com/NeilBaumanMax/vibeide_Neil.git
 ```
 
 ## 已完成
 
 - GitHub SSH 访问已验证。
-- 本机已推送当前接力结果到 `git@github.com:howtion0/vibeide.git`。
+- 接管时已确认远端 `main` 与本地基线同为 `63820a3`。
 - Windows SSH 已连通。
 - Windows 源码已同步到 `C:\vibeide` 和 `E:\vibeide`。
 - Windows 0.1 unpacked 包已同步到 `E:\vibeide-0.1-win-unpacked`。
@@ -49,7 +49,7 @@ git push backup main
 
 ```powershell
 cd C:\
-git clone git@github.com:howtion0/vibeide.git vibeide
+git clone https://github.com/NeilBaumanMax/vibeide_Neil.git vibeide
 cd C:\vibeide
 npm --prefix runtime install
 npm --prefix electron install

@@ -53,11 +53,9 @@ electron/dist-package/
 
 ## API Key
 
-开发模式下 Electron 主进程从项目根读取：
+API Key 文件始终位于 `resources/apikey.txt`，与应用同目录。
 
-```text
-apikey.txt
-```
+开发模式路径为项目根目录，生产模式路径为打包后的 `resources/` 目录。删除应用目录即删除 key。
 
 该文件只允许本机存在，不提交。建议格式：
 

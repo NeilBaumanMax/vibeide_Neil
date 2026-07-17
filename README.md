@@ -12,7 +12,7 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 
 ## 当前状态
 
-- 当前备份 GitHub：`git@github.com:howtion0/vibeide.git`
+- 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
 - 主开发分支：`main`
 - Windows 源码目录：`C:\vibeide`、`E:\vibeide`
 - Windows 0.1 unpacked 包：`E:\vibeide-0.1-win-unpacked`

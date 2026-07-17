@@ -106,17 +106,12 @@ export function getMcpConfigPath(): string {
   return path.join(getRuntimeDir(), 'mcp-config.json');
 }
 
-/** API Key 文件路径 */
+/** API Key 文件路径 — 始终在 resources/ 下，与应用同目录 */
 export function getApiKeyPath(): string {
   if (isDev()) {
     return path.join(devProjectRoot(), 'apikey.txt');
   }
-  // 使用 app.getPath('userData') 但不要被后续的 setPath 影响
-  // 这里使用固定的 base path
-  const base = app.isReady()
-    ? app.getPath('appData')
-    : process.env.APPDATA || path.join(require('os').homedir(), 'AppData', 'Roaming');
-  return path.join(base, 'vibeide', 'apikey.txt');
+  return path.join(process.resourcesPath, 'apikey.txt');
 }
 
 /** 运行时数据目录（recordings、workflows、logs 等） */

@@ -2,6 +2,23 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-17 — GitHub 真相源切换到 vibeide_Neil
+
+- 当前 GitHub 切换为 `https://github.com/NeilBaumanMax/vibeide_Neil.git`。
+- 切换前已验证新远端 `main` 与本地基线同为 `63820a3`，无需强推或合并无关历史。
+- README、仓库级开发规则、HANDOFF、GITHUB_SYNC、DEVELOPMENT 和 DEV_PROGRESS 已统一更新；旧仓库地址只保留在明确的历史日志和迁移记录中。
+- 未跟踪的本机 `日志.txt` 和运行态文件不纳入同步提交。
+
+## 2026-07-16 — API Key 路径收敛：从 %APPDATA% 迁移到 resources/
+
+- **问题**：用户发现删除解压目录重新解压后，旧 API key 仍然生效，原因是 key 被持久化到 `%APPDATA%\vibeide\apikey.txt`，删除应用目录不会清除它。另外，`resources\apikey.txt` 只作为首次复制源，修改它不会生效。
+- **修复**（`electron/src/main/paths.ts`、`first-run.ts`、`agent.ts`）：
+  - `getApiKeyPath()` 生产模式改为返回 `process.resourcesPath/apikey.txt`（与应用同目录）
+  - 移除 `tryCopyKeyFromResources()` — 不再复制 key 到 `%APPDATA%`
+  - `checkApiKey()` 和 `readDeepSeekApiKey()` 统一只读 `resources/apikey.txt`
+  - 结果：编辑 `resources\apikey.txt` 重启即生效，删除应用目录即删除 key
+- 文档同步：`HANDOFF.md`、`SECURITY.md`、`LOG.md`、`DEV_PROGRESS.md`
+
 ## 2026-07-11 — 修复打包版 exe ESP-IDF 编译三问题（中文路径 / Python venv / 约束文件）
 
 - 发现并修复打包版 `奥德赛0.0.exe` 编译 ESP-IDF 工程的三大问题：

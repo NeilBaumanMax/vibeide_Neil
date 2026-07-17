@@ -7,7 +7,7 @@
 - Node.js 22+
 - npm
 - Python 3.11+
-- Git SSH 可访问 `git@github.com:howtion0/vibeide.git`
+- Git 可访问 `https://github.com/NeilBaumanMax/vibeide_Neil.git`
 - Windows 实机用于最终运行验证
 
 ## 开工检查
