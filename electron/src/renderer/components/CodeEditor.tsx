@@ -7,6 +7,7 @@ loader.config({ monaco });
 interface Props {
   filePath: string;
   value: string;
+  fontSize: number;
   onChange: (value: string) => void;
 }
 
@@ -115,7 +116,7 @@ const configureMonaco: BeforeMount = (instance) => {
   });
 };
 
-export default function CodeEditor({ filePath, value, onChange }: Props) {
+export default function CodeEditor({ filePath, value, fontSize, onChange }: Props) {
   if (!filePath) {
     return <div className="editor-code-empty">从左侧文件资源管理器打开源码、CMake、Markdown 或 Skills 文档。</div>;
   }
@@ -137,8 +138,8 @@ export default function CodeEditor({ filePath, value, onChange }: Props) {
           cursorBlinking: 'smooth',
           fontFamily: 'Consolas, "Noto Sans Mono", monospace',
           fontLigatures: false,
-          fontSize: 13,
-          lineHeight: 21,
+          fontSize,
+          lineHeight: Math.round(fontSize * 1.6),
           minimap: { enabled: true, maxColumn: 100, renderCharacters: false },
           padding: { top: 10, bottom: 10 },
           renderWhitespace: 'selection',

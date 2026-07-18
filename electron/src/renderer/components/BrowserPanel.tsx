@@ -29,6 +29,9 @@ interface Props {
 type PanelMode = 'workbench' | 'repo' | 'monitor' | 'tasks' | 'editor';
 type RuntimeCard = 'live' | 'full' | 'events';
 const UI_BUILD_LABEL = '奥德赛0.4.0-7171';
+const EDITOR_FONT_SIZE_KEY = 'vibeide.editor.fontSize';
+const EDITOR_FONT_SIZE_MIN = 10;
+const EDITOR_FONT_SIZE_MAX = 24;
 
 interface SerialSample {
   x: number;
@@ -49,6 +52,13 @@ interface ExplorerContextMenu {
   item: WorkbenchItem;
   parentPath: string;
   root: boolean;
+}
+
+interface ExplorerDialog {
+  mode: 'create-file' | 'create-dir' | 'rename' | 'delete';
+  item: WorkbenchItem;
+  parentPath: string;
+  value: string;
 }
 
 interface ProjectOption {
@@ -299,6 +309,11 @@ export default function BrowserPanel({
   const [explorerLoadingPaths, setExplorerLoadingPaths] = useState<string[]>([]);
   const [explorerMessage, setExplorerMessage] = useState('');
   const [explorerContextMenu, setExplorerContextMenu] = useState<ExplorerContextMenu | null>(null);
+  const [explorerDialog, setExplorerDialog] = useState<ExplorerDialog | null>(null);
+  const [editorFontSize, setEditorFontSize] = useState(() => {
+    const stored = Number(window.localStorage.getItem(EDITOR_FONT_SIZE_KEY));
+    return Number.isFinite(stored) && stored >= EDITOR_FONT_SIZE_MIN && stored <= EDITOR_FONT_SIZE_MAX ? stored : 13;
+  });
   const browserStageRef = useRef<HTMLDivElement | null>(null);
   const serialBottomRef = useRef<HTMLDivElement | null>(null);
   const focusedLogLineRef = useRef<HTMLDivElement | null>(null);
@@ -364,6 +379,10 @@ export default function BrowserPanel({
   useEffect(() => {
     setInputUrl(url);
   }, [url]);
+
+  useEffect(() => {
+    window.localStorage.setItem(EDITOR_FONT_SIZE_KEY, String(editorFontSize));
+  }, [editorFontSize]);
 
   useEffect(() => {
     if (!explorerContextMenu) return;
@@ -591,65 +610,81 @@ export default function BrowserPanel({
     return candidate;
   };
 
-  const handleCreateExplorerEntry = async (kind: 'file' | 'dir') => {
+  const handleCreateExplorerEntry = (kind: 'file' | 'dir') => {
     const context = explorerContextMenu;
     if (!context) return;
     setExplorerContextMenu(null);
     const parentPath = context.item.kind === 'dir' ? context.item.path : context.parentPath;
-    const name = window.prompt(kind === 'file' ? '请输入新文件名（包含扩展名）' : '请输入新文件夹名', kind === 'file' ? 'untitled.c' : '新建文件夹');
+    setExplorerDialog({
+      mode: kind === 'file' ? 'create-file' : 'create-dir',
+      item: context.item,
+      parentPath,
+      value: kind === 'file' ? 'untitled.c' : '新建文件夹',
+    });
+  };
+
+  const executeCreateExplorerEntry = async (dialog: ExplorerDialog) => {
+    const kind = dialog.mode === 'create-file' ? 'file' : 'dir';
+    const name = dialog.value.trim();
     if (!name) return;
-    const result = await window.electronAPI?.createWorkbenchEntry(parentPath, name, kind);
+    const result = await window.electronAPI?.createWorkbenchEntry(dialog.parentPath, name, kind);
     if (!result?.ok || !result.path) {
       setExplorerMessage(result?.error || '新建失败');
       return;
     }
-    setExplorerExpandedPaths((current) => current.includes(parentPath) ? current : [...current, parentPath]);
-    await loadExplorerDirectory(parentPath);
+    setExplorerExpandedPaths((current) => current.includes(dialog.parentPath) ? current : [...current, dialog.parentPath]);
+    await loadExplorerDirectory(dialog.parentPath);
     onRefreshWorkbench();
     setExplorerMessage(`已新建${kind === 'file' ? '文件' : '文件夹'}: ${result.path}`);
-    if (kind === 'file') void openEditorFile(result.path, name.trim());
+    if (kind === 'file') void openEditorFile(result.path, name);
   };
 
-  const handleRenameExplorerEntry = async () => {
+  const handleRenameExplorerEntry = () => {
     const context = explorerContextMenu;
     if (!context || context.root) return;
     setExplorerContextMenu(null);
-    const nextName = window.prompt('请输入新名称', context.item.name);
-    if (!nextName || nextName.trim() === context.item.name) return;
-    const result = await window.electronAPI?.renameWorkbenchEntry(context.item.path, nextName);
+    setExplorerDialog({ mode: 'rename', item: context.item, parentPath: context.parentPath, value: context.item.name });
+  };
+
+  const executeRenameExplorerEntry = async (dialog: ExplorerDialog) => {
+    const nextName = dialog.value.trim();
+    if (!nextName || nextName === dialog.item.name) return;
+    const result = await window.electronAPI?.renameWorkbenchEntry(dialog.item.path, nextName);
     if (!result?.ok || !result.path) {
       setExplorerMessage(result?.error || '重命名失败');
       return;
     }
-    const oldPath = context.item.path;
+    const oldPath = dialog.item.path;
     const nextPath = result.path;
     setEditorTabs((current) => current.map((tab) => {
       const remapped = remapExplorerPath(tab.path, oldPath, nextPath);
-      return remapped === tab.path ? tab : { ...tab, path: remapped, title: tab.path === oldPath ? nextName.trim() : tab.title, message: `路径已更新: ${remapped}` };
+      return remapped === tab.path ? tab : { ...tab, path: remapped, title: tab.path === oldPath ? nextName : tab.title, message: `路径已更新: ${remapped}` };
     }));
     setActiveEditorFile((current) => remapExplorerPath(current, oldPath, nextPath));
     setExplorerExpandedPaths((current) => current.map((entry) => remapExplorerPath(entry, oldPath, nextPath)));
     setExplorerChildren((current) => Object.fromEntries(Object.entries(current).map(([key, items]) => [
       remapExplorerPath(key, oldPath, nextPath),
-      items.map((item) => ({ ...item, path: remapExplorerPath(item.path, oldPath, nextPath), name: item.path === oldPath ? nextName.trim() : item.name })),
+      items.map((item) => ({ ...item, path: remapExplorerPath(item.path, oldPath, nextPath), name: item.path === oldPath ? nextName : item.name })),
     ])));
-    await loadExplorerDirectory(context.parentPath);
+    await loadExplorerDirectory(dialog.parentPath);
     onRefreshWorkbench();
-    setExplorerMessage(`已重命名为: ${nextName.trim()}`);
+    setExplorerMessage(`已重命名为: ${nextName}`);
   };
 
-  const handleDeleteExplorerEntry = async () => {
+  const handleDeleteExplorerEntry = () => {
     const context = explorerContextMenu;
     if (!context || context.root) return;
     setExplorerContextMenu(null);
-    const label = context.item.kind === 'dir' ? '文件夹及其内容' : '文件';
-    if (!window.confirm(`确定要将${label}“${context.item.name}”移到系统回收站吗？`)) return;
-    const result = await window.electronAPI?.deleteWorkbenchEntry(context.item.path);
+    setExplorerDialog({ mode: 'delete', item: context.item, parentPath: context.parentPath, value: '' });
+  };
+
+  const executeDeleteExplorerEntry = async (dialog: ExplorerDialog) => {
+    const result = await window.electronAPI?.deleteWorkbenchEntry(dialog.item.path);
     if (!result?.ok) {
       setExplorerMessage(result?.error || '删除失败');
       return;
     }
-    const targetPath = context.item.path;
+    const targetPath = dialog.item.path;
     const isTargetOrChild = (candidate: string) => candidate === targetPath || candidate.startsWith(`${targetPath}\\`) || candidate.startsWith(`${targetPath}/`);
     setEditorTabs((current) => {
       const next = current.filter((tab) => !isTargetOrChild(tab.path));
@@ -660,9 +695,18 @@ export default function BrowserPanel({
     setExplorerChildren((current) => Object.fromEntries(Object.entries(current)
       .filter(([key]) => !isTargetOrChild(key))
       .map(([key, items]) => [key, items.filter((item) => !isTargetOrChild(item.path))])));
-    await loadExplorerDirectory(context.parentPath);
+    await loadExplorerDirectory(dialog.parentPath);
     onRefreshWorkbench();
     setExplorerMessage(`已移到系统回收站: ${targetPath}`);
+  };
+
+  const handleConfirmExplorerDialog = async () => {
+    const dialog = explorerDialog;
+    if (!dialog) return;
+    setExplorerDialog(null);
+    if (dialog.mode === 'create-file' || dialog.mode === 'create-dir') await executeCreateExplorerEntry(dialog);
+    else if (dialog.mode === 'rename') await executeRenameExplorerEntry(dialog);
+    else await executeDeleteExplorerEntry(dialog);
   };
 
   const handleContextRefresh = () => {
@@ -1076,19 +1120,59 @@ export default function BrowserPanel({
             >
               {explorerContextMenu.item.kind === 'dir' ? (
                 <>
-                  <button type="button" role="menuitem" onClick={() => void handleCreateExplorerEntry('file')}>新建文件</button>
-                  <button type="button" role="menuitem" onClick={() => void handleCreateExplorerEntry('dir')}>新建文件夹</button>
+                  <button type="button" role="menuitem" onClick={() => handleCreateExplorerEntry('file')}>新建文件</button>
+                  <button type="button" role="menuitem" onClick={() => handleCreateExplorerEntry('dir')}>新建文件夹</button>
                   <span />
                 </>
               ) : null}
-              {!explorerContextMenu.root ? <button type="button" role="menuitem" onClick={() => void handleRenameExplorerEntry()}>重命名</button> : null}
+              {!explorerContextMenu.root ? <button type="button" role="menuitem" onClick={handleRenameExplorerEntry}>重命名</button> : null}
               <button type="button" role="menuitem" onClick={handleContextRefresh}>刷新</button>
               {!explorerContextMenu.root ? (
                 <>
                   <span />
-                  <button className="editor-context-menu-delete" type="button" role="menuitem" onClick={() => void handleDeleteExplorerEntry()}>移到回收站</button>
+                  <button className="editor-context-menu-delete" type="button" role="menuitem" onClick={handleDeleteExplorerEntry}>移到回收站</button>
                 </>
               ) : null}
+            </div>
+          ) : null}
+          {explorerDialog ? (
+            <div className="editor-dialog-backdrop" role="presentation" onMouseDown={() => setExplorerDialog(null)}>
+              <form
+                className="editor-dialog nes-container is-rounded"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleConfirmExplorerDialog();
+                }}
+                onMouseDown={(event) => event.stopPropagation()}
+              >
+                <strong>
+                  {explorerDialog.mode === 'create-file' ? '新建文件' : explorerDialog.mode === 'create-dir' ? '新建文件夹' : explorerDialog.mode === 'rename' ? '重命名' : '移到回收站'}
+                </strong>
+                {explorerDialog.mode === 'delete' ? (
+                  <p>确定要将{explorerDialog.item.kind === 'dir' ? '文件夹及其内容' : '文件'}“{explorerDialog.item.name}”移到系统回收站吗？</p>
+                ) : (
+                  <label>
+                    <span>{explorerDialog.mode === 'rename' ? '新名称' : '名称'}</span>
+                    <input
+                      className="nes-input"
+                      autoFocus
+                      value={explorerDialog.value}
+                      onChange={(event) => setExplorerDialog((current) => current ? { ...current, value: event.target.value } : current)}
+                      onFocus={(event) => event.currentTarget.select()}
+                    />
+                  </label>
+                )}
+                <div className="editor-dialog-actions">
+                  <button className="nes-btn" type="button" onClick={() => setExplorerDialog(null)}>取消</button>
+                  <button
+                    className={`nes-btn ${explorerDialog.mode === 'delete' ? 'is-error' : 'is-primary'}`}
+                    type="submit"
+                    disabled={explorerDialog.mode !== 'delete' && !explorerDialog.value.trim()}
+                  >
+                    {explorerDialog.mode === 'delete' ? '移到回收站' : '确定'}
+                  </button>
+                </div>
+              </form>
             </div>
           ) : null}
           <section className="editor-main">
@@ -1130,9 +1214,19 @@ export default function BrowserPanel({
             <CodeEditor
               filePath={activeEditorTab?.path || ''}
               value={activeEditorTab?.text || ''}
+              fontSize={editorFontSize}
               onChange={handleEditorTextChange}
             />
-            <div className="editor-status">{activeEditorTab?.message || '还没有打开文件。'}</div>
+            <div className="editor-footer">
+              <div className="editor-status">{activeEditorTab?.message || '还没有打开文件。'}</div>
+              <div className="editor-font-controls" aria-label="编辑器字体大小">
+                <span>字体</span>
+                <button type="button" title="减小字体" onClick={() => setEditorFontSize((current) => Math.max(EDITOR_FONT_SIZE_MIN, current - 1))} disabled={editorFontSize <= EDITOR_FONT_SIZE_MIN}>−</button>
+                <strong>{editorFontSize}px</strong>
+                <button type="button" title="增大字体" onClick={() => setEditorFontSize((current) => Math.min(EDITOR_FONT_SIZE_MAX, current + 1))} disabled={editorFontSize >= EDITOR_FONT_SIZE_MAX}>＋</button>
+                <button type="button" title="恢复默认字号" onClick={() => setEditorFontSize(13)}>重置</button>
+              </div>
+            </div>
           </section>
         </div>
       ) : null}
