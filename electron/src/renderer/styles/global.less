@@ -236,6 +236,53 @@ body.is-resizing-panels * {
 .chat-title {
   padding: 10px 12px;
   font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chat-agent-status {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  color: #14532d;
+  background: #dcfce7;
+  border: 2px solid var(--nes-border);
+  font-family: "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1.2;
+}
+
+.chat-agent-status--busy {
+  color: #78350f;
+  background: #fef08a;
+}
+
+.chat-task-strip {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  padding: 6px 9px;
+  color: #dbeafe;
+  background: #172033;
+  border-bottom: 3px solid var(--nes-border);
+  font-size: 10px;
+}
+
+.chat-task-strip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-task-strip em {
+  color: var(--nes-yellow);
+  font-style: normal;
+  white-space: nowrap;
 }
 
 .chat-messages {
@@ -286,22 +333,37 @@ body.is-resizing-panels * {
 }
 
 .chat-input {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   padding: 8px;
   border-top: 4px solid var(--nes-border);
   background: var(--nes-sky);
 }
 
-.chat-input input {
+.chat-input textarea {
   min-width: 0;
-  flex: 1;
+  width: 100%;
+  min-height: 58px;
+  max-height: 150px;
+  resize: vertical;
+  padding: 7px 9px;
+  font-family: "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+  line-height: 1.5;
 }
 
-.chat-input button {
+.chat-input-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.chat-input-actions button {
   flex-shrink: 0;
   font-size: 10px;
-  min-width: 70px;
+  min-width: 72px;
+  min-height: 34px;
+  padding: 5px 8px !important;
 }
 
 .task-progress {
@@ -2223,7 +2285,7 @@ body.is-resizing-panels * {
   font-size: 13px;
 }
 
-.chat-input input,
+.chat-input textarea,
 .chat-input button {
   font-size: 12px;
 }

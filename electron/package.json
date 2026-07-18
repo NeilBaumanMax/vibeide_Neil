@@ -19,7 +19,8 @@
     "verify:version": "node scripts/verify_version.cjs",
     "smoke:workbench": "node scripts/run_workbench_smoke.cjs",
     "verify:session": "node node_modules/electron/cli.js scripts/verify_claude_session.cjs",
-    "verify:hardboard": "node node_modules/electron/cli.js scripts/verify_hardboard_context_rules.cjs"
+    "verify:hardboard": "node node_modules/electron/cli.js scripts/verify_hardboard_context_rules.cjs",
+    "verify:task-queue": "node node_modules/electron/cli.js scripts/verify_agent_task_queue.cjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatPanel from './components/ChatPanel';
 import BrowserPanel from './components/BrowserPanel';
 import TaskProgress from './components/TaskProgress';
-import type { BrowserTab, ChatMessage, HardboardDevice, RecordingSummary, TaskStep, WorkbenchOverview } from './types';
+import type { AgentTaskStatus, BrowserTab, ChatMessage, HardboardDevice, RecordingSummary, TaskStep, TaskSubmitMode, WorkbenchOverview } from './types';
 
 const LEFT_PANEL_WIDTH_KEY = 'vibeide.ui.leftPanelWidth';
 const DEFAULT_LEFT_PANEL_WIDTH = 34;
+const IDLE_TASK_STATUS: AgentTaskStatus = { busy: false, paused: false, activeTaskId: null, activeTask: null, queueLength: 0, guidanceCount: 0 };
 
 function clampLeftPanelWidth(value: number): number {
   return Math.min(52, Math.max(24, value));
@@ -21,6 +22,7 @@ function readLeftPanelWidth(): number {
 export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [steps, setSteps] = useState<TaskStep[]>([]);
+  const [taskStatus, setTaskStatus] = useState<AgentTaskStatus>(IDLE_TASK_STATUS);
   const [browserUrl, setBrowserUrl] = useState('about:blank');
   const [tabs, setTabs] = useState<BrowserTab[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -89,6 +91,7 @@ export default function App() {
           role: 'agent',
           timestamp: msg.timestamp,
           error: msg.error,
+          taskId: msg.taskId,
         }]);
       });
 
@@ -96,15 +99,8 @@ export default function App() {
         setSteps(result.steps);
       });
 
-      window.electronAPI.onTaskComplete((result) => {
-        setMessages(prev => [...prev, {
-          id: crypto.randomUUID(),
-          text: result.code === 0 ? '任务完成' : `任务失败 (code: ${result.code})`,
-          role: 'agent',
-          timestamp: Date.now(),
-          error: result.code !== 0,
-        }]);
-      });
+      window.electronAPI.onTaskStatus((result) => setTaskStatus(result));
+      void window.electronAPI.getTaskStatus().then((result) => setTaskStatus(result));
 
       window.electronAPI.onBrowserTabs((result) => {
         setTabs(result.tabs);
@@ -126,7 +122,7 @@ export default function App() {
     }
   }, [refreshWorkbench]);
 
-  const handleSend = useCallback((text: string) => {
+  const handleSend = useCallback((text: string, mode: TaskSubmitMode = 'auto') => {
     const msg: ChatMessage = {
       id: crypto.randomUUID(),
       text,
@@ -137,7 +133,19 @@ export default function App() {
 
     setSteps([]);
 
-    window.electronAPI?.sendMessage(text);
+    void window.electronAPI?.sendMessage(text, mode).catch((error) => {
+      setMessages(prev => [...prev, {
+        id: crypto.randomUUID(),
+        text: `发送失败: ${error instanceof Error ? error.message : String(error)}`,
+        role: 'agent',
+        timestamp: Date.now(),
+        error: true,
+      }]);
+    });
+  }, []);
+
+  const handleStopTask = useCallback(() => {
+    void window.electronAPI?.stopTask();
   }, []);
 
   const handleNavigate = useCallback((url: string) => {
@@ -316,7 +324,7 @@ export default function App() {
       >
         {!leftPanelCollapsed ? (
           <div className="left-panel">
-            <ChatPanel messages={messages} onSend={handleSend} />
+            <ChatPanel messages={messages} taskStatus={taskStatus} onSend={handleSend} onStop={handleStopTask} />
             <TaskProgress steps={steps} />
           </div>
         ) : null}

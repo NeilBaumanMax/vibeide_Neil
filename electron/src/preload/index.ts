@@ -1,16 +1,20 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  sendMessage: (text: string) => ipcRenderer.invoke('chat:send', text),
-  onMessage: (cb: (msg: { text: string; timestamp: number; error?: boolean }) => void) => {
+  sendMessage: (text: string, mode?: 'auto' | 'guide' | 'queue') => ipcRenderer.invoke('chat:send', text, mode),
+  onMessage: (cb: (msg: { text: string; timestamp: number; error?: boolean; taskId?: string | null }) => void) => {
     ipcRenderer.on('chat:message', (_event, msg) => cb(msg));
   },
-  onTaskComplete: (cb: (result: { code: number | null }) => void) => {
+  onTaskComplete: (cb: (result: { code: number | null; taskId?: string | null }) => void) => {
     ipcRenderer.on('task:complete', (_event, result) => cb(result));
   },
-  onTaskProgress: (cb: (result: { steps: Array<{ id: string; label: string; done: boolean }> }) => void) => {
+  onTaskProgress: (cb: (result: { steps: Array<{ id: string; label: string; done: boolean }>; taskId?: string | null }) => void) => {
     ipcRenderer.on('task:progress', (_event, result) => cb(result));
   },
+  onTaskStatus: (cb: (result: { busy: boolean; paused: boolean; activeTaskId: string | null; activeTask: string | null; queueLength: number; guidanceCount: number }) => void) => {
+    ipcRenderer.on('task:status', (_event, result) => cb(result));
+  },
+  getTaskStatus: () => ipcRenderer.invoke('task:status'),
   pauseTask: () => ipcRenderer.invoke('task:pause'),
   resumeTask: () => ipcRenderer.invoke('task:resume'),
   stopTask: () => ipcRenderer.invoke('task:stop'),

@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { ipcMain, BrowserWindow, dialog } from 'electron';
-import { handleTask, getOrchestrator } from './worker';
+import { getOrchestrator } from './worker';
+import type { TaskSubmitMode } from './worker/orchestrator';
 import { activateTab, closeTab, listTabs, openTabUrl, setBrowserTabsEmitter, setBrowserViewBoundsFromRenderer } from './browser-view';
 import { listBrowserRecordingSummaries, listBrowserRecordings, replayBrowserRecording, replayLatestBrowserRecording, startBrowserRecording, stopBrowserRecording } from './browser-recorder';
 import { createWorkbenchEntry, deleteWorkbenchEntry, getWorkbenchOverview, importWorkbenchFolder, listWorkbenchDirectory, openWorkbenchItem, readWorkbenchFile, removeImportedWorkbenchFolder, renameWorkbenchEntry, writeWorkbenchFile } from './workbench';
@@ -29,10 +30,11 @@ export function startGateway(mainWindow: BrowserWindow): void {
   const orch = getOrchestrator(mainWindow, pushUI);
 
   // 聊天 — 委托 Worker
-  ipcMain.handle('chat:send', async (_event, text: string) => {
-    orch.handleTask(text);
-    return { ok: true };
+  ipcMain.handle('chat:send', async (_event, text: string, mode?: TaskSubmitMode) => {
+    return orch.submitTask(text, mode || 'auto');
   });
+
+  ipcMain.handle('task:status', async () => orch.getTaskStatus());
 
   // 任务控制 — 委托 Worker
   ipcMain.handle('task:pause', async () => {

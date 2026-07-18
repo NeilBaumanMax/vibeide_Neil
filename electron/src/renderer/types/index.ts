@@ -4,6 +4,27 @@ export interface ChatMessage {
   role: 'user' | 'agent';
   timestamp: number;
   error?: boolean;
+  taskId?: string | null;
+}
+
+export type TaskSubmitMode = 'auto' | 'guide' | 'queue';
+
+export interface TaskSubmitResult {
+  ok: boolean;
+  disposition: 'started' | 'guided' | 'queued';
+  taskId: string;
+  activeTaskId: string | null;
+  queueLength: number;
+  guidanceCount: number;
+}
+
+export interface AgentTaskStatus {
+  busy: boolean;
+  paused: boolean;
+  activeTaskId: string | null;
+  activeTask: string | null;
+  queueLength: number;
+  guidanceCount: number;
 }
 
 export interface TaskStep {
@@ -128,10 +149,12 @@ export interface HardboardRuntimeLaunchResult {
 }
 
 export interface WindowAPI {
-  sendMessage: (text: string) => Promise<{ ok: boolean }>;
-  onMessage: (cb: (msg: { text: string; timestamp: number; error?: boolean }) => void) => void;
-  onTaskComplete: (cb: (result: { code: number | null }) => void) => void;
-  onTaskProgress: (cb: (result: { steps: TaskStep[] }) => void) => void;
+  sendMessage: (text: string, mode?: TaskSubmitMode) => Promise<TaskSubmitResult>;
+  onMessage: (cb: (msg: { text: string; timestamp: number; error?: boolean; taskId?: string | null }) => void) => void;
+  onTaskComplete: (cb: (result: { code: number | null; taskId?: string | null }) => void) => void;
+  onTaskProgress: (cb: (result: { steps: TaskStep[]; taskId?: string | null }) => void) => void;
+  onTaskStatus: (cb: (result: AgentTaskStatus) => void) => void;
+  getTaskStatus: () => Promise<AgentTaskStatus>;
   pauseTask: () => Promise<{ ok: boolean }>;
   resumeTask: () => Promise<{ ok: boolean }>;
   stopTask: () => Promise<{ ok: boolean }>;
