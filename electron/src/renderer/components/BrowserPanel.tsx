@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import WorkspacePanel from './WorkspacePanel';
-import type { BrowserTab, HardboardDevice, HardboardRuntimeState, RecordingSummary, RuntimeEvent, WorkbenchOverview } from '../types';
+import CodeEditor from './CodeEditor';
+import type { BrowserTab, HardboardDevice, HardboardRuntimeState, RecordingSummary, RuntimeEvent, WorkbenchItem, WorkbenchOverview } from '../types';
 
 interface Props {
   url: string;
@@ -40,6 +41,14 @@ interface EditorTab {
   text: string;
   message: string;
   dirty: boolean;
+}
+
+interface ExplorerContextMenu {
+  x: number;
+  y: number;
+  item: WorkbenchItem;
+  parentPath: string;
+  root: boolean;
 }
 
 interface ProjectOption {
@@ -112,6 +121,74 @@ function taskDuration(task: TaskHistoryItem): string {
   const milliseconds = Math.max(0, end - task.startedAt);
   if (milliseconds < 1000) return `${milliseconds}ms`;
   return `${(milliseconds / 1000).toFixed(1)}s`;
+}
+
+interface EditorExplorerNodesProps {
+  items: WorkbenchItem[];
+  depth: number;
+  activePath: string;
+  expandedPaths: string[];
+  loadingPaths: string[];
+  childrenByPath: Record<string, WorkbenchItem[]>;
+  onToggleDirectory: (targetPath: string) => void;
+  onOpenFile: (item: WorkbenchItem) => void;
+  onContextMenu: (event: React.MouseEvent, item: WorkbenchItem, parentPath: string, root: boolean) => void;
+  parentPath: string;
+}
+
+function EditorExplorerNodes({
+  items,
+  depth,
+  activePath,
+  expandedPaths,
+  loadingPaths,
+  childrenByPath,
+  onToggleDirectory,
+  onOpenFile,
+  onContextMenu,
+  parentPath,
+}: EditorExplorerNodesProps) {
+  return (
+    <>
+      {items.map((item) => {
+        const directory = item.kind === 'dir';
+        const expanded = directory && expandedPaths.includes(item.path);
+        const loading = directory && loadingPaths.includes(item.path);
+        return (
+          <div key={item.path} className="editor-explorer-node">
+            <button
+              type="button"
+              className={`editor-explorer-item${activePath === item.path ? ' editor-explorer-item--active' : ''}`}
+              style={{ paddingLeft: `${8 + depth * 14}px` }}
+              title={item.path}
+              onClick={() => directory ? onToggleDirectory(item.path) : onOpenFile(item)}
+              onContextMenu={(event) => onContextMenu(event, item, parentPath, false)}
+            >
+              <span className="editor-explorer-chevron">{directory ? (expanded ? '▾' : '▸') : '·'}</span>
+              <span className={`editor-explorer-icon editor-explorer-icon--${directory ? 'dir' : 'file'}`}>{directory ? 'DIR' : 'FILE'}</span>
+              <span className="editor-explorer-name">{item.name}</span>
+            </button>
+            {directory && expanded ? (
+              loading ? <div className="editor-explorer-loading" style={{ paddingLeft: `${30 + depth * 14}px` }}>正在读取...</div> : (
+                <EditorExplorerNodes
+                  items={childrenByPath[item.path] || []}
+                  depth={depth + 1}
+                  activePath={activePath}
+                  expandedPaths={expandedPaths}
+                  loadingPaths={loadingPaths}
+                  childrenByPath={childrenByPath}
+                  onToggleDirectory={onToggleDirectory}
+                  onOpenFile={onOpenFile}
+                  onContextMenu={onContextMenu}
+                  parentPath={item.path}
+                />
+              )
+            ) : null}
+          </div>
+        );
+      })}
+    </>
+  );
 }
 
 function isPlaceholderTab(tab: BrowserTab, totalTabs: number): boolean {
@@ -217,6 +294,11 @@ export default function BrowserPanel({
   const [taskHistoryClearedSeq, setTaskHistoryClearedSeq] = useState(0);
   const [editorTabs, setEditorTabs] = useState<EditorTab[]>([]);
   const [activeEditorFile, setActiveEditorFile] = useState('');
+  const [explorerChildren, setExplorerChildren] = useState<Record<string, WorkbenchItem[]>>({});
+  const [explorerExpandedPaths, setExplorerExpandedPaths] = useState<string[]>([]);
+  const [explorerLoadingPaths, setExplorerLoadingPaths] = useState<string[]>([]);
+  const [explorerMessage, setExplorerMessage] = useState('');
+  const [explorerContextMenu, setExplorerContextMenu] = useState<ExplorerContextMenu | null>(null);
   const browserStageRef = useRef<HTMLDivElement | null>(null);
   const serialBottomRef = useRef<HTMLDivElement | null>(null);
   const focusedLogLineRef = useRef<HTMLDivElement | null>(null);
@@ -230,6 +312,14 @@ export default function BrowserPanel({
   const projectOptions = useMemo<ProjectOption[]>(() => {
     return (workbench?.hardboardProjects || [])
       .map((name) => ({ value: `hardboard/projects/${name}` }));
+  }, [workbench]);
+  const explorerRoots = useMemo(() => {
+    const seen = new Set<string>();
+    return (workbench?.sections || []).filter((section) => {
+      if (!section.folderPath || seen.has(section.folderPath)) return false;
+      seen.add(section.folderPath);
+      return true;
+    });
   }, [workbench]);
   const availableRuntimeEvents = runtimeEvents.length ? runtimeEvents : runtimeState?.recent || [];
   const visibleRuntimeEvents = useMemo(() => availableRuntimeEvents.slice(-500), [availableRuntimeEvents]);
@@ -259,9 +349,37 @@ export default function BrowserPanel({
     [activeEditorFile, editorTabs]
   );
 
+  const loadExplorerDirectory = useCallback(async (targetPath: string) => {
+    setExplorerLoadingPaths((current) => current.includes(targetPath) ? current : [...current, targetPath]);
+    const result = await window.electronAPI?.listWorkbenchDirectory?.(targetPath);
+    setExplorerLoadingPaths((current) => current.filter((entry) => entry !== targetPath));
+    if (!result?.ok) {
+      setExplorerMessage(result?.error || `无法读取目录: ${targetPath}`);
+      return;
+    }
+    setExplorerChildren((current) => ({ ...current, [targetPath]: result.items || [] }));
+    setExplorerMessage('');
+  }, []);
+
   useEffect(() => {
     setInputUrl(url);
   }, [url]);
+
+  useEffect(() => {
+    if (!explorerContextMenu) return;
+    const closeMenu = () => setExplorerContextMenu(null);
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') closeMenu();
+    };
+    window.addEventListener('click', closeMenu);
+    window.addEventListener('blur', closeMenu);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('click', closeMenu);
+      window.removeEventListener('blur', closeMenu);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [explorerContextMenu]);
 
   useEffect(() => {
     if (!selectedDevicePort && hardboardDevices[0]) setSelectedDevicePort(hardboardDevices[0].port);
@@ -339,6 +457,13 @@ export default function BrowserPanel({
   }, [projectDir, projectOptions]);
 
   useEffect(() => {
+    if (mode !== 'editor' || !explorerRoots.length) return;
+    const rootPaths = explorerRoots.map((section) => section.folderPath);
+    setExplorerExpandedPaths((current) => [...new Set([...current, ...rootPaths])]);
+    for (const rootPath of rootPaths) void loadExplorerDirectory(rootPath);
+  }, [explorerRoots, loadExplorerDirectory, mode]);
+
+  useEffect(() => {
     serialBottomRef.current?.scrollIntoView({ block: 'end' });
   }, [serialText]);
 
@@ -401,25 +526,152 @@ export default function BrowserPanel({
     setRuntimeMessage(result?.ok ? `Flash 已启动，launcher pid=${result.pid ?? 'unknown'}` : result?.error || 'Flash 启动失败');
   };
 
-  const handleEditWorkbenchItem = async (item: WorkbenchItem) => {
+  const openEditorFile = async (targetPath: string, title: string) => {
     setMode('editor');
-    const existing = editorTabs.find((tab) => tab.path === item.path);
+    const existing = editorTabs.find((tab) => tab.path === targetPath);
     if (existing) {
       setActiveEditorFile(existing.path);
       return;
     }
 
-    const result = await window.electronAPI?.readWorkbenchFile(item.path);
-    const title = item.detail || item.name;
+    const result = await window.electronAPI?.readWorkbenchFile(targetPath);
     const nextTab: EditorTab = {
-      path: item.path,
+      path: targetPath,
       title,
       text: result?.ok ? result.text || '' : '',
-      message: result?.ok ? `正在编辑: ${result.path || item.path}` : result?.error || '读取失败',
+      message: result?.ok ? `正在编辑: ${result.path || targetPath}` : result?.error || '读取失败',
       dirty: false,
     };
     setEditorTabs((current) => [...current, nextTab]);
-    setActiveEditorFile(item.path);
+    setActiveEditorFile(targetPath);
+  };
+
+  const handleEditWorkbenchItem = async (item: WorkbenchItem) => {
+    await openEditorFile(item.path, item.detail || item.name);
+  };
+
+  const handleExplorerOpenFile = (item: WorkbenchItem) => {
+    void openEditorFile(item.path, item.name);
+  };
+
+  const handleToggleExplorerDirectory = (targetPath: string) => {
+    const expanded = explorerExpandedPaths.includes(targetPath);
+    setExplorerExpandedPaths((current) => expanded
+      ? current.filter((entry) => entry !== targetPath)
+      : [...current, targetPath]);
+    if (!expanded) void loadExplorerDirectory(targetPath);
+  };
+
+  const handleRefreshExplorer = () => {
+    setExplorerChildren({});
+    setExplorerMessage('正在刷新文件资源管理器...');
+    onRefreshWorkbench();
+    for (const root of explorerRoots) void loadExplorerDirectory(root.folderPath);
+  };
+
+  const showExplorerContextMenu = (event: React.MouseEvent, item: WorkbenchItem, parentPath: string, root: boolean) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const menuWidth = 176;
+    const menuHeight = item.kind === 'dir' ? 190 : 104;
+    setExplorerContextMenu({
+      x: Math.max(4, Math.min(event.clientX, window.innerWidth - menuWidth - 4)),
+      y: Math.max(4, Math.min(event.clientY, window.innerHeight - menuHeight - 4)),
+      item,
+      parentPath,
+      root,
+    });
+  };
+
+  const remapExplorerPath = (candidate: string, oldPath: string, nextPath: string) => {
+    if (candidate === oldPath) return nextPath;
+    if (candidate.startsWith(`${oldPath}\\`) || candidate.startsWith(`${oldPath}/`)) {
+      return `${nextPath}${candidate.slice(oldPath.length)}`;
+    }
+    return candidate;
+  };
+
+  const handleCreateExplorerEntry = async (kind: 'file' | 'dir') => {
+    const context = explorerContextMenu;
+    if (!context) return;
+    setExplorerContextMenu(null);
+    const parentPath = context.item.kind === 'dir' ? context.item.path : context.parentPath;
+    const name = window.prompt(kind === 'file' ? '请输入新文件名（包含扩展名）' : '请输入新文件夹名', kind === 'file' ? 'untitled.c' : '新建文件夹');
+    if (!name) return;
+    const result = await window.electronAPI?.createWorkbenchEntry(parentPath, name, kind);
+    if (!result?.ok || !result.path) {
+      setExplorerMessage(result?.error || '新建失败');
+      return;
+    }
+    setExplorerExpandedPaths((current) => current.includes(parentPath) ? current : [...current, parentPath]);
+    await loadExplorerDirectory(parentPath);
+    onRefreshWorkbench();
+    setExplorerMessage(`已新建${kind === 'file' ? '文件' : '文件夹'}: ${result.path}`);
+    if (kind === 'file') void openEditorFile(result.path, name.trim());
+  };
+
+  const handleRenameExplorerEntry = async () => {
+    const context = explorerContextMenu;
+    if (!context || context.root) return;
+    setExplorerContextMenu(null);
+    const nextName = window.prompt('请输入新名称', context.item.name);
+    if (!nextName || nextName.trim() === context.item.name) return;
+    const result = await window.electronAPI?.renameWorkbenchEntry(context.item.path, nextName);
+    if (!result?.ok || !result.path) {
+      setExplorerMessage(result?.error || '重命名失败');
+      return;
+    }
+    const oldPath = context.item.path;
+    const nextPath = result.path;
+    setEditorTabs((current) => current.map((tab) => {
+      const remapped = remapExplorerPath(tab.path, oldPath, nextPath);
+      return remapped === tab.path ? tab : { ...tab, path: remapped, title: tab.path === oldPath ? nextName.trim() : tab.title, message: `路径已更新: ${remapped}` };
+    }));
+    setActiveEditorFile((current) => remapExplorerPath(current, oldPath, nextPath));
+    setExplorerExpandedPaths((current) => current.map((entry) => remapExplorerPath(entry, oldPath, nextPath)));
+    setExplorerChildren((current) => Object.fromEntries(Object.entries(current).map(([key, items]) => [
+      remapExplorerPath(key, oldPath, nextPath),
+      items.map((item) => ({ ...item, path: remapExplorerPath(item.path, oldPath, nextPath), name: item.path === oldPath ? nextName.trim() : item.name })),
+    ])));
+    await loadExplorerDirectory(context.parentPath);
+    onRefreshWorkbench();
+    setExplorerMessage(`已重命名为: ${nextName.trim()}`);
+  };
+
+  const handleDeleteExplorerEntry = async () => {
+    const context = explorerContextMenu;
+    if (!context || context.root) return;
+    setExplorerContextMenu(null);
+    const label = context.item.kind === 'dir' ? '文件夹及其内容' : '文件';
+    if (!window.confirm(`确定要将${label}“${context.item.name}”移到系统回收站吗？`)) return;
+    const result = await window.electronAPI?.deleteWorkbenchEntry(context.item.path);
+    if (!result?.ok) {
+      setExplorerMessage(result?.error || '删除失败');
+      return;
+    }
+    const targetPath = context.item.path;
+    const isTargetOrChild = (candidate: string) => candidate === targetPath || candidate.startsWith(`${targetPath}\\`) || candidate.startsWith(`${targetPath}/`);
+    setEditorTabs((current) => {
+      const next = current.filter((tab) => !isTargetOrChild(tab.path));
+      if (isTargetOrChild(activeEditorFile)) setActiveEditorFile(next[0]?.path || '');
+      return next;
+    });
+    setExplorerExpandedPaths((current) => current.filter((entry) => !isTargetOrChild(entry)));
+    setExplorerChildren((current) => Object.fromEntries(Object.entries(current)
+      .filter(([key]) => !isTargetOrChild(key))
+      .map(([key, items]) => [key, items.filter((item) => !isTargetOrChild(item.path))])));
+    await loadExplorerDirectory(context.parentPath);
+    onRefreshWorkbench();
+    setExplorerMessage(`已移到系统回收站: ${targetPath}`);
+  };
+
+  const handleContextRefresh = () => {
+    const context = explorerContextMenu;
+    if (!context) return;
+    setExplorerContextMenu(null);
+    const targetPath = context.item.kind === 'dir' ? context.item.path : context.parentPath;
+    void loadExplorerDirectory(targetPath);
+    setExplorerMessage(`正在刷新: ${targetPath}`);
   };
 
   const handleEditorTextChange = (text: string) => {
@@ -460,6 +712,18 @@ export default function BrowserPanel({
         : tab
     )));
   };
+
+  useEffect(() => {
+    if (mode !== 'editor') return;
+    const handleEditorShortcut = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        void handleSaveEditor();
+      }
+    };
+    window.addEventListener('keydown', handleEditorShortcut);
+    return () => window.removeEventListener('keydown', handleEditorShortcut);
+  }, [activeEditorTab, mode]);
 
   const progressValue = runtimeState?.progress ?? 0;
   const runtimeBusy = runtimeState?.status === 'running';
@@ -750,57 +1014,126 @@ export default function BrowserPanel({
 
       {mode === 'editor' ? (
         <div className="editor-panel">
-          <div className="editor-toolbar nes-container is-dark">
-            <strong>{activeEditorTab ? `${activeEditorTab.dirty ? '* ' : ''}${activeEditorTab.title}` : '未选择文件'}</strong>
-            <select className="nes-select" value={activeEditorTab?.path || ''} onChange={(event) => setActiveEditorFile(event.target.value)} disabled={!editorTabs.length}>
-              <option value="">打开的文件</option>
-              {editorTabs.map((tab) => (
-                <option key={tab.path} value={tab.path}>{tab.dirty ? '* ' : ''}{tab.title}</option>
-              ))}
-            </select>
-            <button className="nes-btn is-success" type="button" onClick={handleSaveEditor} disabled={!activeEditorTab}>保存</button>
-          </div>
-          <div className="editor-tab-strip">
-            {editorTabs.length ? editorTabs.map((tab) => (
-              <button
-                key={tab.path}
-                className={`editor-tab${activeEditorTab?.path === tab.path ? ' editor-tab--active' : ''}`}
-                type="button"
-                title={tab.path}
-                onClick={() => setActiveEditorFile(tab.path)}
-              >
-                <span>{tab.dirty ? '* ' : ''}{tab.title}</span>
-                <i
-                  role="button"
-                  tabIndex={0}
-                  title="关闭"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    handleCloseEditorTab(tab.path);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      handleCloseEditorTab(tab.path);
-                    }
-                  }}
-                >
-                  x
-                </i>
-              </button>
-            )) : (
-              <div className="editor-empty-tabs">从仓库点击 C / CMake / Markdown / skills 文档后，会在这里打开多个编辑窗口。</div>
-            )}
-          </div>
-          <textarea
-            className="nes-textarea editor-textarea"
-            value={activeEditorTab?.text || ''}
-            onChange={(event) => handleEditorTextChange(event.target.value)}
-            disabled={!activeEditorTab}
-            placeholder="这里显示源码、CMake、Markdown、skills 文档。"
-          />
-          <div className="editor-status">{activeEditorTab?.message || '还没有打开文件。HTML 文件仍在工作台浏览器运行。'}</div>
+          <aside className="editor-explorer nes-container is-rounded">
+            <header className="editor-explorer-header">
+              <div>
+                <strong>文件资源管理器</strong>
+                <span>{explorerRoots.length} 个工作目录</span>
+              </div>
+              <button className="nes-btn" type="button" onClick={handleRefreshExplorer}>刷新</button>
+            </header>
+            <div className="editor-explorer-tree">
+              {explorerRoots.map((root) => {
+                const expanded = explorerExpandedPaths.includes(root.folderPath);
+                const loading = explorerLoadingPaths.includes(root.folderPath);
+                return (
+                  <section key={root.id} className="editor-explorer-root">
+                    <button
+                      type="button"
+                      className="editor-explorer-root-button"
+                      title={root.folderPath}
+                      onClick={() => handleToggleExplorerDirectory(root.folderPath)}
+                      onContextMenu={(event) => showExplorerContextMenu(event, {
+                        name: root.title,
+                        kind: 'dir',
+                        path: root.folderPath,
+                        updatedAt: null,
+                        size: null,
+                      }, root.folderPath, true)}
+                    >
+                      <span>{expanded ? '▾' : '▸'}</span>
+                      <strong>{root.title}</strong>
+                    </button>
+                    {expanded ? (
+                      loading ? <div className="editor-explorer-loading">正在读取...</div> : (
+                        <EditorExplorerNodes
+                          items={explorerChildren[root.folderPath] || []}
+                          depth={0}
+                          activePath={activeEditorTab?.path || ''}
+                          expandedPaths={explorerExpandedPaths}
+                          loadingPaths={explorerLoadingPaths}
+                          childrenByPath={explorerChildren}
+                          onToggleDirectory={handleToggleExplorerDirectory}
+                          onOpenFile={handleExplorerOpenFile}
+                          onContextMenu={showExplorerContextMenu}
+                          parentPath={root.folderPath}
+                        />
+                      )
+                    ) : null}
+                  </section>
+                );
+              })}
+              {!explorerRoots.length ? <div className="editor-explorer-empty">仓库中还没有可用工作目录。</div> : null}
+            </div>
+            <div className="editor-explorer-status">{explorerMessage || '展开目录并点击文件即可编辑'}</div>
+          </aside>
+          {explorerContextMenu ? (
+            <div
+              className="editor-context-menu"
+              style={{ left: explorerContextMenu.x, top: explorerContextMenu.y }}
+              onClick={(event) => event.stopPropagation()}
+              role="menu"
+            >
+              {explorerContextMenu.item.kind === 'dir' ? (
+                <>
+                  <button type="button" role="menuitem" onClick={() => void handleCreateExplorerEntry('file')}>新建文件</button>
+                  <button type="button" role="menuitem" onClick={() => void handleCreateExplorerEntry('dir')}>新建文件夹</button>
+                  <span />
+                </>
+              ) : null}
+              {!explorerContextMenu.root ? <button type="button" role="menuitem" onClick={() => void handleRenameExplorerEntry()}>重命名</button> : null}
+              <button type="button" role="menuitem" onClick={handleContextRefresh}>刷新</button>
+              {!explorerContextMenu.root ? (
+                <>
+                  <span />
+                  <button className="editor-context-menu-delete" type="button" role="menuitem" onClick={() => void handleDeleteExplorerEntry()}>移到回收站</button>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+          <section className="editor-main">
+            <div className="editor-tabs-bar">
+              <div className="editor-tab-strip">
+                {editorTabs.length ? editorTabs.map((tab) => (
+                  <button
+                    key={tab.path}
+                    className={`editor-tab${activeEditorTab?.path === tab.path ? ' editor-tab--active' : ''}`}
+                    type="button"
+                    title={tab.path}
+                    onClick={() => setActiveEditorFile(tab.path)}
+                  >
+                    <span>{tab.dirty ? '* ' : ''}{tab.title}</span>
+                    <i
+                      role="button"
+                      tabIndex={0}
+                      title="关闭"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleCloseEditorTab(tab.path);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          handleCloseEditorTab(tab.path);
+                        }
+                      }}
+                    >
+                      x
+                    </i>
+                  </button>
+                )) : <div className="editor-empty-tabs">从左侧资源管理器选择文件</div>}
+              </div>
+              <button className="nes-btn is-success editor-save-button" type="button" onClick={handleSaveEditor} disabled={!activeEditorTab || !activeEditorTab.dirty}>保存</button>
+            </div>
+            <div className="editor-current-path" title={activeEditorTab?.path}>{activeEditorTab?.path || '未打开文件'}</div>
+            <CodeEditor
+              filePath={activeEditorTab?.path || ''}
+              value={activeEditorTab?.text || ''}
+              onChange={handleEditorTextChange}
+            />
+            <div className="editor-status">{activeEditorTab?.message || '还没有打开文件。'}</div>
+          </section>
         </div>
       ) : null}
     </div>

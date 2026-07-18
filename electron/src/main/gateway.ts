@@ -4,7 +4,7 @@ import { ipcMain, BrowserWindow, dialog } from 'electron';
 import { handleTask, getOrchestrator } from './worker';
 import { activateTab, closeTab, listTabs, openTabUrl, setBrowserTabsEmitter, setBrowserViewBoundsFromRenderer } from './browser-view';
 import { listBrowserRecordingSummaries, listBrowserRecordings, replayBrowserRecording, replayLatestBrowserRecording, startBrowserRecording, stopBrowserRecording } from './browser-recorder';
-import { getWorkbenchOverview, importWorkbenchFolder, openWorkbenchItem, readWorkbenchFile, removeImportedWorkbenchFolder, writeWorkbenchFile } from './workbench';
+import { createWorkbenchEntry, deleteWorkbenchEntry, getWorkbenchOverview, importWorkbenchFolder, listWorkbenchDirectory, openWorkbenchItem, readWorkbenchFile, removeImportedWorkbenchFolder, renameWorkbenchEntry, writeWorkbenchFile } from './workbench';
 import {
   isSerialMonitorRunning,
   listHardboardDevices,
@@ -113,8 +113,24 @@ export function startGateway(mainWindow: BrowserWindow): void {
     return readWorkbenchFile(targetPath);
   });
 
+  ipcMain.handle('workbench:listDirectory', async (_event, targetPath: string) => {
+    return listWorkbenchDirectory(targetPath);
+  });
+
   ipcMain.handle('workbench:writeFile', async (_event, targetPath: string, text: string) => {
     return writeWorkbenchFile(targetPath, text);
+  });
+
+  ipcMain.handle('workbench:createEntry', async (_event, parentPath: string, name: string, kind: 'file' | 'dir') => {
+    return createWorkbenchEntry(parentPath, name, kind);
+  });
+
+  ipcMain.handle('workbench:renameEntry', async (_event, targetPath: string, nextName: string) => {
+    return renameWorkbenchEntry(targetPath, nextName);
+  });
+
+  ipcMain.handle('workbench:deleteEntry', async (_event, targetPath: string) => {
+    return deleteWorkbenchEntry(targetPath);
   });
 
   ipcMain.handle('smoke:workbench:finish', async (_event, result: unknown) => {

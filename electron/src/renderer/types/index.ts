@@ -144,7 +144,11 @@ export interface WindowAPI {
   removeImportedWorkbenchFolder: (folderPath: string) => Promise<{ ok: boolean; error?: string; overview: WorkbenchOverview }>;
   openWorkbenchItem: (targetPath: string) => Promise<{ ok: boolean; kind?: 'file' | 'dir'; path?: string; url?: string; error?: string }>;
   readWorkbenchFile: (targetPath: string) => Promise<{ ok: boolean; path?: string; text?: string; error?: string }>;
+  listWorkbenchDirectory: (targetPath: string) => Promise<{ ok: boolean; path?: string; items?: WorkbenchItem[]; error?: string }>;
   writeWorkbenchFile: (targetPath: string, text: string) => Promise<{ ok: boolean; path?: string; text?: string; error?: string }>;
+  createWorkbenchEntry: (parentPath: string, name: string, kind: 'file' | 'dir') => Promise<{ ok: boolean; path?: string; kind?: 'file' | 'dir'; error?: string }>;
+  renameWorkbenchEntry: (targetPath: string, nextName: string) => Promise<{ ok: boolean; path?: string; oldPath?: string; kind?: 'file' | 'dir'; error?: string }>;
+  deleteWorkbenchEntry: (targetPath: string) => Promise<{ ok: boolean; path?: string; kind?: 'file' | 'dir'; error?: string }>;
   isWorkbenchSmokeTest?: boolean;
   finishWorkbenchSmokeTest?: (result: unknown) => Promise<{ ok: boolean }>;
   activateBrowserTab: (id: string) => Promise<{ ok: boolean }>;

@@ -22,6 +22,8 @@
     "verify:hardboard": "node node_modules/electron/cli.js scripts/verify_hardboard_context_rules.cjs"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "monaco-editor": "^0.55.1",
     "nes.css": "^2.3.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"

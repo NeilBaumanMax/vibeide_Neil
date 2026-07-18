@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { shell } from 'electron';
 import { getAppRoot, getRecordingsDir, getWorkflowsDir, getAgentWorkspaceDir, getHardboardDir, getRuntimeDataDir } from './paths';
 
 export interface WorkbenchItem {
@@ -46,8 +47,25 @@ export interface WorkbenchFileResult {
   error?: string;
 }
 
+export interface WorkbenchDirectoryResult {
+  ok: boolean;
+  path?: string;
+  items?: WorkbenchItem[];
+  error?: string;
+}
+
+export interface WorkbenchMutationResult {
+  ok: boolean;
+  path?: string;
+  oldPath?: string;
+  kind?: 'file' | 'dir';
+  error?: string;
+}
+
 const PROJECT_ROOT = getAppRoot();
 const IMPORTED_FOLDERS_FILE = getRuntimeDataDir('workbench-imports.json');
+const EDITOR_EXCLUDED_DIRECTORIES = new Set(['.git', 'node_modules', 'build', 'managed_components', 'dist', 'dist-package', '__pycache__']);
+const EDITOR_TEXT_FILE = /(?:^|\/)(?:CMakeLists\.txt|Makefile|Dockerfile|Kconfig(?:\.projbuild)?|sdkconfig(?:\.defaults)?|[^/]+\.(?:c|h|cpp|hpp|cc|hh|S|asm|md|mdx|json|jsonc|txt|yaml|yml|toml|ini|cfg|conf|html?|css|less|scss|js|mjs|cjs|ts|tsx|jsx|py|sh|ps1|cmd|bat|xml|csv))$/i;
 
 function allowedWorkbenchRoots(): string[] {
   return [
@@ -67,6 +85,26 @@ function allowedWorkbenchRoots(): string[] {
 function isAllowedWorkbenchPath(targetPath: string): boolean {
   const resolved = path.resolve(targetPath);
   return allowedWorkbenchRoots().some((root) => resolved === root || resolved.startsWith(`${root}${path.sep}`));
+}
+
+function isWorkbenchRoot(targetPath: string): boolean {
+  const resolved = path.resolve(targetPath);
+  const protectedRoots = [
+    ...allowedWorkbenchRoots(),
+    getHardboardDir('projects'),
+    getHardboardDir('example'),
+    path.join(PROJECT_ROOT, 'agent', 'skills'),
+  ].map((entry) => path.resolve(entry));
+  return protectedRoots.some((root) => resolved === root);
+}
+
+function validateEntryName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed || trimmed === '.' || trimmed === '..') throw new Error('名称不能为空');
+  if (trimmed !== path.basename(trimmed) || /[\\/:*?"<>|]/.test(trimmed)) {
+    throw new Error('名称不能包含路径分隔符或 Windows 保留字符');
+  }
+  return trimmed;
 }
 
 function statItem(filePath: string, enrich?: (item: WorkbenchItem) => WorkbenchItem): WorkbenchItem | null {
@@ -319,6 +357,29 @@ export function openWorkbenchItem(targetPath: string): WorkbenchOpenResult {
   };
 }
 
+export function listWorkbenchDirectory(targetPath: string): WorkbenchDirectoryResult {
+  try {
+    if (!isAllowedWorkbenchPath(targetPath)) return { ok: false, error: '不允许列出仓库范围外的目录' };
+    const resolved = path.resolve(targetPath);
+    const stats = fs.statSync(resolved);
+    if (!stats.isDirectory()) return { ok: false, error: '只能列出目录内容' };
+
+    const items = fs.readdirSync(resolved, { withFileTypes: true })
+      .filter((entry) => !entry.name.startsWith('.') && !EDITOR_EXCLUDED_DIRECTORIES.has(entry.name))
+      .filter((entry) => entry.isDirectory() || (entry.isFile() && EDITOR_TEXT_FILE.test(entry.name)))
+      .map((entry) => statItem(path.join(resolved, entry.name)))
+      .filter((entry): entry is WorkbenchItem => Boolean(entry))
+      .sort((a, b) => {
+        if (a.kind !== b.kind) return a.kind === 'dir' ? -1 : 1;
+        return a.name.localeCompare(b.name, 'zh-CN');
+      });
+
+    return { ok: true, path: resolved, items };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 export function readWorkbenchFile(targetPath: string): WorkbenchFileResult {
   try {
     if (!isAllowedWorkbenchPath(targetPath)) return { ok: false, error: '不允许读取工作台范围外的路径' };
@@ -340,6 +401,52 @@ export function writeWorkbenchFile(targetPath: string, text: string): WorkbenchF
     if (!stats.isFile()) return { ok: false, error: '只能写入文件' };
     fs.writeFileSync(resolved, text, 'utf-8');
     return { ok: true, path: resolved, text };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export function createWorkbenchEntry(parentPath: string, name: string, kind: 'file' | 'dir'): WorkbenchMutationResult {
+  try {
+    if (!isAllowedWorkbenchPath(parentPath)) return { ok: false, error: '不允许在工作目录范围外新建内容' };
+    const resolvedParent = path.resolve(parentPath);
+    if (!fs.statSync(resolvedParent).isDirectory()) return { ok: false, error: '只能在文件夹中创建内容' };
+    const targetPath = path.join(resolvedParent, validateEntryName(name));
+    if (!isAllowedWorkbenchPath(targetPath)) return { ok: false, error: '目标路径不在允许范围内' };
+    if (fs.existsSync(targetPath)) return { ok: false, error: '同名文件或文件夹已经存在' };
+
+    if (kind === 'dir') fs.mkdirSync(targetPath);
+    else fs.writeFileSync(targetPath, '', { encoding: 'utf-8', flag: 'wx' });
+    return { ok: true, path: targetPath, kind };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export function renameWorkbenchEntry(targetPath: string, nextName: string): WorkbenchMutationResult {
+  try {
+    if (!isAllowedWorkbenchPath(targetPath)) return { ok: false, error: '不允许重命名工作目录范围外的内容' };
+    const resolved = path.resolve(targetPath);
+    if (isWorkbenchRoot(resolved)) return { ok: false, error: '不能重命名文件资源管理器根目录' };
+    const stats = fs.statSync(resolved);
+    const nextPath = path.join(path.dirname(resolved), validateEntryName(nextName));
+    if (!isAllowedWorkbenchPath(nextPath)) return { ok: false, error: '目标路径不在允许范围内' };
+    if (nextPath !== resolved && fs.existsSync(nextPath)) return { ok: false, error: '同名文件或文件夹已经存在' };
+    fs.renameSync(resolved, nextPath);
+    return { ok: true, oldPath: resolved, path: nextPath, kind: stats.isDirectory() ? 'dir' : 'file' };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export async function deleteWorkbenchEntry(targetPath: string): Promise<WorkbenchMutationResult> {
+  try {
+    if (!isAllowedWorkbenchPath(targetPath)) return { ok: false, error: '不允许删除工作目录范围外的内容' };
+    const resolved = path.resolve(targetPath);
+    if (isWorkbenchRoot(resolved)) return { ok: false, error: '不能删除文件资源管理器根目录' };
+    const stats = fs.statSync(resolved);
+    await shell.trashItem(resolved);
+    return { ok: true, path: resolved, kind: stats.isDirectory() ? 'dir' : 'file' };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
