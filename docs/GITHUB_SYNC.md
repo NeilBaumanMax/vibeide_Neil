@@ -19,8 +19,10 @@ GitHub
 ## 已完成
 
 - GitHub SSH 访问已验证。
-- 当前本机记录的 `origin/main` 为 `5e6ba3b`；`electron_fix_neil` 本地最新功能提交为 `b428a0e`。
-- `electron_fix_neil` 推送曾因 GitHub HTTPS 连接重置失败，远端分支是否存在必须以之后成功的 `git push -u origin electron_fix_neil` 为准。
+- 当前本机记录的 `origin/main` 为 `5e6ba3b`；`electron_fix_neil` 本地基线为 `d10245d`。
+- 当前施工分支为 `agent_task_queue_fix`，Agent 任务串行化功能提交为 `39ef92d`，首轮施工文档提交为 `86af2c8`。
+- `agent_task_queue_fix` 当前没有 upstream；本轮只维护本地 Git，不执行远端推送。需要同步时由用户手动运行 `git push -u origin agent_task_queue_fix`。
+- `electron_fix_neil` 早期推送曾因 GitHub HTTPS 连接重置失败；远端分支事实不能根据本地分支存在与否推断，必须以成功的 `git push` 或远端查询结果为准。
 - Windows SSH 已连通。
 - Windows 源码已同步到 `C:\vibeide` 和 `E:\vibeide`。
 - Windows 0.1 unpacked 包已同步到 `E:\vibeide-0.1-win-unpacked`。

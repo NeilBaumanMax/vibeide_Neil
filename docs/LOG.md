@@ -2,6 +2,15 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-18 — agent_task_queue_fix 文档漂移复核
+
+- 以本地 `git branch -vv`、`git log`、`config/version.json` 和实际 Electron 源码为真相源复核文档；当前分支为 `agent_task_queue_fix`，父分支基线为 `d10245d`，功能提交为 `39ef92d`，首轮任务队列文档提交为 `86af2c8`。
+- 修正 README 仍把 `electron_fix_neil` 写成当前施工分支的问题，并补充单活动任务、追加要求和显式排队能力边界。
+- 修正 `GITHUB_SYNC.md` 仍把 `b428a0e` 写成最新功能提交的问题；明确 `electron_fix_neil=d10245d`、当前分支尚无 upstream、本轮只维护本地 Git以及用户手动推送命令。
+- 修正任务管理器施工文档的分支措辞：该实现最初在 `electron_fix_neil` 落地，当前 `agent_task_queue_fix` 完整继承，而不是把父分支继续写成当前分支。
+- 版本保持 `0.4.0-7171` / `0.4.0.7171`，与 `config/version.json` 一致；历史日志中的旧分支和旧提交继续作为历史事实保留，不进行全局替换。
+- Git 边界：只精确暂存本轮 5 个文档文件；提交前复核未发现其他代码改动，不使用 `git add -A`，不推送远端。
+
 ## 2026-07-18 — Agent 单活动任务与追加/排队修复
 
 - 从 `electron_fix_neil` 的 `d10245d` 单独建立 `agent_task_queue_fix`，隔离修复“上一个回答尚未结束时再次发送会并发启动另一 Agent 任务”的问题。

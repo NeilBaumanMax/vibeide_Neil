@@ -13,17 +13,17 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 ## 当前状态
 
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
-- 当前施工分支：`electron_fix_neil`（远端基线分支为 `main`）
+- 当前施工分支：`agent_task_queue_fix`（从本地 `electron_fix_neil` 的 `d10245d` 分出，远端基线分支为 `main`）
 - 当前发布版本：`0.4.0-7171`（Windows PE 四段版本映射为 `0.4.0.7171`）
 - 当前 Windows 源码目录：`E:\Agent\vibeide\vibeide`
 - 上一版 Windows v0.1.0 unpacked 包：`E:\vibeide-0.1-win-unpacked`（历史验证对象）
 - 历史 Linux、`C:\vibeide` 和旧 `E:\vibeide` 路径仅用于迁移记录，不再作为当前施工目录。
-- 当前代码来源：Windows 工作区在 `electron_fix_neil` 分支持续施工；GitHub 推送状态以 `git branch -vv` 为准。
+- 当前代码来源：Windows 工作区在 `agent_task_queue_fix` 分支修复 Agent 并发任务问题；该分支当前没有 upstream，GitHub 推送状态以 `git branch -vv` 为准。
 
 ## 能力边界
 
 - Electron 桌面窗口提供聊天区、任务进度、仓库、串口监视、任务管理和 VS Code 风格代码编辑入口；编辑器支持多根文件树、Monaco 语法高亮、多文件标签、保存、字号持久化及带内置对话框的右键文件管理。浏览器工作台前端入口当前隐藏，相关后端能力暂时保留。
-- Worker 负责快捷任务、搜索预处理、任务上下文构造和 Agent 生命周期。
+- Worker 负责快捷任务、搜索预处理、任务上下文构造和 Agent 生命周期；同一时间只运行一个活动任务，执行中消息默认追加到当前任务，显式“排队”才建立独立后续任务。
 - Agent 负责推理和任务执行规划，但所有浏览器操作必须通过 MCP 工具完成。
 - Runtime 通过 CDP 连接 Electron Chromium，提供 `browser.*`、`storage.*` 和 `hardboard.*` MCP tools。
 - `runtime/hardboard` 保存 ESP-IDF 工具、ESP32-S3 示例、施工文档、本地工程和固件产物。

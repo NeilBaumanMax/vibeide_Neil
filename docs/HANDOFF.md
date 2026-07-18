@@ -9,7 +9,7 @@
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
-- 当前施工分支：`agent_task_queue_fix`，从 `electron_fix_neil` 的编辑器与文档基线 `d10245d` 分出；Agent 单活动任务、追加要求和显式排队修复提交为 `39ef92d`。远端推送曾因 GitHub HTTPS 连接重置失败，当前仍以本地 Git 日志为准。
+- 当前施工分支：`agent_task_queue_fix`，从 `electron_fix_neil` 的编辑器与文档基线 `d10245d` 分出；Agent 单活动任务、追加要求和显式排队修复提交为 `39ef92d`，首轮施工文档提交为 `86af2c8`。该分支当前没有 upstream，本轮只维护本地 Git，不推送远端。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证

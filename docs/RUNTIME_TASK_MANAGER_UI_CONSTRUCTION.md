@@ -20,7 +20,7 @@
 
 ## 2026-07-17 当前实现（漂移修正）
 
-> 本节描述 `electron_fix_neil` 分支当前实现。下方“用户反馈对应要求”和 2026-06-29 打包记录保留为历史施工依据；其中“工作台可见入口”、逐文件 CMake/config/source/artifact 选择器、PID/Task/Tool 摘要块和常驻三栏日志已经被本轮交互方案取代。
+> 本节描述最初在 `electron_fix_neil` 落地、并由当前 `agent_task_queue_fix` 分支继承的任务管理器实现。下方“用户反馈对应要求”和 2026-06-29 打包记录保留为历史施工依据；其中“工作台可见入口”、逐文件 CMake/config/source/artifact 选择器、PID/Task/Tool 摘要块和常驻三栏日志已经被本轮交互方案取代。
 
 - 当前右侧可见页签为“仓库、监视器、任务管理器、编辑器”；工作台前端入口隐藏，但 React、IPC、`WebContentsView` 和主进程后端链路保留。
 - 左侧对话区默认占 34%，支持拖动分隔条、键盘左右调整、收起/展开，并用 `localStorage` 保存宽度。
