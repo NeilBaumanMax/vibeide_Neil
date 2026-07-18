@@ -30,6 +30,7 @@ Electron Chromium / WebContentsView
 - 暴露 CDP 端口 `9230`。
 - 管理右侧 `WebContentsView` 浏览页和 tabs。
 - 提供 Renderer 到 Worker 的 IPC。
+- 通过 `task:status` 向 Renderer 暴露当前活动任务、暂停状态、追加要求数和独立排队数。
 - 桥接浏览器录制、回放、编辑器目录读取和受限文件操作。
 
 关键文件：
@@ -57,6 +58,7 @@ Electron Chromium / WebContentsView
 职责：
 
 - 接收用户任务。
+- 同一时间只允许一个活动 Agent turn；执行中的普通发送作为当前任务追加要求，只有显式选择“排队”才创建下一项独立任务。
 - 优先处理本地快捷任务。
 - 对搜索/整理/排行类任务做平台 URL 预处理。
 - 读取 Agent 规则和 skills，构造 prompt。
@@ -66,13 +68,23 @@ Electron Chromium / WebContentsView
 
 关键文件：
 
-- `orchestrator.ts`：任务主流程。
+- `orchestrator.ts`：任务主流程、单活动任务约束、追加要求缓冲、独立任务 FIFO 队列和 `taskId` 关联。
 - `context.ts`：根据任务选择 `agent/skills/*.md` 并生成 prompt。
 - `search-preflight.ts`：平台搜索预处理。
 - `quick-tasks.ts`：本地快捷能力。
 - `chat-buffer.ts`：Agent stream-json 输出解析。
 - `task-state.ts`：任务进度状态机。
 - `page-validator.ts`：HTML 页面/游戏验收。
+
+### Agent 任务提交与调度
+
+- Gateway 通过 `task:status` 向 Renderer 暴露当前活动任务、暂停状态、追加要求数和独立排队数。
+- Orchestrator 同一时间只允许一个活动 Agent turn，并用 `currentTaskId` 关联消息、进度与完成事件。
+- 空闲时发送会立即启动任务；执行中“追加要求”保留在当前任务下，等当前 turn 或页面验收结束后继续执行。
+- 执行中“排队”会创建新的 `taskId`，等待当前任务完成或失败后按 FIFO 顺序启动。
+- 停止会终止当前 Agent 并清空等待队列，避免旧任务状态泄漏到后续任务。
+
+对应实现集中在 `orchestrator.ts`，Renderer 状态与操作位于 `App.tsx` 和 `ChatPanel.tsx`。详细施工和验收见 `AGENT_TASK_QUEUE_CONSTRUCTION.md`。
 
 ## Agent 层
 

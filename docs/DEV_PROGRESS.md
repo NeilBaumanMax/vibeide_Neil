@@ -18,6 +18,8 @@
 - [x] 新文档体系已建立：INDEX / ARCHITECTURE / DEVELOPMENT / GITHUB_SYNC / REFACTOR_PLAN / SECURITY / HANDOFF
 - [x] Claude CLI 已接入软件级持续会话上下文，最近轮次持久化到 `runtime/claude-session/`
 - [x] Claude CLI 启动增加 `--continue` 续接策略，并用 prompt 注入作为兜底
+- [x] Agent 对话改为单活动任务：执行中发送默认追加到当前任务，显式“排队”才创建下一任务；状态、消息和结果使用 `taskId` 关联
+- [x] 新增 Agent 任务队列烟测：`npm.cmd --prefix electron run verify:task-queue`
 - [x] Electron 前端已重构为 NES.css / 蓝白机视觉
 - [x] 右侧工作台文件 / 目录现在可点击，会在右侧浏览页层打开 `file://` 地址
 - [x] 新增 Electron 工作台点击烟测：`cd electron && npm run smoke:workbench`

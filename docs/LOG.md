@@ -2,6 +2,17 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-18 — Agent 单活动任务与追加/排队修复
+
+- 从 `electron_fix_neil` 的 `d10245d` 单独建立 `agent_task_queue_fix`，隔离修复“上一个回答尚未结束时再次发送会并发启动另一 Agent 任务”的问题。
+- 根因是 Gateway 对任务提交没有忙碌约束，Orchestrator 每次收到文本都会直接调用 Agent，同时覆盖 `currentTask`、转录和状态；原 `pendingTasks` 仅记录文本，并不负责等待调度。
+- Orchestrator 改为单活动任务：空闲时立即启动；忙碌时默认把消息缓冲为当前任务的追加要求；用户显式点“排队”才创建独立 `taskId` 并按 FIFO 等待。当前 turn 或页面验收结束后优先应用追加要求，任务完成/失败后再启动下一队列项。
+- Gateway、preload 和 Renderer 新增 `task:status` 状态链路，消息、进度和完成事件携带 `taskId`。对话区显示空闲/执行中/暂停、追加数和排队数，并提供“追加要求”“排队”“停止”；多行输入支持 `Shift+Enter`。
+- 补齐 Agent 异常退出、turn 完成回调异常、页面验收期间追加要求、会话多轮记录和队列切换边界；停止操作会终止当前 Agent 并清空等待队列。
+- 新增 `npm.cmd --prefix electron run verify:task-queue`，验证首任务立即启动、默认追加不启动第二任务、显式任务等待、追加保持当前 `taskId`、当前任务结束后才启动队列项。
+- 验证通过：Electron typecheck、main/renderer build、任务队列烟测、Claude session 烟测、Hardboard context 烟测和 `git diff --check`。Renderer 大包提示与本机 `os_crypt_win.cc` 告警不影响退出码。
+- Git：功能提交为 `39ef92d fix(electron): serialize agent tasks and queue follow-ups`；文档精确暂存，用户在 `runtime/hardboard/projects/hello_world_esp32s3/main/hello_world_main.c` 的未提交修改继续排除，不推送远端。
+
 ## 2026-07-18 — VS Code 风格工程编辑器与文件管理
 
 - 编辑器从纯文本输入区升级为两栏工程编辑区：左侧按仓库分组显示 Agent 生成、硬件工程、参考代码、Skills 和用户导入目录，右侧提供多文件标签、路径、保存状态和 Monaco 代码区。

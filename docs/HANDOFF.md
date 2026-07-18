@@ -9,13 +9,13 @@
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
-- 当前施工分支：`electron_fix_neil`。版本/隐藏工作台提交为 `76a3683`，任务管理器 UI 与首轮文档同步提交为 `b428a0e`，路径与旧配置清理到 `036c2d5`，VS Code 风格编辑器功能基线为 `5afcef3`，字号与内置文件对话框修复为 `63992ea`；远端推送曾因 GitHub HTTPS 连接重置失败，当前仍以本地 Git 日志为准。
+- 当前施工分支：`agent_task_queue_fix`，从 `electron_fix_neil` 的编辑器与文档基线 `d10245d` 分出；Agent 单活动任务、追加要求和显式排队修复提交为 `39ef92d`。远端推送曾因 GitHub HTTPS 连接重置失败，当前仍以本地 Git 日志为准。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
 
 - 当前发布版本：`0.4.0-7171`；Windows PE 四段版本映射为 `0.4.0.7171`。
-- `electron_fix_neil` 当前源码已通过 Runtime build、Electron typecheck、main/renderer build、版本一致性和 `git diff --check`；尚未执行本版本 Windows 打包及真实硬件回归。
+- `agent_task_queue_fix` 当前源码已通过 Electron typecheck、main/renderer build、任务队列/会话/Hardboard 规则烟测和 `git diff --check`；尚未执行本版本 Windows 打包、真实 Agent 连续对话及真实硬件回归。
 - 上一版 Windows exe PE 版本已验证（历史 v0.1.0）：
   - `FileVersion=0.1.0`
   - `ProductVersion=0.1.0`
@@ -47,7 +47,7 @@
 - `奥德赛0.4.0.7161.exe` PE 元数据：`ProductName=奥德赛0.4.0.7161`、`FileVersion=0.4.0.7161`、`ProductVersion=0.4.0.7161`
 - 本轮尚未重新执行 exe 启动和 ESP32-S3 实机闭环，详见 `docs/WINDOWS_0_4_0_7161_TEST_REPORT.md`
 
-当前 `0.4.0-7171` 正在 `electron_fix_neil` 分支施工，版本一致性、编译和打包结果以本轮完成后的验证记录为准。
+当前 `0.4.0-7171` 正在 `agent_task_queue_fix` 分支修复 Agent 任务串行化；版本一致性和打包结果仍沿用父分支记录，本轮新增验证见下文。
 
 已通过（编辑器功能 `5afcef3`、交互修复 `63992ea`，2026-07-18）：
 
@@ -57,6 +57,17 @@
 - `git diff --check`
 - 开发预览已启动，Vite `5173` 与 Electron CDP `9230` 正常监听
 - `pytest tests/test_project.py` 未执行：当前 PowerShell 环境没有 `pytest` 命令，不能记录为通过
+
+已通过（Agent 任务串行化修复 `39ef92d`，2026-07-18）：
+
+- `npm.cmd --prefix electron run typecheck`
+- `npm.cmd --prefix electron run build:main`
+- `npm.cmd --prefix electron run build:renderer`
+- `npm.cmd --prefix electron run verify:task-queue`
+- `npm.cmd --prefix electron run verify:session`
+- `npm.cmd --prefix electron run verify:hardboard`
+- `git diff --check`
+- Renderer 大包提示和 Electron `os_crypt_win.cc` 本机凭据解密告警仍存在，但上述命令退出码均为 0；本轮未调用真实 Agent 做高成本联调
 
 已通过（历史 E 盘验证）：
 
@@ -79,6 +90,7 @@
 - 工作台：前端入口已隐藏；React 内部逻辑、IPC、`WebContentsView` 和主进程后端暂时保留，避免贸然删除早期链路。
 - 监视器：已复原为串口监视器。
 - 主布局：左侧默认 34%，支持拖动、键盘微调、宽度持久化以及收起/展开对话区。
+- Agent 对话：同一时间只运行一个活动任务；执行中“追加要求”会在当前任务下一执行点继续处理，“排队”才建立独立后续任务。标题显示空闲/执行中/暂停，状态条显示追加与排队数量，输入框支持 `Shift+Enter` 换行。
 - 可读性：中文正文改用系统字体，代码和日志使用等宽字体，按钮、下拉框和标签尺寸已与增大的字号同步。
 - 任务管理器：先从 `hardboard/projects/<name>` 相对路径选择工程，再执行对齐的 Build/Flash 控制；旧文件选择器、源码预览和 PID/Task/Tool 摘要块已移除。
 - 任务诊断：实时日志、完整日志、事件卡片按需打开；最近任务结果按 `taskId` 汇总，成功/失败颜色分离，支持滚动和独立清除。

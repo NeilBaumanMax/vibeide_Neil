@@ -18,6 +18,7 @@
 12. [WINDOWS_0_1_TEST_REPORT](WINDOWS_0_1_TEST_REPORT.md)：Windows E 盘源码/打包迁移、0.1 exe、ESP32-S3 编译烧录和串口测试报告。
 13. [WINDOWS_0_4_0_7161_TEST_REPORT](WINDOWS_0_4_0_7161_TEST_REPORT.md)：当前版本一致性、PE 元数据和 Windows unpacked 打包测试报告。
 14. [Hardboard Agent 运行文档](../runtime/hardboard/doc/README.md)：Agent 在运行时可读的硬件工程、烧录和工具调用规则。
+15. [AGENT_TASK_QUEUE_CONSTRUCTION](AGENT_TASK_QUEUE_CONSTRUCTION.md)：Agent 单活动任务、执行中追加要求、显式排队和任务状态关联的施工与验收规则。
 
 ## 现有历史文档
 
