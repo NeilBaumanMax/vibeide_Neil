@@ -22,7 +22,7 @@
 ## 现有历史文档
 
 - [DEV_PROGRESS](DEV_PROGRESS.md)：历史开发进度，仍有参考价值。
-- [LOG](LOG.md)：历史施工日志，记录 2026-06-07 到 2026-06-10 的关键变更。
+- [LOG](LOG.md)：持续施工日志，记录各阶段的关键变更、验证和 Git 边界。
 - [12_Docker_Windows_Smoke](12_Docker_Windows_Smoke.md)：Docker + Wine Windows 打包 smoke 方案。
 - `../runtime/hardboard/doc/`：硬件施工文档、设备记录、ESP-IDF 调用规范。
 

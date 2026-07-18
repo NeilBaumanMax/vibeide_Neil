@@ -30,7 +30,7 @@ Electron Chromium / WebContentsView
 - 暴露 CDP 端口 `9230`。
 - 管理右侧 `WebContentsView` 浏览页和 tabs。
 - 提供 Renderer 到 Worker 的 IPC。
-- 桥接浏览器录制、回放和工作台目录展示。
+- 桥接浏览器录制、回放、编辑器目录读取和受限文件操作。
 
 关键文件：
 
@@ -38,7 +38,7 @@ Electron Chromium / WebContentsView
 - `electron/src/main/gateway.ts`：IPC 注册，唯一入口。
 - `electron/src/main/browser-view.ts`：右侧 WebContentsView tabs、持久 session、bounds 同步。
 - `electron/src/main/browser-recorder.ts`：Electron 侧录制和回放。
-- `electron/src/main/workbench.ts`：右侧工作台文件、工具、录制、workflow 摘要。
+- `electron/src/main/workbench.ts`：工作台概览和编辑器文件系统边界；提供允许根目录下的目录枚举、文本读写、新建、重命名及移到系统回收站，禁止修改资源管理器根目录。
 - `electron/src/main/hardboard.ts`：硬件设备、串口、Runtime EventBus、Build/Flash 的 IPC 桥接。
 - `electron/src/main/paths.ts`：开发版与 packaged 环境的资源、Runtime、Agent 和 API key 路径解析。
 - `electron/src/main/agent.ts`：Claude Agent 进程、动态 MCP 配置和生命周期管理。
@@ -46,7 +46,9 @@ Electron Chromium / WebContentsView
 - `electron/src/main/tray.ts`：Windows 系统托盘和窗口显隐。
 - `electron/src/main/worker/session-store.ts`：Claude 会话上下文持久化。
 - `electron/src/renderer/App.tsx`：主 UI 状态，以及左右面板宽度持久化、拖动分隔和对话区收起/展开。
-- `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器和编辑器；工作台前端入口隐藏，但组件内部浏览器工作台实现保留。任务管理器负责相对工程选择、Build/Flash 控制、EventBus 诊断卡片和最近任务结果。
+- `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器和编辑器；工作台前端入口隐藏，但组件内部浏览器工作台实现保留。任务管理器负责相对工程选择、Build/Flash 控制、EventBus 诊断卡片和最近任务结果；编辑器负责多根资源树、懒加载目录、多文件标签、内置文件操作对话框、字号持久化和保存状态同步。
+- `electron/src/renderer/components/CodeEditor.tsx`：基于 Monaco Editor 的代码区，按扩展名选择 C/C++、CMake、Markdown、JSON、TypeScript 等语言，使用内置 C/C++ 深色主题并接收用户字号设置。
+- `electron/src/renderer/monaco.ts`：本地 Monaco editor/json/css/html/typescript Worker 注册，保证开发版和打包版不依赖在线 CDN。
 
 ## Worker 层
 
@@ -169,3 +171,4 @@ Electron Chromium / WebContentsView
 3. 历史文档仍保留部分 `coffecat/coddecat` 迁移记录；这些只作为历史，不应作为当前实现依据。
 4. Electron 侧和 Runtime 侧都有录制/回放实现，需要明确长期边界。
 5. `runtime/workflows/` 默认忽略，若未来要内置示例 workflow，需要单独设计 `examples/workflows/`。
+6. Monaco 完整语言与 Worker 会增加 renderer 产物体积；如后续关注首屏速度，应按实际使用语言继续拆包或延迟加载。

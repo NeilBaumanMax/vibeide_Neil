@@ -4,6 +4,20 @@
 
 本轮不是继续隐藏式接入 runtime eventbus，而是把编译、烧录、MCP 工具调用和进程状态真正显示到 Electron 里，让用户在 `win-unpacked/奥德赛0.0.exe` 中能直接看到 runtime 正在做什么。
 
+## 2026-07-18 编辑器实现（漂移修正）
+
+> 编辑器已经从原来的多文件纯文本输入框升级为 VS Code 风格工程编辑区；下方早期“工作台源码预览”和简单编辑器描述只作为历史需求保留。
+
+- 左侧文件资源管理器直接复用仓库的 Agent 生成、硬件工程、参考代码、Skills 和用户导入目录作为多根工作区；目录按需通过 `workbench:listDirectory` 懒加载，并过滤 `.git`、`node_modules`、build、dist 等内容。
+- 右侧上方保留多文件标签、当前绝对路径和保存按钮，下方改用 Monaco Editor；`Ctrl+S`、未保存标记、切换标签、关闭标签和保存结果提示继续生效。
+- Monaco、C/C++/Markdown/JSON/TypeScript 等语言定义及 editor/json/css/html/typescript Worker 均打进 renderer，本地开发和 packaged 环境不从 CDN 下载资源。
+- C/C++ 使用内置深色主题；CMake 额外注册基础 Monarch tokenizer。编辑区显示行号、括号配色、代码缩略图、选择高亮和缩进辅助线。
+- 编辑器底部提供 10–24px 字号减小、增大和重置，用户上次字号保存到 `localStorage`。
+- 文件或目录右键提供新建文件、新建文件夹、重命名、刷新和“移到系统回收站”；新建、重命名和删除确认使用软件内置对话框，不依赖 Electron 原生 `prompt/confirm`。
+- 重命名目录时同步更新已打开标签和展开路径；删除时关闭目标范围内的标签。所有修改经 Preload/Gateway 进入主进程 `workbench.ts`。
+- 主进程校验允许根目录、名称和同名冲突，禁止重命名/删除资源管理器根目录；删除调用 Electron `shell.trashItem`，不直接永久擦除。
+- 功能基线：`5afcef3 feat(electron): add vscode-style project editor`；交互修复：`63992ea fix(electron): add editor controls and file dialogs`。
+
 ## 2026-07-17 当前实现（漂移修正）
 
 > 本节描述 `electron_fix_neil` 分支当前实现。下方“用户反馈对应要求”和 2026-06-29 打包记录保留为历史施工依据；其中“工作台可见入口”、逐文件 CMake/config/source/artifact 选择器、PID/Task/Tool 摘要块和常驻三栏日志已经被本轮交互方案取代。
@@ -85,7 +99,7 @@ Code preview:
 
 ### 编辑器
 
-编辑器是独立页签，不挤在工作台或仓库里。用于阅读和修改 C / H / C++ / CMake / sdkconfig / Markdown / skills / JSON / YAML / TXT。
+编辑器是独立页签，不挤在工作台或仓库里。当前实现为左侧多根文件树、右上多文件标签、右下 Monaco 代码区和底部字号/状态栏；用于阅读、创建、重命名和修改 C / H / C++ / CMake / sdkconfig / Markdown / skills / JSON / YAML / TXT 等文本文件。删除动作进入系统回收站，工作区根目录受保护。
 
 ### 监视器
 

@@ -13,7 +13,7 @@
 ## 当前已落地
 
 - [x] GitHub 仓库 `https://github.com/NeilBaumanMax/vibeide_Neil.git` 已作为当前接力源码仓库接入本机
-- [x] 已同步源码到 Windows `C:\vibeide` 和 `E:\vibeide`，排除依赖、构建产物、运行态和密钥
+- [x] 当前唯一施工源码目录已统一为 Windows `E:\Agent\vibeide\vibeide`；旧 `C:\vibeide` 和 `E:\vibeide` 仅保留在历史迁移记录中
 - [x] README 已重写为奥德赛0.4.0-7171 当前 Electron + Runtime + Agent 主线，`vibeide` 保留为仓库和内部工程代号
 - [x] 新文档体系已建立：INDEX / ARCHITECTURE / DEVELOPMENT / GITHUB_SYNC / REFACTOR_PLAN / SECURITY / HANDOFF
 - [x] Claude CLI 已接入软件级持续会话上下文，最近轮次持久化到 `runtime/claude-session/`
@@ -60,6 +60,10 @@
 - [x] `agent/skills/espidf_hardboard.md` 已补齐 docsDir/projectsDir、排除 build、先读 `main/CMakeLists.txt` 的文件定位规则
 - [x] Runtime task / pid / eventbus / heartbeat / hardboard build-flash events 已接入任务管理器
 - [x] 编辑器页支持多文件标签，仓库页支持导入和移除文件夹
+- [x] 编辑器升级为 VS Code 风格两栏布局：左侧按仓库分组显示多根文件资源管理器并懒加载目录，右侧保留多文件标签、当前路径、保存状态和 Monaco 代码区
+- [x] Monaco、语言定义和 Worker 已随 Electron 本地打包；C/C++、CMake、Markdown、JSON、TypeScript 等文件支持语法高亮、行号、括号配色和代码缩略图
+- [x] 文件资源管理器支持右键新建文件/文件夹、重命名、刷新和移到系统回收站；文件操作使用软件内置对话框，主进程限制允许路径、拒绝覆盖同名条目并保护根目录
+- [x] 编辑器底部支持 10–24px 字号减小、增大和重置，并用 `localStorage` 保存用户上次字号
 - [x] Electron 左右栏默认比例调整为 34%，支持拖动、键盘微调、宽度持久化和对话区收起/展开
 - [x] Electron 中文正文、日志、按钮和标签完成可读性与控件尺寸修正，代码/串口/日志统一使用等宽字体
 - [x] 任务管理器改为“先选相对工程，再 Build/Flash”，工程列表来自 `runtime/hardboard/projects`，两行控件、状态和进度统一对齐
@@ -81,7 +85,7 @@ Electron Window
 ├── 仓库：默认分组 + 可导入/移除文件夹
 ├── 监视器：串口监视器
 ├── 任务管理器：相对工程选择、build/flash、状态进度、按需日志和最近任务结果
-├── 编辑器：源码/Markdown 多文件标签
+├── 编辑器：多根文件树、Monaco 高亮、多文件标签、保存、字号和右键文件管理
 └── 工作台后端：浏览器、录制和 WebContentsView 链路保留，前端入口隐藏
 ```
 
@@ -110,7 +114,7 @@ UI -> Gateway -> Worker -> Agent -> MCP -> Runtime -> Electron Chromium
 ## 当前已知问题
 
 1. `tests/test_scaffold.py` 仍依赖旧 Python scaffold `src/coddecat`，与当前 Electron 主线不一致。
-2. Windows 正式目录 `C:\vibeide` 已作为 Git 工作目录使用，后续继续通过 GitHub pull 接力。
+2. Monaco 当前随 renderer 完整打包，产物体积增加；后续应按启动性能决定是否拆分语言包或延迟加载。
 3. `WebContentsView` 在 Linux/X11 下已增加无有效 bounds 隐藏保护，但仍需继续实机压测位置稳定性。
 4. Worker 层已接入统一搜索预处理，但平台识别仍应随新增平台继续扩展和压测。
 5. 个别 agent 规则文本仍使用旧词 `BrowserView`，语义上指的是“右侧浏览页层”。

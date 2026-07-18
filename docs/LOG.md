@@ -2,6 +2,17 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-18 — VS Code 风格工程编辑器与文件管理
+
+- 编辑器从纯文本输入区升级为两栏工程编辑区：左侧按仓库分组显示 Agent 生成、硬件工程、参考代码、Skills 和用户导入目录，右侧提供多文件标签、路径、保存状态和 Monaco 代码区。
+- 主进程新增受限目录枚举，文件树按需展开并过滤 `.git`、`node_modules`、build、dist 等不应显示的目录；仓库允许根目录继续作为所有读写操作的安全边界。
+- Electron 内置 `monaco-editor` 与 `@monaco-editor/react`，使用本地 Worker 和内置 C/C++ 深色主题；C/C++、CMake、Markdown、JSON、TypeScript 等文本获得语法高亮、行号、括号配色和缩略图，打包后不依赖在线 CDN。
+- 文件资源管理器新增右键菜单：目录可新建文件/文件夹，文件和子目录可重命名或移到系统回收站，所有节点可刷新；禁止覆盖同名条目、非法名称和修改工作区根目录。
+- 文件操作改用软件内置对话框，解决 Electron 环境下原生 `prompt` 无反馈的问题；编辑器底部新增 10–24px 字号调节和重置，并持久化用户上次字号。
+- 文件重命名会同步更新已打开标签、活动路径和展开目录；删除会关闭目标文件或目录范围内的标签。保留 `Ctrl+S`、未保存标记和保存结果提示。
+- 验证：Electron typecheck、main build、renderer build、`git diff --check` 通过；开发预览中 Vite `5173` 和 Electron CDP `9230` 正常监听。`pytest tests/test_project.py` 因本机缺少 `pytest` 命令未执行，不记录为通过。
+- Git：功能提交为 `5afcef3 feat(electron): add vscode-style project editor`，交互修复为 `63992ea fix(electron): add editor controls and file dialogs`，文档漂移修正单独提交。精确暂存 Electron 源码/依赖和本轮文档，排除 `electron/dist*`、`node_modules`、runtime 状态、硬件构建产物及用户未暂存的 `hello_world_main.c` 修改；不推送远端。
+
 ## 2026-07-17 — electron_fix_neil 前端调整与 0.4.0-7171 版本施工
 
 - 右侧顶部隐藏“工作台”页签，当前可见入口为仓库、监视器、任务管理器和编辑器。

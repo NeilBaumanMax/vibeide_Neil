@@ -22,7 +22,7 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 
 ## 能力边界
 
-- Electron 桌面窗口提供聊天区、任务进度、仓库、串口监视、任务管理和代码编辑入口；浏览器工作台前端入口当前隐藏，相关后端能力暂时保留。
+- Electron 桌面窗口提供聊天区、任务进度、仓库、串口监视、任务管理和 VS Code 风格代码编辑入口；编辑器支持多根文件树、Monaco 语法高亮、多文件标签、保存、字号持久化及带内置对话框的右键文件管理。浏览器工作台前端入口当前隐藏，相关后端能力暂时保留。
 - Worker 负责快捷任务、搜索预处理、任务上下文构造和 Agent 生命周期。
 - Agent 负责推理和任务执行规划，但所有浏览器操作必须通过 MCP 工具完成。
 - Runtime 通过 CDP 连接 Electron Chromium，提供 `browser.*`、`storage.*` 和 `hardboard.*` MCP tools。

@@ -4,12 +4,12 @@
 
 ## 当前事实
 
-- 当前日期：2026-07-17。
+- 当前日期：2026-07-18。
 - 正式产品名：奥德赛0.4.0-7171。
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
-- 当前施工分支：`electron_fix_neil`。版本/隐藏工作台提交为 `76a3683`，任务管理器 UI 与首轮文档同步提交为 `b428a0e`；远端推送曾因 GitHub HTTPS 连接重置失败，当前仍以本地 Git 日志为准。
+- 当前施工分支：`electron_fix_neil`。版本/隐藏工作台提交为 `76a3683`，任务管理器 UI 与首轮文档同步提交为 `b428a0e`，路径与旧配置清理到 `036c2d5`，VS Code 风格编辑器功能基线为 `5afcef3`，字号与内置文件对话框修复为 `63992ea`；远端推送曾因 GitHub HTTPS 连接重置失败，当前仍以本地 Git 日志为准。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
@@ -49,6 +49,15 @@
 
 当前 `0.4.0-7171` 正在 `electron_fix_neil` 分支施工，版本一致性、编译和打包结果以本轮完成后的验证记录为准。
 
+已通过（编辑器功能 `5afcef3`、交互修复 `63992ea`，2026-07-18）：
+
+- `npm.cmd --prefix electron run typecheck`
+- `npm.cmd --prefix electron run build:main`
+- `npm.cmd --prefix electron run build:renderer`
+- `git diff --check`
+- 开发预览已启动，Vite `5173` 与 Electron CDP `9230` 正常监听
+- `pytest tests/test_project.py` 未执行：当前 PowerShell 环境没有 `pytest` 命令，不能记录为通过
+
 已通过（历史 E 盘验证）：
 
 - 打包版 runtime `hardboard:env`
@@ -74,7 +83,9 @@
 - 任务管理器：先从 `hardboard/projects/<name>` 相对路径选择工程，再执行对齐的 Build/Flash 控制；旧文件选择器、源码预览和 PID/Task/Tool 摘要块已移除。
 - 任务诊断：实时日志、完整日志、事件卡片按需打开；最近任务结果按 `taskId` 汇总，成功/失败颜色分离，支持滚动和独立清除。
 - 日志定位：点击某条任务的“查看”会在完整日志中自动定位对应 `taskId`，成功段绿色高亮、失败段红色高亮。
-- 编辑器：用于代码和 Markdown 阅读/编辑，支持多文件标签、切换、保存、关闭。
+- 编辑器：左侧显示来自仓库分组和导入目录的多根文件资源管理器，目录按需展开；右侧使用 Monaco Editor，支持 C/C++、CMake、Markdown、JSON、TypeScript 等语法高亮、多文件标签、切换、`Ctrl+S` 保存和关闭。
+- 编辑器字号：底部提供减小、增大和重置，范围 10–24px，使用 `localStorage` 保存用户上次字号。
+- 编辑器文件管理：目录右键可新建文件/文件夹，文件和子目录可重命名或移到系统回收站，所有节点可刷新；新建、重命名和删除确认均使用软件内置对话框。主进程只允许操作工作台许可范围，禁止覆盖同名条目和修改资源管理器根目录。
 - 仓库：默认分组不显示施工文档；支持导入文件夹，导入分组支持移除。
 - 运行态导入文件记录在 `runtime/workbench-imports.json`，该文件已被 `.gitignore` 忽略。
 
@@ -187,9 +198,9 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 
 ## 下一步建议
 
-1. 修复 `hardboard:serial` 的 reset/open 时序和 UI 状态呈现。
-2. 给任务管理器补一条 Windows packaged runtime smoke，覆盖 build/flash/serial 三个入口。
-3. 清理旧文档中仍作为历史记录出现的 `0.3.0`、`Runtime UI v2`、`howtio` 描述，保留时必须标明”历史记录”。
-4. 发布 `0.4.0-7171` Windows 包后，新建对应版本报告；旧版本报告继续保留为历史实测。
-5. 在 ESP-IDF 真实编译测试通过后，补全 `WINDOWS_0_1_TEST_REPORT.md` 的中文路径修复验证项。
-6. 考虑把便携 Python 打包到 `resources/runtime/python/` 作为 ESP-IDF 编译的默认 Python（当前优先系统 Python）。
+1. 对编辑器新建、重命名、回收站删除、字号持久化和打包版离线语法高亮执行一轮 Windows UI smoke，重点覆盖已打开标签的路径同步。
+2. 根据启动和包体实测决定是否拆分 Monaco 语言资源；当前完整 Worker 已本地打包。
+3. 修复 `hardboard:serial` 的 reset/open 时序和 UI 状态呈现。
+4. 给任务管理器补一条 Windows packaged runtime smoke，覆盖 build/flash/serial 三个入口。
+5. 发布 `0.4.0-7171` Windows 包后，新建对应版本报告；旧版本报告继续保留为历史实测。
+6. 在 ESP-IDF 真实编译测试通过后，补全 `WINDOWS_0_1_TEST_REPORT.md` 的中文路径修复验证项。
