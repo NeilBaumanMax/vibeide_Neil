@@ -40,7 +40,7 @@ Electron Chromium / WebContentsView
 - `electron/src/main/browser-view.ts`：右侧 WebContentsView tabs、持久 session、bounds 同步。
 - `electron/src/main/browser-recorder.ts`：Electron 侧录制和回放。
 - `electron/src/main/workbench.ts`：工作台概览和编辑器文件系统边界；提供允许根目录下的目录枚举、文本读写、新建、重命名及移到系统回收站，禁止修改资源管理器根目录。
-- `electron/src/main/hardboard.ts`：硬件设备、串口、Runtime EventBus、Build/Flash 的 IPC 桥接。
+- `electron/src/main/hardboard.ts`：硬件设备、串口、Runtime EventBus、日志历史清理、Build/Flash 的 IPC 桥接。
 - `electron/src/main/paths.ts`：开发版与 packaged 环境的资源、Runtime、Agent 和 API key 路径解析。
 - `electron/src/main/agent.ts`：Claude Agent 进程、动态 MCP 配置和生命周期管理。
 - `electron/src/main/first-run.ts`：首次运行目录与资源初始化。
@@ -134,7 +134,7 @@ Electron Chromium / WebContentsView
 - `runtime/src/mcp/hardboard.tool.ts`：Hardboard MCP tools 注册。
 - `runtime/src/mcp/tool-events.ts`：MCP 工具事件写入 EventBus。
 - `runtime/src/hardboard/runner.ts`：ESP-IDF Build/Flash 进程执行。
-- `runtime/src/eventbus/event-store.ts`：EventBus JSONL 和最近状态持久化。
+- `runtime/src/eventbus/event-store.ts`：EventBus JSONL 和最近状态持久化；提供空闲期历史事件与 Hardboard `.log` 文件的受限清理。
 - `runtime/src/process/process-runner.ts`：受管子进程生命周期。
 - `runtime/src/task/task-manager.ts`：Runtime 任务状态机。
 

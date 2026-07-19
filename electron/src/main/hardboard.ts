@@ -48,6 +48,7 @@ export interface HardboardFlashLaunchOptions {
 
 let serialProcess: ChildProcessWithoutNullStreams | null = null;
 let serialStopTimer: NodeJS.Timeout | null = null;
+const activeRuntimeLaunchPids = new Set<number>();
 
 export async function listHardboardDevices(): Promise<HardboardDevice[]> {
   if (process.platform === 'win32') {
@@ -146,6 +147,17 @@ export function stopSerialMonitor(): { ok: boolean } {
 export async function readHardboardRuntimeEvents(sinceSeq = 0): Promise<unknown> {
   const result = await execRuntimeJson(['hardboard:events', String(Math.max(0, sinceSeq))]);
   return result;
+}
+
+export async function clearHardboardRuntimeHistory(): Promise<unknown> {
+  if (activeRuntimeLaunchPids.size > 0) {
+    return { ok: false, error: 'Build/Flash 启动进程仍在运行，不能清除日志' };
+  }
+  try {
+    return await execRuntimeJson(['hardboard:events-clear']);
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 export function startHardboardBuild(options?: HardboardBuildLaunchOptions): HardboardRuntimeLaunchResult {
@@ -257,6 +269,13 @@ function spawnRuntimeCommand(args: string[], launchOptions?: object): HardboardR
     windowsHide: true,
     stdio: 'ignore',
   });
+  if (child.pid) {
+    const launchPid = child.pid;
+    activeRuntimeLaunchPids.add(launchPid);
+    const releasePid = () => activeRuntimeLaunchPids.delete(launchPid);
+    child.once('exit', releasePid);
+    child.once('error', releasePid);
+  }
   child.unref();
   return {
     ok: true,

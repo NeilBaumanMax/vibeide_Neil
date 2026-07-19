@@ -67,6 +67,39 @@ export function getRuntimeEventFiles() {
   };
 }
 
+export function clearRuntimeEventHistory(): {
+  ok: true;
+  eventsRemoved: number;
+  logsRemoved: number;
+  state: HardboardRuntimeState;
+} {
+  const current = getRuntimeEventState();
+  if (current.status === 'running' || current.activePid != null) {
+    throw new Error('Runtime 任务仍在运行，不能清除日志；请等待任务结束或先停止任务');
+  }
+
+  let eventsRemoved = 0;
+  if (fs.existsSync(EVENT_LOG_FILE)) {
+    const lines = fs.readFileSync(EVENT_LOG_FILE, 'utf-8').split(/\r?\n/).filter(Boolean);
+    eventsRemoved = lines.length;
+    fs.unlinkSync(EVENT_LOG_FILE);
+  }
+
+  let logsRemoved = 0;
+  if (fs.existsSync(RUNTIME_DIRS.hardboardLogs)) {
+    for (const entry of fs.readdirSync(RUNTIME_DIRS.hardboardLogs, { withFileTypes: true })) {
+      if (!entry.isFile() || !entry.name.toLowerCase().endsWith('.log')) continue;
+      fs.unlinkSync(path.join(RUNTIME_DIRS.hardboardLogs, entry.name));
+      logsRemoved += 1;
+    }
+  }
+
+  lastSeq = 0;
+  state = createInitialState();
+  writeState(state);
+  return { ok: true, eventsRemoved, logsRemoved, state };
+}
+
 function deriveRuntimeState(value: HardboardRuntimeState): HardboardRuntimeState {
   if (value.status !== 'running') return value;
   const heartbeatAt = value.lastHeartbeatAt || value.generatedAt;
@@ -213,6 +246,10 @@ function readInitialState(): HardboardRuntimeState {
       // Fall through to a fresh state.
     }
   }
+  return createInitialState();
+}
+
+function createInitialState(): HardboardRuntimeState {
   return {
     generatedAt: Date.now(),
     lastSeq: 0,

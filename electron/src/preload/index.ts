@@ -44,6 +44,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   listBrowserRecordingSummaries: () => ipcRenderer.invoke('browser:listRecordingSummaries'),
   listHardboardDevices: () => ipcRenderer.invoke('hardboard:listDevices'),
   getHardboardRuntimeEvents: (sinceSeq?: number) => ipcRenderer.invoke('hardboard:runtimeEvents', sinceSeq),
+  clearHardboardRuntimeHistory: () => ipcRenderer.invoke('hardboard:runtimeHistoryClear'),
   startHardboardBuild: (options?: { projectDir?: string; cmakeFile?: string; configFile?: string; sourceFile?: string }) => ipcRenderer.invoke('hardboard:buildStart', options),
   startHardboardFlash: (options: { projectDir?: string; port: string; artifactFile?: string; configFile?: string }) => ipcRenderer.invoke('hardboard:flashStart', options),
   readHardboardSourceFile: (targetPath: string) => ipcRenderer.invoke('hardboard:readSource', targetPath),

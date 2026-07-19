@@ -27,7 +27,7 @@ export {
   runIdfSetTarget,
   runSerialCapture,
 } from './hardboard.js';
-export { readRuntimeEventsSince } from './eventbus/index.js';
+export { clearRuntimeEventHistory, readRuntimeEventsSince } from './eventbus/index.js';
 
 async function runCli(): Promise<void> {
   const command = process.argv[2] ?? 'health';
@@ -75,6 +75,12 @@ async function runCli(): Promise<void> {
     const { readRuntimeEventsSince } = await import('./eventbus/index.js');
     const sinceSeq = Number.parseInt(process.argv[3] || '0', 10);
     console.log(JSON.stringify(readRuntimeEventsSince(Number.isFinite(sinceSeq) ? sinceSeq : 0), null, 2));
+    return;
+  }
+
+  if (command === 'hardboard:events-clear') {
+    const { clearRuntimeEventHistory } = await import('./eventbus/index.js');
+    console.log(JSON.stringify(clearRuntimeEventHistory(), null, 2));
     return;
   }
 

@@ -8,6 +8,7 @@ import { listBrowserRecordingSummaries, listBrowserRecordings, replayBrowserReco
 import { createWorkbenchEntry, deleteWorkbenchEntry, getWorkbenchOverview, importWorkbenchFolder, listWorkbenchDirectory, openWorkbenchItem, readWorkbenchFile, removeImportedWorkbenchFolder, renameWorkbenchEntry, writeWorkbenchFile } from './workbench';
 import {
   isSerialMonitorRunning,
+  clearHardboardRuntimeHistory,
   listHardboardDevices,
   readHardboardRuntimeEvents,
   readHardboardSourceFile,
@@ -201,6 +202,10 @@ export function startGateway(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('hardboard:runtimeEvents', async (_event, sinceSeq?: number) => {
     return readHardboardRuntimeEvents(typeof sinceSeq === 'number' ? sinceSeq : 0);
+  });
+
+  ipcMain.handle('hardboard:runtimeHistoryClear', async () => {
+    return clearHardboardRuntimeHistory();
   });
 
   ipcMain.handle('hardboard:buildStart', async (_event, options?: { projectDir?: string; cmakeFile?: string; configFile?: string; sourceFile?: string }) => {

@@ -140,6 +140,14 @@ export interface HardboardRuntimeEventsResult {
   events: RuntimeEvent[];
 }
 
+export interface HardboardRuntimeClearResult {
+  ok: boolean;
+  eventsRemoved?: number;
+  logsRemoved?: number;
+  state?: HardboardRuntimeState;
+  error?: string;
+}
+
 export interface HardboardRuntimeLaunchResult {
   ok: boolean;
   pid?: number;
@@ -184,6 +192,7 @@ export interface WindowAPI {
   listBrowserRecordingSummaries: () => Promise<{ recordings: RecordingSummary[] }>;
   listHardboardDevices: () => Promise<{ devices: HardboardDevice[] }>;
   getHardboardRuntimeEvents: (sinceSeq?: number) => Promise<HardboardRuntimeEventsResult>;
+  clearHardboardRuntimeHistory: () => Promise<HardboardRuntimeClearResult>;
   startHardboardBuild: (options?: { projectDir?: string; cmakeFile?: string; configFile?: string; sourceFile?: string }) => Promise<HardboardRuntimeLaunchResult>;
   startHardboardFlash: (options: { projectDir?: string; port: string; artifactFile?: string; configFile?: string }) => Promise<HardboardRuntimeLaunchResult>;
   readHardboardSourceFile: (targetPath: string) => Promise<{ ok: boolean; path?: string; text?: string; error?: string }>;

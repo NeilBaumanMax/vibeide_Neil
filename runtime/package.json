@@ -11,7 +11,8 @@
     "mcp": "node node_modules/tsx/dist/cli.mjs src/index.ts mcp",
     "connect": "node node_modules/tsx/dist/cli.mjs src/index.ts connect",
     "typecheck": "node node_modules/typescript/lib/tsc.js --noEmit",
-    "smoke:hardboard": "npm run build && node scripts/verify_hardboard_build.mjs"
+    "smoke:hardboard": "npm run build && node scripts/verify_hardboard_build.mjs",
+    "verify:event-clear": "npm run build && node scripts/verify_event_history_clear.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

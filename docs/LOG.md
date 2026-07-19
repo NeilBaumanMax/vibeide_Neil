@@ -2,6 +2,15 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-20 — 任务管理器运行日志改为真实磁盘清理
+
+- 用户复测发现任务管理器“清除”后重开前端旧日志再次出现；根因是 `clearRuntimeCard` / `clearTaskHistory` 只推进 Renderer 的显示游标，磁盘上的 EventBus 和构建日志从未删除。
+- Runtime 新增 `hardboard:events-clear`：仅在任务非运行状态执行，删除 `hardboard/events/events.jsonl`、把 `state.json` 重置为空闲状态，并精确删除 `hardboard/logs` 目录中的 `.log` 文件；其他文件不会删除。
+- Electron 新增 `hardboard:runtimeHistoryClear` IPC，Renderer 的诊断日志和最近任务“清除”统一调用该后端接口，成功后同步归零事件、任务记录和轮询序号。
+- Build/Flash 运行中禁用清除按钮，Runtime 后端也会二次拒绝，避免清理时与日志写入竞争。
+- 新增 `npm.cmd --prefix runtime run verify:event-clear`，在隔离临时目录验证 EventBus 和 `.log` 文件真实消失、状态归零且非日志文件保留。
+- 验证通过：Runtime build/清理烟测、Electron typecheck、main/renderer build和 `git diff --check`。
+
 ## 2026-07-20 — Agent 停止与异步完成回调竞态加固
 
 - 复核 `AGENT_TASK_QUEUE_CONSTRUCTION.md` 和现有实现后发现：Agent turn 返回结果、Worker 正在等待页面验收时，用户停止或切换任务，旧异步回调仍可能继续完成当前状态、启动返工，甚至污染随后开始的新任务。
@@ -58,7 +67,7 @@
 - 实时日志、完整日志、事件卡片改为按钮触发的诊断卡片；页面下半区新增“最近任务与结果”，按 `taskId` 聚合 Build/Flash 的状态、工程、端口、时间、耗时和退出码。
 - 状态颜色明确分离：成功绿色、失败红色、运行中蓝色、等待黄色、取消灰色；任务结果固定表头并提供纵向滚动，前端事件缓存提高到最近 500 条。
 - 点击任务“查看”会在完整 EventBus 日志中按 `taskId` 定位、自动滚动并高亮对应日志段；失败为红色、成功为绿色。
-- 实时日志、完整日志、事件卡片和最近任务结果均增加独立“清除”按钮；清除只更新前端显示游标，不删除后端 EventBus 文件，新事件继续显示。
+- 实时日志、完整日志、事件卡片和最近任务结果均增加“清除”按钮；该阶段最初只更新前端显示游标，已在 2026-07-20 的后续修复中改为真实后端清理。
 - 本轮漂移修正同步更新 `ARCHITECTURE.md`、`DEV_PROGRESS.md`、`HANDOFF.md`、`RUNTIME_TASK_MANAGER_UI_CONSTRUCTION.md` 和本日志；历史测试报告不改写。
 - 收尾验证通过：`npm.cmd --prefix runtime run build`、Electron `typecheck`、`build:main`、`build:renderer`、`verify:version` 和 `git diff --check`；版本输出为 release `0.4.0.7171`、package `0.4.0-7171`、product `奥德赛0.4.0-7171`。
 - Git：所有改动位于 `electron_fix_neil`，只精确暂存本轮源码和文档，不纳入 `electron/dist*`、runtime events/logs、硬件 build、密钥或其他运行态文件；按用户要求暂不推送远端。

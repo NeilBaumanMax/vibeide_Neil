@@ -294,8 +294,10 @@ export default function BrowserPanel({
   const [runtimeState, setRuntimeState] = useState<HardboardRuntimeState | null>(null);
   const [runtimeEvents, setRuntimeEvents] = useState<RuntimeEvent[]>([]);
   const [runtimeSeq, setRuntimeSeq] = useState(0);
+  const [runtimePollGeneration, setRuntimePollGeneration] = useState(0);
   const [projectDir, setProjectDir] = useState('');
   const [runtimeMessage, setRuntimeMessage] = useState('');
+  const [clearingRuntimeHistory, setClearingRuntimeHistory] = useState(false);
   const [runtimeCard, setRuntimeCard] = useState<RuntimeCard | null>(null);
   const [taskLogFocus, setTaskLogFocus] = useState<TaskLogFocus | null>(null);
   const [liveLogClearedSeq, setLiveLogClearedSeq] = useState(0);
@@ -317,6 +319,7 @@ export default function BrowserPanel({
   const browserStageRef = useRef<HTMLDivElement | null>(null);
   const serialBottomRef = useRef<HTMLDivElement | null>(null);
   const focusedLogLineRef = useRef<HTMLDivElement | null>(null);
+  const runtimePollGenerationRef = useRef(0);
 
   const visibleTabs = useMemo(
     () => tabs.filter((tab) => !isPlaceholderTab(tab, tabs.length)),
@@ -454,9 +457,10 @@ export default function BrowserPanel({
 
   useEffect(() => {
     let cancelled = false;
+    const generation = runtimePollGenerationRef.current;
     const poll = async () => {
       const result = await window.electronAPI?.getHardboardRuntimeEvents?.(runtimeSeq);
-      if (!result || cancelled) return;
+      if (!result || cancelled || generation !== runtimePollGenerationRef.current) return;
       setRuntimeState(result.state);
       setRuntimeSeq(result.state.lastSeq);
       setRuntimeEvents((current) => [...current, ...result.events].slice(-500));
@@ -467,7 +471,7 @@ export default function BrowserPanel({
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [projectDir, runtimeSeq]);
+  }, [projectDir, runtimeSeq, runtimePollGeneration]);
 
   useEffect(() => {
     if (!projectDir && projectOptions[0]) {
@@ -783,18 +787,40 @@ export default function BrowserPanel({
     setRuntimeCard('full');
   };
 
-  const clearRuntimeCard = () => {
-    const latestSeq = visibleRuntimeEvents.at(-1)?.seq ?? runtimeSeq;
-    if (runtimeCard === 'live') setLiveLogClearedSeq(latestSeq);
-    if (runtimeCard === 'full') {
-      setFullLogClearedSeq(latestSeq);
+  const clearRuntimeHistory = async () => {
+    if (clearingRuntimeHistory) return;
+    setClearingRuntimeHistory(true);
+    try {
+      const result = await window.electronAPI?.clearHardboardRuntimeHistory?.();
+      if (!result?.ok || !result.state) {
+        setRuntimeMessage(result?.error || '运行日志清除失败');
+        return;
+      }
+
+      setRuntimeEvents([]);
+      runtimePollGenerationRef.current += 1;
+      setRuntimePollGeneration(runtimePollGenerationRef.current);
+      setRuntimeState(result.state);
+      setRuntimeSeq(result.state.lastSeq);
+      setLiveLogClearedSeq(0);
+      setFullLogClearedSeq(0);
+      setEventCardsClearedSeq(0);
+      setTaskHistoryClearedSeq(0);
       setTaskLogFocus(null);
+      setRuntimeMessage(`已从磁盘删除 ${result.eventsRemoved ?? 0} 条 EventBus 事件和 ${result.logsRemoved ?? 0} 个日志文件`);
+    } catch (error) {
+      setRuntimeMessage(`运行日志清除失败: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setClearingRuntimeHistory(false);
     }
-    if (runtimeCard === 'events') setEventCardsClearedSeq(latestSeq);
   };
 
-  const clearTaskHistory = () => {
-    setTaskHistoryClearedSeq(visibleRuntimeEvents.at(-1)?.seq ?? runtimeSeq);
+  const clearRuntimeCard = async () => {
+    await clearRuntimeHistory();
+  };
+
+  const clearTaskHistory = async () => {
+    await clearRuntimeHistory();
   };
 
   return (
@@ -982,7 +1008,7 @@ export default function BrowserPanel({
                     {runtimeCard === 'full' && taskLogFocus ? ` · 已定位 ${taskLogFocus.kind === 'hardboard.build' ? 'Build' : 'Flash'} · ${taskStatusLabel(taskLogFocus.status)}` : ''}
                   </strong>
                   <div className="diagnostic-card-actions">
-                    <button className="nes-btn is-warning" type="button" onClick={clearRuntimeCard}>清除</button>
+                    <button className="nes-btn is-warning" type="button" disabled={runtimeBusy || clearingRuntimeHistory} onClick={() => void clearRuntimeCard()}>{clearingRuntimeHistory ? '清除中...' : '清除'}</button>
                     <button className="nes-btn is-error" type="button" onClick={() => setRuntimeCard(null)}>关闭</button>
                   </div>
                 </header>
@@ -1026,7 +1052,7 @@ export default function BrowserPanel({
                 <strong>最近任务与结果</strong>
                 <div className="task-history-header-actions">
                   <span>{taskHistory.length ? `${taskHistory.length} 条 Build / Flash 记录` : '等待任务'}</span>
-                  <button className="nes-btn is-warning" type="button" onClick={clearTaskHistory}>清除</button>
+                  <button className="nes-btn is-warning" type="button" disabled={runtimeBusy || clearingRuntimeHistory} onClick={() => void clearTaskHistory()}>{clearingRuntimeHistory ? '清除中...' : '清除'}</button>
                 </div>
               </header>
               <div className="task-history-table">

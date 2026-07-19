@@ -71,8 +71,8 @@
 - [x] Electron 中文正文、日志、按钮和标签完成可读性与控件尺寸修正，代码/串口/日志统一使用等宽字体
 - [x] 任务管理器改为“先选相对工程，再 Build/Flash”，工程列表来自 `runtime/hardboard/projects`，两行控件、状态和进度统一对齐
 - [x] 任务管理器删除旧文件选择器、源码预览和进程摘要块；实时日志、完整日志、事件卡片改为按需诊断卡片
-- [x] 最近任务结果按 `taskId` 聚合并区分成功/失败颜色，支持滚动、独立清除、查看对应日志和按状态高亮定位
-- [x] 实时日志、完整日志、事件卡片和最近任务结果均支持独立前端清除，不删除后端 EventBus 数据
+- [x] 最近任务结果按 `taskId` 聚合并区分成功/失败颜色，支持滚动、清除、查看对应日志和按状态高亮定位
+- [x] 任务管理器“清除”已改为真实后端清理：空闲时删除 EventBus `events.jsonl`、重置状态并删除 Hardboard `.log` 文件；运行中拒绝清理，非日志文件保留
 - [x] 文档路径漂移已修正：当前 Windows 工作区统一为 `E:\Agent\vibeide\vibeide`，旧 Linux、`C:\vibeide`、`D:\vibeide` 和 `E:\vibeide` 路径仅作为历史迁移记录保留
 - [x] `ARCHITECTURE.md` 已补齐 Runtime hardboard/eventbus/process/task/MCP 子系统和 Electron hardboard/paths/agent/first-run/tray/session-store 模块
 - [x] 删除已被 Electron 动态 MCP 配置取代的 `runtime/mcp-config.json`、孤立根 `package-lock.json`，并清理活动脚本中的旧 `coffecat` 名称和绝对路径
