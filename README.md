@@ -13,12 +13,12 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 ## 当前状态
 
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
-- 当前施工分支：`agent_task_queue_fix`（从本地 `electron_fix_neil` 的 `d10245d` 分出，远端基线分支为 `main`）
+- 当前施工分支：`agent_task_queue_fix`（从本地 `electron_fix_neil` 的 `d10245d` 分出；当前功能 HEAD 为 `25065b4`）
 - 当前发布版本：`0.4.0-7171`（Windows PE 四段版本映射为 `0.4.0.7171`）
 - 当前 Windows 源码目录：`E:\Agent\vibeide\vibeide`
 - 上一版 Windows v0.1.0 unpacked 包：`E:\vibeide-0.1-win-unpacked`（历史验证对象）
 - 历史 Linux、`C:\vibeide` 和旧 `E:\vibeide` 路径仅用于迁移记录，不再作为当前施工目录。
-- 当前代码来源：Windows 工作区在 `agent_task_queue_fix` 分支修复 Agent 并发任务问题；该分支当前没有 upstream，GitHub 推送状态以 `git branch -vv` 为准。
+- 当前代码来源：Windows 工作区在 `agent_task_queue_fix` 分支维护 Agent 单活动任务、异步回调隔离和 Runtime 日志真实清理；该分支当前没有 upstream，GitHub 推送状态以 `git branch -vv` 为准。
 
 ## 能力边界
 
@@ -26,6 +26,7 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 - Worker 负责快捷任务、搜索预处理、任务上下文构造和 Agent 生命周期；同一时间只运行一个活动任务，执行中消息默认追加到当前任务，显式“排队”才建立独立后续任务。
 - Agent 负责推理和任务执行规划，但所有浏览器操作必须通过 MCP 工具完成。
 - Runtime 通过 CDP 连接 Electron Chromium，提供 `browser.*`、`storage.*` 和 `hardboard.*` MCP tools。
+- 任务管理器的日志“清除”会在 Runtime 空闲时真实删除 EventBus 历史和 Hardboard `.log` 文件，不再只是隐藏前端记录。
 - `runtime/hardboard` 保存 ESP-IDF 工具、ESP32-S3 示例、施工文档、本地工程和固件产物。
 - 录制、回放和 workflow 保留，用于把网页/调试流程沉淀为可复用辅助任务。
 
@@ -137,6 +138,6 @@ pytest tests/test_project.py
 
 ## 下一步
 
-1. 继续按 [接力开发文档](docs/HANDOFF.md) 维护 Linux 本机、Windows C/E 盘、GitHub 三方同步。
+1. 继续以 `E:\Agent\vibeide\vibeide` 为唯一施工目录，在当前本地分支精确提交；远端同步按 [GitHub 同步和接力](docs/GITHUB_SYNC.md) 由用户决定。
 2. 修复 `hardboard:serial` 在 ESP32-S3 上的 reset/open 时序，避免端口打开但无应用输出。
 3. 按 [重构计划](docs/REFACTOR_PLAN.md) 清理旧 scaffold、整理 Runtime / Agent / Electron 边界。

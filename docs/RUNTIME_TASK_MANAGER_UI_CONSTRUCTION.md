@@ -28,8 +28,8 @@
 - 任务管理器先选择 `hardboard/projects/<project>` 相对工程路径，再执行 Build/Flash。Build 和 Flash 固定为对齐的六列控制行，分别显示状态和进度；Flash 行提供串口选择与设备刷新。
 - 工程下拉项由主进程枚举 `runtime/hardboard/projects` 目录提供。主进程保留安全的 `hardboard/projects/<name>` 相对引用，交给 runtime 按开发版或 packaged 环境解析。
 - 删除旧的 CMake/config/source/artifact 选择器、源码预览和 PID/Task/Tool/Port/Project/Current 摘要块，避免用户先选文件再选工作目录的倒置流程。
-- 实时日志、完整日志和事件卡片改为按按钮打开的诊断卡片，给页面下半区留出任务结果空间；三个视图均可独立清除。
-- “最近任务与结果”按 `taskId` 聚合 Build/Flash，显示状态、工程、端口、开始时间、耗时、退出码和日志入口；成功为绿色、失败为红色，列表固定表头并可滚动，也可独立清除。
+- 实时日志、完整日志和事件卡片改为按按钮打开的诊断卡片，给页面下半区留出任务结果空间；各视图均提供统一的运行历史清除入口。
+- “最近任务与结果”按 `taskId` 聚合 Build/Flash，显示状态、工程、端口、开始时间、耗时、退出码和日志入口；成功为绿色、失败为红色，列表固定表头并可滚动，也提供同一个运行历史清除入口。
 - 点击任务“查看”会打开完整日志，按 `taskId` 定位该任务的日志段并自动滚动；失败日志红色高亮、成功日志绿色高亮，其余状态使用各自颜色。
 - Renderer 最多保留最近 500 条 Runtime 事件用于完整日志和任务结果；“清除”现在通过 IPC 调用 Runtime 后端，删除 `events.jsonl`、重置 `state.json` 并删除 `hardboard/logs` 下的 `.log` 文件。Build/Flash 运行期间禁止清除，非日志文件不受影响。
 

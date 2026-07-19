@@ -58,7 +58,7 @@
 - [x] `windows1.0` 支线开始 Windows 启动与打包适配
 - [x] 增加 Docker + Wine Windows 打包 smoke 测试入口
 - [x] `agent/tools` 长期工具补齐 Windows `.cmd` / 跨平台 `.mjs` 入口
-- [x] hardboard runtime 打包版已使用短路径 `%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard`，支持相对项目路径
+- [x] hardboard runtime 打包版将随包目录通过 junction 映射到短路径 `C:\vibeide-hw\hardboard`，开发版继续使用工作区 `runtime/hardboard`，并支持相对项目路径
 - [x] `hardboard.idf_build` / `hardboard.idf_flash` 已改为 compact 输出，完整 stdout/stderr 写入 `runtime/hardboard/logs/*.log`
 - [x] `agent/skills/espidf_hardboard.md` 已补齐 docsDir/projectsDir、排除 build、先读 `main/CMakeLists.txt` 的文件定位规则
 - [x] Runtime task / pid / eventbus / heartbeat / hardboard build-flash events 已接入任务管理器

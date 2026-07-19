@@ -64,7 +64,7 @@ hardboard\projects\<project-name>
 不要让 Agent 拼 `C:\vibeide\electron\dist-package\win-unpacked\resources\runtime\hardboard\...` 这种打包后的长绝对路径。Windows 打包版 runtime 会在内部把 hardboard 根目录映射到短路径：
 
 ```text
-%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard
+C:\vibeide-hw\hardboard
 ```
 
 用途：
@@ -83,7 +83,7 @@ fatal error: bits/stl_iterator_base_types.h: No such file or directory
 
 这类错误通常不是 ESP-IDF 源码缺文件。实测头文件存在，常见原因有两类：
 
-1. 打包后路径过深或旧 build 缓存记录了旧路径。先确认 `hardboard.env_status` 返回的是短路径 `%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard`，然后删除工程 `build` 后重试。
+1. 打包后路径过深或旧 build 缓存记录了旧路径。先确认 `hardboard.env_status` 返回的是短路径 `C:\vibeide-hw\hardboard`，然后删除工程 `build` 后重试。
 2. 打包版 Xtensa GCC 14.2.0 的 C++ multilib include 没被编译命令带上。症状通常出现在 ESP-IDF C++ 组件，例如 `nvs_flash`，缺的是 `xtensa-esp-elf/include/c++/14.2.0/xtensa-esp-elf/esp32s3/no-rtti/bits/*`。
 
 排查顺序：
@@ -106,7 +106,7 @@ node dist\index.js hardboard:build hardboard\projects\wifi_connect_fmai
 `hardboard:env` 应显示：
 
 ```text
-hardboardRoot = C:\Users\HP\AppData\Local\vibeide-hardboard-runtime\hardboard
+hardboardRoot = C:\vibeide-hw\hardboard
 ```
 
 ## log.txt 复盘出的已修复问题

@@ -238,7 +238,7 @@ CPLUS_INCLUDE_PATH += target 对应 Xtensa C++ multilib include
 Windows 打包版继续使用短路径：
 
 ```text
-%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard
+C:\vibeide-hw\hardboard
 ```
 
 ## EventBus

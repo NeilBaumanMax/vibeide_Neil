@@ -2,6 +2,14 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-20 — `25065b4` 后文档漂移复核
+
+- 以本地 `git status`、`git log`、`git branch -vv` 和现代码为真相源复核；当前分支为 `agent_task_queue_fix`，功能 HEAD 为 `25065b4`，分支仍无 upstream，本轮只维护本地 Git。
+- README、HANDOFF 和 GITHUB_SYNC 补齐 `443a0a6` 的旧回调隔离与 `25065b4` 的 Runtime 日志真实清理，不再把当前施工状态停留在早期 `39ef92d/86af2c8`。
+- 任务管理器施工文档把“独立前端清除”修正为多个入口调用统一的后端历史清理；HANDOFF 补齐 `verify:event-clear` 和本轮完整验证事实。
+- 当前打包版 Hardboard 短路径按 `runtime/src/paths.ts` 修正为 `C:\vibeide-hw\hardboard` junction；旧 `%LOCALAPPDATA%\vibeide-hardboard-runtime` 只保留在明确的历史测试记录中。
+- README 的下一步移除旧 Linux/C/E 盘三方并行同步说法，继续以 `E:\Agent\vibeide\vibeide` 为唯一施工目录。
+
 ## 2026-07-20 — 任务管理器运行日志改为真实磁盘清理
 
 - 用户复测发现任务管理器“清除”后重开前端旧日志再次出现；根因是 `clearRuntimeCard` / `clearTaskHistory` 只推进 Renderer 的显示游标，磁盘上的 EventBus 和构建日志从未删除。

@@ -20,7 +20,7 @@ GitHub
 
 - GitHub SSH 访问已验证。
 - 当前本机记录的 `origin/main` 为 `5e6ba3b`；`electron_fix_neil` 本地基线为 `d10245d`。
-- 当前施工分支为 `agent_task_queue_fix`，Agent 任务串行化功能提交为 `39ef92d`，首轮施工文档提交为 `86af2c8`。
+- 当前施工分支为 `agent_task_queue_fix`；任务串行化功能提交为 `39ef92d`，首轮施工文档为 `86af2c8`，文档漂移复核为 `3df82c8`，旧异步回调隔离为 `443a0a6`，Runtime 日志真实清理为当前功能 HEAD `25065b4`。
 - `agent_task_queue_fix` 当前没有 upstream；本轮只维护本地 Git，不执行远端推送。需要同步时由用户手动运行 `git push -u origin agent_task_queue_fix`。
 - `electron_fix_neil` 早期推送曾因 GitHub HTTPS 连接重置失败；远端分支事实不能根据本地分支存在与否推断，必须以成功的 `git push` 或远端查询结果为准。
 - Windows SSH 已连通。

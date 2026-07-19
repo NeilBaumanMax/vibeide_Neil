@@ -51,7 +51,7 @@ fatal error: bits/stl_iterator_base_types.h: No such file or directory
 
 不要先改业务源码。排查顺序：
 
-1. `hardboard.env_status` 必须显示 `hardboardRoot` 位于 `%LOCALAPPDATA%\vibeide-hardboard-runtime\hardboard`。
+1. 打包版 `hardboard.env_status` 应显示 `hardboardRoot` 位于 `C:\vibeide-hw\hardboard`；开发版应指向当前工作区的 `runtime\hardboard`。
 2. 删除当前工程 `build` 目录，避免旧 Python、旧 ESP-IDF 路径或旧 toolchain include 缓存。
 3. 重新执行 `hardboard.idf_build`，读取 compact JSON 里的 `stderrTail` 和 `stderrLogPath`。
 4. runtime 会按工程 target 自动给 `CPLUS_INCLUDE_PATH` 注入 Xtensa GCC 14.2.0 C++ multilib include，例如 `xtensa-esp-elf/include/c++/14.2.0/xtensa-esp-elf/esp32s3/no-rtti`。如果仍然失败，先检查该目录是否存在；临时方案是在工程顶层 `CMakeLists.txt` 对 C++ 编译追加同一路径。
