@@ -21,6 +21,15 @@ async function main() {
     turnInFlight: false,
     paused: false,
     silenceTimer: null,
+    buffer: { flush: () => [] },
+    state: {
+      completed: 0,
+      failed: 0,
+      resetCount: 0,
+      complete() { this.completed += 1; },
+      fail() { this.failed += 1; },
+      reset() { this.resetCount += 1; },
+    },
   });
 
   orchestrator.startTask = async (request) => {
@@ -63,6 +72,31 @@ async function main() {
   assert.equal(starts[1].id, queued.taskId);
   assert.equal(orchestrator.queuedTasks.length, 0);
   assert(events.some((event) => event.channel === 'task:status'), 'task status events should be emitted');
+
+  // A turn-complete callback yields while checking for guidance. If the task
+  // is stopped/replaced during that gap, the old callback must not complete or
+  // otherwise mutate the next task.
+  orchestrator.turnInFlight = false;
+  orchestrator.finishCurrentTask();
+  const stale = orchestrator.submitTask('即将取消的任务', 'auto');
+  const completedBefore = orchestrator.state.completed;
+  const staleCompletion = orchestrator.handleAgentTurnComplete(0, '即将取消的任务');
+  orchestrator.finishCurrentTask();
+  await staleCompletion;
+  assert.equal(orchestrator.state.completed, completedBefore, 'stale completion must be ignored after task cancellation');
+  assert.equal(orchestrator.currentTaskId, null);
+  assert(stale.taskId, 'canceled task should have an id');
+
+  // Stop is also responsible for dropping both kinds of pending work.
+  orchestrator.currentTask = null;
+  orchestrator.currentTaskId = null;
+  orchestrator.turnInFlight = true;
+  orchestrator.pendingGuidance = ['不要遗漏这一项'];
+  orchestrator.queuedTasks = [{ id: 'queued-after-stop', text: '不应再执行' }];
+  orchestrator.stop();
+  assert.equal(orchestrator.pendingGuidance.length, 0);
+  assert.equal(orchestrator.queuedTasks.length, 0);
+  assert.equal(orchestrator.getTaskStatus().busy, false);
 
   console.log('agent task queue smoke ok');
   app.quit();

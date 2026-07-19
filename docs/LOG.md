@@ -2,6 +2,15 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-20 — Agent 停止与异步完成回调竞态加固
+
+- 复核 `AGENT_TASK_QUEUE_CONSTRUCTION.md` 和现有实现后发现：Agent turn 返回结果、Worker 正在等待页面验收时，用户停止或切换任务，旧异步回调仍可能继续完成当前状态、启动返工，甚至污染随后开始的新任务。
+- turn 完成链路现在捕获原活动 `taskId`，在追加要求检查、页面验收及失败回调恢复后重新确认任务仍然有效；过期回调只记录并忽略，不再写入新任务状态。
+- Agent 进程在已经产出 turn result、进入 Worker 异步验收后关闭时，不再抢占验收链路的任务所有权；如需返工或应用追加要求，由验收链路按需重新拉起 Agent。
+- 启动任务和恢复任务的异步失败也增加活动任务校验，避免迟到的 Promise rejection 结束后来任务。
+- 扩展 `verify_agent_task_queue.cjs`：新增“完成回调让出执行权后任务已取消”的回归，以及停止清空追加要求和独立队列的断言。
+- 验证通过：Electron typecheck、main/renderer build、任务队列烟测、Claude session 烟测、Hardboard context 烟测和 `git diff --check`。Renderer 大包提示与本机 `os_crypt_win.cc` 告警不影响退出码。
+
 ## 2026-07-18 — agent_task_queue_fix 文档漂移复核
 
 - 以本地 `git branch -vv`、`git log`、`config/version.json` 和实际 Electron 源码为真相源复核文档；当前分支为 `agent_task_queue_fix`，父分支基线为 `d10245d`，功能提交为 `39ef92d`，首轮任务队列文档提交为 `86af2c8`。

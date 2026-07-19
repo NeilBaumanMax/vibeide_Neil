@@ -112,6 +112,10 @@ export class Orchestrator {
     try {
       await this.runTask(request.text);
     } catch (error) {
+      if (!this.isActiveTask(request.id)) {
+        logger.warn('task:error', { taskId: request.id, ignored: true, stage: 'start' });
+        return;
+      }
       const message = error instanceof Error ? error.message : String(error);
       logger.error('task:error', { task: request.text, taskId: request.id, message });
       this.pushUI('chat:message', {
@@ -209,7 +213,11 @@ export class Orchestrator {
       if (this.observedAgentPid !== (proc.pid ?? null)) return;
       this.stopSilenceTimer();
       this.observedAgentPid = null;
-      if (this.currentTask || this.turnInFlight) {
+      // A result event can start asynchronous page validation before the CLI
+      // process closes. In that window the turn is already complete, so the
+      // validation path remains the task owner and may respawn the Agent if it
+      // needs a follow-up turn.
+      if (this.turnInFlight) {
         void this.handleAgentProcessExit(code ?? 1);
       }
     });
@@ -238,6 +246,8 @@ export class Orchestrator {
       logger.warn('agent:turn-complete', { ignored: true, exitCode: code, task: task.slice(0, 100) });
       return;
     }
+    const taskId = this.currentTaskId;
+    if (!taskId) return;
     this.turnInFlight = false;
     logger.info('agent:turn-complete', { exitCode: code, taskId: this.currentTaskId, task: task.slice(0, 100) });
 
@@ -247,12 +257,20 @@ export class Orchestrator {
       this.handleParsedChunk(p);
     }
 
-    if (code === 0 && await this.continueWithPendingGuidance(task)) return;
+    if (code === 0) {
+      const continued = await this.continueWithPendingGuidance(task);
+      if (!this.isActiveTask(taskId)) return;
+      if (continued) return;
+    }
 
     if (code === 0 && isHtmlGameTask(task)) {
       const browserView = getBrowserView();
       if (browserView) {
         const validation = await validateCurrentPage(browserView, task);
+        // Stop, task failure, or a queue transition may happen while the
+        // screenshot/validation promise is pending. Never let that stale
+        // completion mutate or restart a newer task.
+        if (!this.isActiveTask(taskId)) return;
         if (validation) {
           logger.info('page:validate', {
             ok: validation.ok,
@@ -293,7 +311,9 @@ export class Orchestrator {
           }
 
           if (!validation.ok) {
-            if (await this.continueWithPendingGuidance(task)) return;
+            const continued = await this.continueWithPendingGuidance(task);
+            if (!this.isActiveTask(taskId)) return;
+            if (continued) return;
             this.pushUI('chat:message', {
               text: `[Worker] 页面验收失败：${validation.reasons.join('；')}`,
               timestamp: Date.now(),
@@ -310,7 +330,11 @@ export class Orchestrator {
     }
 
     // 页面验收本身可能耗时；验收期间收到的追加要求也必须留在当前任务内。
-    if (code === 0 && await this.continueWithPendingGuidance(task)) return;
+    if (code === 0) {
+      const continued = await this.continueWithPendingGuidance(task);
+      if (!this.isActiveTask(taskId)) return;
+      if (continued) return;
+    }
 
     this.pushUI('chat:message', {
       text: code === 0 ? '[Agent] 任务完成' : `[Agent] 任务失败 (code: ${code})`,
@@ -435,8 +459,9 @@ export class Orchestrator {
         });
       }
       if (task) {
+        const taskId = this.currentTaskId;
         void this.handleAgentTurnComplete(p.isError ? 1 : 0, task).catch((error) => {
-          this.handleTurnFailure(error);
+          this.handleTurnFailure(error, taskId);
         });
       }
       return;
@@ -524,7 +549,11 @@ export class Orchestrator {
     this.pushUI('task:status', this.getTaskStatus());
   }
 
-  private handleTurnFailure(error: unknown): void {
+  private handleTurnFailure(error: unknown, taskId: string | null = this.currentTaskId): void {
+    if (!taskId || !this.isActiveTask(taskId)) {
+      logger.warn('task:error', { taskId, ignored: true, stage: 'turn-complete' });
+      return;
+    }
     const message = error instanceof Error ? error.message : String(error);
     logger.error('task:error', { taskId: this.currentTaskId, stage: 'turn-complete', message });
     this.pushUI('chat:message', {
@@ -561,6 +590,10 @@ export class Orchestrator {
     } else {
       this.emitTaskStatus();
     }
+  }
+
+  private isActiveTask(taskId: string): boolean {
+    return this.currentTaskId === taskId && this.currentTask !== null;
   }
 
   private describeExecutionPlan(task: string): string {
@@ -607,7 +640,9 @@ export class Orchestrator {
       timestamp: Date.now(),
       taskId: this.currentTaskId,
     });
+    const taskId = this.currentTaskId;
     void this.runTask(this.currentTask, { kind: 'resume', text: '继续暂停前尚未完成的工作，并结合此前已经产生的结果。' }).catch((error) => {
+      if (!taskId || !this.isActiveTask(taskId)) return;
       const message = error instanceof Error ? error.message : String(error);
       this.pushUI('chat:message', { text: `[Worker] 恢复失败: ${message}`, timestamp: Date.now(), error: true, taskId: this.currentTaskId });
       this.state.fail();

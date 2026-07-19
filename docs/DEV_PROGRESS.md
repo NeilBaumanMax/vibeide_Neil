@@ -20,6 +20,7 @@
 - [x] Claude CLI 启动增加 `--continue` 续接策略，并用 prompt 注入作为兜底
 - [x] Agent 对话改为单活动任务：执行中发送默认追加到当前任务，显式“排队”才创建下一任务；状态、消息和结果使用 `taskId` 关联
 - [x] 新增 Agent 任务队列烟测：`npm.cmd --prefix electron run verify:task-queue`
+- [x] Agent 异步完成回调绑定活动 `taskId`：停止或切换任务后，旧 turn/页面验收/恢复回调会被忽略；烟测覆盖取消竞态和停止清空追加/排队项
 - [x] Electron 前端已重构为 NES.css / 蓝白机视觉
 - [x] 右侧工作台文件 / 目录现在可点击，会在右侧浏览页层打开 `file://` 地址
 - [x] 新增 Electron 工作台点击烟测：`cd electron && npm run smoke:workbench`

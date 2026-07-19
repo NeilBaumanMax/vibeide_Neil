@@ -4,7 +4,7 @@
 
 ## 当前事实
 
-- 当前日期：2026-07-18。
+- 当前日期：2026-07-20。
 - 正式产品名：奥德赛0.4.0-7171。
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
@@ -16,6 +16,7 @@
 
 - 当前发布版本：`0.4.0-7171`；Windows PE 四段版本映射为 `0.4.0.7171`。
 - `agent_task_queue_fix` 当前源码已通过 Electron typecheck、main/renderer build、任务队列/会话/Hardboard 规则烟测和 `git diff --check`；尚未执行本版本 Windows 打包、真实 Agent 连续对话及真实硬件回归。
+- 本轮继续加固任务生命周期：turn 完成后的页面验收、恢复和异常回调均校验原 `taskId`，停止或队列切换后的旧异步回调不会再完成新任务或复活旧任务；任务队列烟测已覆盖取消竞态及停止清空两类等待项。
 - 上一版 Windows exe PE 版本已验证（历史 v0.1.0）：
   - `FileVersion=0.1.0`
   - `ProductVersion=0.1.0`
@@ -68,6 +69,17 @@
 - `npm.cmd --prefix electron run verify:hardboard`
 - `git diff --check`
 - Renderer 大包提示和 Electron `os_crypt_win.cc` 本机凭据解密告警仍存在，但上述命令退出码均为 0；本轮未调用真实 Agent 做高成本联调
+
+已通过（Agent 任务取消竞态加固，2026-07-20）：
+
+- `npm.cmd --prefix electron run typecheck`
+- `npm.cmd --prefix electron run build:main`
+- `npm.cmd --prefix electron run build:renderer`
+- `npm.cmd --prefix electron run verify:task-queue`
+- `npm.cmd --prefix electron run verify:session`
+- `npm.cmd --prefix electron run verify:hardboard`
+- `git diff --check`
+- Renderer 大包提示和 Electron `os_crypt_win.cc` 本机凭据解密告警仍存在，但命令退出码均为 0
 
 已通过（历史 E 盘验证）：
 
