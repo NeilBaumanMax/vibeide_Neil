@@ -5,8 +5,70 @@ import TaskProgress from './components/TaskProgress';
 import type { AgentTaskStatus, BrowserTab, ChatMessage, HardboardDevice, RecordingSummary, TaskStep, TaskSubmitMode, WorkbenchOverview } from './types';
 
 const LEFT_PANEL_WIDTH_KEY = 'vibeide.ui.leftPanelWidth';
+const APPEARANCE_THEME_KEY = 'vibeide.appearance.theme';
+const APPEARANCE_POSITION_KEY = 'vibeide.appearance.position';
 const DEFAULT_LEFT_PANEL_WIDTH = 34;
+const APPEARANCE_BUTTON_SIZE = 42;
+const APPEARANCE_EDGE_GAP = 12;
 const IDLE_TASK_STATUS: AgentTaskStatus = { busy: false, paused: false, activeTaskId: null, activeTask: null, queueLength: 0, guidanceCount: 0 };
+type AppearanceTheme = 'dark' | 'light';
+type FloatingPosition = { x: number; y: number };
+
+function readInitialAppearanceTheme(): AppearanceTheme {
+  try {
+    const stored = window.localStorage.getItem(APPEARANCE_THEME_KEY);
+    if (stored === 'dark' || stored === 'light') return stored;
+    const initial = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    window.localStorage.setItem(APPEARANCE_THEME_KEY, initial);
+    return initial;
+  } catch {
+    return 'dark';
+  }
+}
+
+function applyAppearanceTheme(theme: AppearanceTheme): void {
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
+}
+
+const INITIAL_APPEARANCE_THEME = readInitialAppearanceTheme();
+applyAppearanceTheme(INITIAL_APPEARANCE_THEME);
+
+function clampAppearancePosition(position: FloatingPosition): FloatingPosition {
+  return {
+    x: Math.min(
+      Math.max(APPEARANCE_EDGE_GAP, window.innerWidth - APPEARANCE_BUTTON_SIZE - APPEARANCE_EDGE_GAP),
+      Math.max(APPEARANCE_EDGE_GAP, position.x),
+    ),
+    y: Math.min(
+      Math.max(APPEARANCE_EDGE_GAP, window.innerHeight - APPEARANCE_BUTTON_SIZE - APPEARANCE_EDGE_GAP),
+      Math.max(APPEARANCE_EDGE_GAP, position.y),
+    ),
+  };
+}
+
+function readInitialAppearancePosition(): FloatingPosition {
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(APPEARANCE_POSITION_KEY) ?? 'null') as Partial<FloatingPosition> | null;
+    if (stored && Number.isFinite(stored.x) && Number.isFinite(stored.y)) {
+      return clampAppearancePosition({ x: Number(stored.x), y: Number(stored.y) });
+    }
+  } catch {
+    // Fall through to the collision-free default position.
+  }
+  return clampAppearancePosition({
+    x: window.innerWidth - APPEARANCE_BUTTON_SIZE - 18,
+    y: window.innerHeight - APPEARANCE_BUTTON_SIZE - 82,
+  });
+}
+
+function storeAppearancePosition(position: FloatingPosition): void {
+  try {
+    window.localStorage.setItem(APPEARANCE_POSITION_KEY, JSON.stringify(position));
+  } catch {
+    // Dragging remains available for this session when storage is unavailable.
+  }
+}
 
 function clampLeftPanelWidth(value: number): number {
   return Math.min(52, Math.max(24, value));
@@ -33,11 +95,121 @@ export default function App() {
   const [workbench, setWorkbench] = useState<WorkbenchOverview | null>(null);
   const [leftPanelWidth, setLeftPanelWidth] = useState(readLeftPanelWidth);
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+  const [appearanceTheme, setAppearanceTheme] = useState<AppearanceTheme>(INITIAL_APPEARANCE_THEME);
+  const [appearanceMenuOpen, setAppearanceMenuOpen] = useState(false);
+  const [appearancePosition, setAppearancePosition] = useState<FloatingPosition>(readInitialAppearancePosition);
+  const [appearanceDragging, setAppearanceDragging] = useState(false);
   const workbenchSmokeTriggered = useRef(false);
+  const appearanceSettingsRef = useRef<HTMLDivElement>(null);
+  const appearanceDragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    originX: number;
+    originY: number;
+    moved: boolean;
+  } | null>(null);
+  const suppressAppearanceClickRef = useRef(false);
 
   useEffect(() => {
     window.localStorage.setItem(LEFT_PANEL_WIDTH_KEY, String(leftPanelWidth));
   }, [leftPanelWidth]);
+
+  useEffect(() => {
+    applyAppearanceTheme(appearanceTheme);
+    try {
+      window.localStorage.setItem(APPEARANCE_THEME_KEY, appearanceTheme);
+    } catch {
+      // The theme still applies for this session when storage is unavailable.
+    }
+  }, [appearanceTheme]);
+
+  useEffect(() => {
+    if (!appearanceMenuOpen) return undefined;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!appearanceSettingsRef.current?.contains(event.target as Node)) {
+        setAppearanceMenuOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setAppearanceMenuOpen(false);
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [appearanceMenuOpen]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setAppearancePosition((current) => {
+        const next = clampAppearancePosition(current);
+        storeAppearancePosition(next);
+        return next;
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleAppearancePointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.button !== 0) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    appearanceDragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: appearancePosition.x,
+      originY: appearancePosition.y,
+      moved: false,
+    };
+  }, [appearancePosition]);
+
+  const handleAppearancePointerMove = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = appearanceDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - drag.startX;
+    const deltaY = event.clientY - drag.startY;
+    if (!drag.moved && Math.hypot(deltaX, deltaY) < 6) return;
+    drag.moved = true;
+    suppressAppearanceClickRef.current = true;
+    setAppearanceDragging(true);
+    setAppearanceMenuOpen(false);
+    setAppearancePosition(clampAppearancePosition({
+      x: drag.originX + deltaX,
+      y: drag.originY + deltaY,
+    }));
+  }, []);
+
+  const finishAppearanceDrag = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = appearanceDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    const next = clampAppearancePosition({
+      x: drag.originX + event.clientX - drag.startX,
+      y: drag.originY + event.clientY - drag.startY,
+    });
+    if (drag.moved) {
+      setAppearancePosition(next);
+      storeAppearancePosition(next);
+    }
+    appearanceDragRef.current = null;
+    setAppearanceDragging(false);
+  }, []);
+
+  const handleAppearanceClick = useCallback(() => {
+    if (suppressAppearanceClickRef.current) {
+      suppressAppearanceClickRef.current = false;
+      return;
+    }
+    setAppearanceMenuOpen((open) => !open);
+  }, []);
 
   const handleDividerPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (leftPanelCollapsed || window.innerWidth <= 820) return;
@@ -354,6 +526,58 @@ export default function App() {
             onOpenWorkbenchItem={handleOpenWorkbenchItem}
           />
         </div>
+      </div>
+      <div
+        className={`appearance-settings${appearanceDragging ? ' is-dragging' : ''}${appearancePosition.x < 282 ? ' opens-right' : ''}${appearancePosition.y < 244 ? ' opens-down' : ''}`}
+        ref={appearanceSettingsRef}
+        style={{ left: appearancePosition.x, top: appearancePosition.y }}
+      >
+        {appearanceMenuOpen ? (
+          <div className="appearance-popover" role="dialog" aria-label="外观设置">
+            <div className="appearance-popover-heading">
+              <strong>外观</strong>
+              <span>选择界面主题</span>
+            </div>
+            <div className="appearance-theme-options" role="radiogroup" aria-label="界面主题">
+              {(['dark', 'light'] as AppearanceTheme[]).map((theme) => (
+                <button
+                  className={`appearance-theme-option${appearanceTheme === theme ? ' is-selected' : ''}`}
+                  type="button"
+                  role="radio"
+                  aria-checked={appearanceTheme === theme}
+                  key={theme}
+                  onClick={() => setAppearanceTheme(theme)}
+                >
+                  <span className={`appearance-theme-preview appearance-theme-preview--${theme}`} aria-hidden="true">
+                    <i />
+                    <b />
+                  </span>
+                  <span>{theme === 'dark' ? '深色' : '浅色'}</span>
+                  <span className="appearance-theme-check" aria-hidden="true">✓</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <button
+          className={`appearance-settings-trigger${appearanceMenuOpen ? ' is-open' : ''}`}
+          type="button"
+          title="外观设置"
+          aria-label="打开外观设置"
+          aria-haspopup="dialog"
+          aria-expanded={appearanceMenuOpen}
+          onPointerDown={handleAppearancePointerDown}
+          onPointerMove={handleAppearancePointerMove}
+          onPointerUp={finishAppearanceDrag}
+          onPointerCancel={finishAppearanceDrag}
+          onClick={handleAppearanceClick}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M10 14v6" />
+            <circle cx="14" cy="7" r="2" />
+            <circle cx="10" cy="17" r="2" />
+          </svg>
+        </button>
       </div>
     </div>
   );
