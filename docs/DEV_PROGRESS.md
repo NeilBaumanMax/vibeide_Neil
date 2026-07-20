@@ -22,6 +22,8 @@
 - [x] 新增 Agent 任务队列烟测：`npm.cmd --prefix electron run verify:task-queue`
 - [x] Agent 异步完成回调绑定活动 `taskId`：停止或切换任务后，旧 turn/页面验收/恢复回调会被忽略；烟测覆盖取消竞态和停止清空追加/排队项
 - [x] Electron 前端已全面放弃 NES.css / 像素视觉，改为 Apple 风格冷色材质、系统字体、克制边框和直接反馈
+- [x] 深色/浅色主题已从持续跟随系统媒体查询改为应用内显式选择；首次读取系统偏好后持久化到 `vibeide.appearance.theme`，避免运行中因系统偏好变化突然切色
+- [x] 右下角外观入口支持 Pointer Capture 拖动、6px 防误触阈值、坐标持久化、窗口边界约束和四象限浮层方向适配；默认避开编辑器字号工具条
 - [x] 内置串口助手采用左侧收发、右侧配置布局，支持完整串口参数、文本/HEX 双向收发、编码与行尾控制；无用数值趋势图已删除，并适配整体浅色/深色材质
 - [x] Windows 串口设备 CIM 枚举失败时自动回退到随包 `pyserial`，COM5 中文设备名、打开和关闭释放已完成打包版验证
 - [x] Windows ESP-IDF 和串口统一使用 `resources/runtime/python/Scripts/python.exe`；旧 `esptools/idf-tools/python_env` 不再进入安装包，隔离模式由 `sitecustomize.py` 恢复脚本目录导入
@@ -91,10 +93,11 @@
 ```text
 Electron Window
 ├── Agent 对话与任务输出
-├── 仓库：默认分组 + 可导入/移除文件夹
+├── 仓库：Agent 生成 / 硬件工程 / 参考代码 / Skills 四个固定受控根目录
 ├── 监视器：串口监视器
 ├── 任务管理器：相对工程选择、build/flash、状态进度、按需日志和最近任务结果
 ├── 编辑器：多根文件树、Monaco 高亮、多文件标签、保存、字号和右键文件管理
+├── 外观：持久化深色/浅色主题和可拖动悬浮设置入口
 └── 工作台后端：浏览器、录制和 WebContentsView 链路保留，前端入口隐藏
 ```
 

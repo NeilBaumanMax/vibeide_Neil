@@ -2,6 +2,15 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-21 — 应用内主题与可拖动外观入口
+
+- 修复界面只依赖 `prefers-color-scheme` 导致运行中可能随 Windows/Electron 偏好突然由深色变浅色的问题；首次无记录时读取一次系统偏好，此后用 `data-theme="dark|light"` 和 `vibeide.appearance.theme` 固定用户选择。
+- 右下角新增 Apple 风格外观浮层，支持深色/浅色预览、点击外部或 Escape 关闭，并使用应用主题令牌适配两种配色。
+- 根据用户反馈解决外观按钮与编辑器字号工具条重叠：按钮默认上移，并增加 Pointer Capture 1:1 拖动、6px 防误触、可视边界约束及 `vibeide.appearance.position` 坐标持久化。
+- 浮层根据悬浮按钮所在位置自动选择上下展开和左右对齐，拖动时即时关闭，避免窗口边缘越界和拖动误开菜单。
+- 验证通过：Electron typecheck、renderer build、Windows `pack:win`；成品实测主题切换/重载持久化、按钮拖动/重载持久化、左上象限浮层边界和最终右侧安全位置。
+- 本地功能提交：`9848c33 feat(ui): add persistent draggable theme control`；未推送远端。
+
 ## 2026-07-21 — 随包 Python、MCP、双向串口助手与 Apple 主题收口
 
 - Windows Python 运行时统一为 `resources/runtime/python/Scripts/python.exe`；打包排除旧 `esptools/idf-tools/python_env/**`，保留 embeddable `python312._pth` 隔离，并用 `runtime/python/sitecustomize.py` 恢复当前脚本目录导入。

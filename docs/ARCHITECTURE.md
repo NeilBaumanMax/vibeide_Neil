@@ -46,9 +46,9 @@ Electron Chromium / WebContentsView
 - `electron/src/main/first-run.ts`：首次运行目录与资源初始化。
 - `electron/src/main/tray.ts`：Windows 系统托盘和窗口显隐。
 - `electron/src/main/worker/session-store.ts`：Claude 会话上下文持久化。
-- `electron/src/renderer/App.tsx`：主 UI 状态，以及左右面板宽度持久化、拖动分隔和对话区收起/展开。
+- `electron/src/renderer/App.tsx`：主 UI 状态、左右面板宽度持久化、拖动分隔和对话区收起/展开；同时管理独立于系统实时偏好的深色/浅色主题、可拖动外观按钮坐标和对应 `localStorage` 状态。
 - `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器和编辑器；工作台前端入口隐藏，但组件内部浏览器工作台实现保留。任务管理器负责相对工程选择、Build/Flash 控制、可直接清除的 EventBus 历史和最近任务结果；监视器提供文本/HEX 双向收发及完整串口参数；编辑器负责多根资源树、懒加载目录、等宽标签、Portal 右键菜单、字号持久化和保存状态同步。
-- `electron/src/renderer/styles/apple.less`：1.0.0-7201 最终视觉覆盖，定义冷色材质、排版层级、圆角、反馈动效和 reduced-motion/reduced-transparency 适配。
+- `electron/src/renderer/styles/apple.less`：1.0.0-7201 最终视觉覆盖，使用 `data-theme="dark|light"` 定义显式主题令牌，并提供冷色材质、排版层级、圆角、可拖动外观浮层、反馈动效和 reduced-motion/reduced-transparency 适配。
 - `electron/src/renderer/components/CodeEditor.tsx`：基于 Monaco Editor 的代码区，按扩展名选择 C/C++、CMake、Markdown、JSON、TypeScript 等语言，使用内置 C/C++ 深色主题并接收用户字号设置。
 - `electron/src/renderer/monaco.ts`：本地 Monaco editor/json/css/html/typescript Worker 注册，保证开发版和打包版不依赖在线 CDN。
 

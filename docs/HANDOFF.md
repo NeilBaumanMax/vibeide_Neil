@@ -9,13 +9,14 @@
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
-- 当前施工分支：`electron_design`。该分支在既有任务串行化、编辑器和 Runtime EventBus 基线上完成 Apple 风格界面、四仓库入口、任务清除、内置双向串口助手、随包 Python/MCP 修复与编辑器交互修正。本轮维护本地 Git，不推送远端。
+- 当前施工分支：`electron_design`。该分支在既有任务串行化、编辑器和 Runtime EventBus 基线上完成 Apple 风格界面、四仓库入口、任务清除、内置双向串口助手、随包 Python/MCP 修复、应用内持久化主题和可拖动外观入口。本轮维护本地 Git，不推送远端；当前最新功能提交为 `9848c33`，其前一轮硬件/串口提交为 `508174a`。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
 
 - 当前发布版本：`1.0.0-7201`；Windows PE 四段版本映射为 `1.0.0.7201`。
 - `electron_design` 当前源码需以 Runtime/Electron typecheck、main/renderer build、Windows unpacked 打包和 `git diff --check` 作为提交门禁。当前版本已执行 Windows 打包、MCP handshake、随包 Python、ESP-IDF 冷构建及 COM5 串口回归；真实 Agent 长时间连续对话仍需持续观察。
+- 当前主题不再持续跟随 Windows/Electron 的 `prefers-color-scheme`。首次无记录时读取一次系统偏好，之后由外观菜单选择并持久化；按钮位置也独立持久化，可拖动避开编辑器字号工具条。
 - 本轮继续加固任务生命周期：turn 完成后的页面验收、恢复和异常回调均校验原 `taskId`，停止或队列切换后的旧异步回调不会再完成新任务或复活旧任务；任务队列烟测已覆盖取消竞态及停止清空两类等待项。
 - 上一版 Windows exe PE 版本已验证（历史 v0.1.0）：
   - `FileVersion=0.1.0`
@@ -59,6 +60,13 @@
 - 内置串口助手支持完整参数、文本/HEX 双向收发、编码和行尾；COM5 枚举、打开、关闭释放均通过界面验证。
 - 串口助手保持左侧收发/右侧配置布局，并按 `apple-design` 原则适配浅色/深色主题、材质、状态反馈和辅助功能媒体查询；趋势图已删除。
 - `npm.cmd --prefix runtime run typecheck`、`npm.cmd --prefix runtime run build`、`npm.cmd --prefix electron run typecheck`、main/renderer build 和 `npm.cmd --prefix electron run pack:win` 通过。
+
+已通过（应用主题与可拖动外观入口，2026-07-21）：
+
+- `npm.cmd --prefix electron run typecheck`、renderer 生产构建和 Windows `pack:win` 通过，成品 `奥德赛1.0.0-7201.exe` 已启动验证。
+- 深色 `#131315` 与浅色 `#e9eaed` 可由应用内菜单切换；页面重载后主题仍保持，最终验收状态恢复为深色。
+- 使用成品窗口真实指针事件将按钮拖至 `(100,100)`，松开后 `is-dragging` 正常清除，坐标写入 `vibeide.appearance.position`，页面重载后位置保持。
+- 按钮位于左上区域时浮层自动向右下展开，实测边界完全位于视口内；最终按钮移回右侧、距底部约 86px，不遮挡字号工具条。
 
 已通过（Electron Apple UI 与 1.0.0-7201，2026-07-20）：
 

@@ -8,6 +8,7 @@
 - Windows PE 四段版本：`1.0.0.7201`
 - 唯一施工目录：`E:\Agent\vibeide\vibeide`
 - 生效样式：`electron/src/renderer/styles/global.less` 基础布局 + `apple.less` 最终覆盖
+- 当前功能提交：`9848c33 feat(ui): add persistent draggable theme control`（本地，未推送）
 
 本轮完全放弃 NES.css、像素字体、硬边框和蓝白机视觉。界面采用系统字体、冷色上下文色、克制的半透明材质、弱分隔线、圆角控件、直接按压反馈和减少动态效果适配。
 
@@ -19,6 +20,7 @@
 4. 主面板通过材质、明度和留白分层，避免“框中框”；仅保留必要的分隔线和焦点轮廓。
 5. 动效必须短、可中断，并遵守 `prefers-reduced-motion` 与 `prefers-reduced-transparency`。
 6. 反馈与触发控件保持空间邻近。清除、保存、打开目录等操作不得只在窗口底部反馈。
+7. 可拖动控件使用 Pointer Capture 进行 1:1 跟随，设置移动阈值避免拖动误触点击，并把最终位置约束在可视窗口内。
 
 ## 页面现状
 
@@ -27,6 +29,9 @@
 - 左右栏使用可拖动分隔条和 Pointer Capture，宽度可持久化。
 - 对话区和右侧工作区取消多层粗边框，改用不同表面明度区分层级。
 - 深色模式使用高对比正文和低对比辅助文字，避免文字与背景粘连。
+- 应用不再持续跟随 `prefers-color-scheme`。首次无用户记录时读取一次系统偏好，之后由右下角“外观”菜单显式选择深色/浅色，并通过 `vibeide.appearance.theme` 持久化。
+- 外观按钮可在窗口内自由拖动，位置保存到 `vibeide.appearance.position`；默认位置位于编辑器字号工具条上方，窗口缩放时自动回到安全边界。
+- 外观浮层根据按钮所在象限自动选择上下展开及左右对齐，避免拖到窗口边缘后菜单越界；拖动期间关闭浮层，普通点击才切换菜单。
 
 ### 仓库
 
@@ -41,7 +46,7 @@
 - 页面保留传统串口助手的熟悉布局：左侧为接收区和发送区，右侧为串口配置、接收区配置、发送区配置。原数值趋势图、数字采样和跨行缓存已删除。
 - 支持波特率、数据位、停止位、校验位、文本/HEX 收发、GBK/UTF-8/ASCII/Latin1，以及不追加/LF/CRLF 行尾。
 - 重开端口前等待旧 Python 子进程退出，降低 COM 独占释放竞态；端口被其他程序占用时输出可读中文提示。
-- 串口页不再强制 WinForms 浅色。布局保持不变，颜色、卡片材质、圆角、主次按钮、危险操作和连接状态使用 `apple.less` 主题变量，随系统浅色/深色模式适配。
+- 串口页不再强制 WinForms 浅色。布局保持不变，颜色、卡片材质、圆角、主次按钮、危险操作和连接状态使用 `apple.less` 主题变量，随应用内浅色/深色选择适配。
 - 按钮按下即时缩放；连接状态使用带圆点的状态胶囊和 `aria-live="polite"`。同时覆盖 `prefers-reduced-motion`、`prefers-reduced-transparency` 与 `prefers-contrast`。
 
 ### 任务管理器
@@ -58,10 +63,12 @@
 - 关闭按钮具有圆形 hover/focus 高亮与按压反馈。
 - 文件树右键菜单通过 React Portal 挂载到 `document.body`，使用视口坐标定位在鼠标附近并做边缘约束。
 - 右下角字号控件改为圆角按钮组，蓝色按钮替代像素式方框。
+- 全局外观按钮默认上移避开字号控件；如果仍与用户工作区冲突，可直接拖到其他位置，重启后保持。
 
 ## 关键实现
 
 - `electron/src/renderer/styles/apple.less`：Apple 风格材质、排版、颜色、动效和无障碍覆盖。
+- `electron/src/renderer/App.tsx`：显式主题状态、主题/悬浮坐标持久化、外观菜单、拖动手势与窗口边界约束。
 - `electron/src/renderer/components/BrowserPanel.tsx`：四页面交互、任务清除、双向串口助手、编辑器标签和右键菜单。
 - `electron/src/renderer/components/WorkspacePanel.tsx`：四仓库与资源管理器入口。
 - `electron/src/main/gateway.ts` / `preload/index.ts`：受限文件夹打开和硬件 IPC。
@@ -79,4 +86,4 @@ npm.cmd --prefix electron run verify:version
 git diff --check
 ```
 
-界面验收至少确认：只有一个 Electron 主窗口；四个仓库按钮存在；清除前后的任务行数归零；监视器没有趋势图且左侧收发/右侧配置布局不变；浅色/深色主题下控件可读；COM 设备可枚举、打开后可关闭释放；编辑器右键菜单贴近指针；标签关闭按钮可见且有 hover/focus 反馈。
+界面验收至少确认：只有一个 Electron 主窗口；四个仓库按钮存在；清除前后的任务行数归零；监视器没有趋势图且左侧收发/右侧配置布局不变；应用内浅色/深色切换后控件可读且重载保持；外观按钮可拖动、重载保持位置、窗口缩放不越界，浮层在四个象限均不超出视口；外观按钮不遮挡编辑器字号工具条；COM 设备可枚举、打开后可关闭释放；编辑器右键菜单贴近指针；标签关闭按钮可见且有 hover/focus 反馈。
