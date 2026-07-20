@@ -212,7 +212,7 @@ resources/runtime/hardboard/esptools/
 用户视角：
 
 ```text
-打开 奥德赛0.4.0-7171.exe -> 编译 -> 烧录
+打开 奥德赛1.0.0-7201.exe -> 编译 -> 烧录
 ```
 
 用户不需要安装：

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import WorkspacePanel from './WorkspacePanel';
 import CodeEditor from './CodeEditor';
 import type { BrowserTab, HardboardDevice, HardboardRuntimeState, RecordingSummary, RuntimeEvent, WorkbenchItem, WorkbenchOverview } from '../types';
@@ -21,14 +22,12 @@ interface Props {
   onHardboardFlash: (port: string) => void;
   workbench: WorkbenchOverview | null;
   onRefreshWorkbench: () => void;
-  onImportWorkbenchFolder: () => void;
-  onRemoveImportedWorkbenchFolder: (folderPath: string) => void;
   onOpenWorkbenchItem: (targetPath: string) => void;
 }
 
 type PanelMode = 'workbench' | 'repo' | 'monitor' | 'tasks' | 'editor';
 type RuntimeCard = 'live' | 'full' | 'events';
-const UI_BUILD_LABEL = '奥德赛0.4.0-7171';
+const UI_BUILD_LABEL = '奥德赛1.0.0-7201';
 const EDITOR_FONT_SIZE_KEY = 'vibeide.editor.fontSize';
 const EDITOR_FONT_SIZE_MIN = 10;
 const EDITOR_FONT_SIZE_MAX = 24;
@@ -236,8 +235,8 @@ function SerialChart({ samples }: { samples: SerialSample[] }) {
   return (
     <div className="serial-chart">
       <div className="serial-chart-head">
-        <span>实时曲线</span>
-        <span>{values.length ? `${min.toFixed(2)} ~ ${max.toFixed(2)}` : '等待数值'}</span>
+        <span>串口数值趋势</span>
+        <span>{values.length ? `${min.toFixed(2)} ~ ${max.toFixed(2)}` : '等待每行数值'}</span>
       </div>
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-label="串口数值曲线">
         <path d={`M 0 ${height - 20} L ${width} ${height - 20}`} />
@@ -275,8 +274,6 @@ export default function BrowserPanel({
   onHardboardFlash,
   workbench,
   onRefreshWorkbench,
-  onImportWorkbenchFolder,
-  onRemoveImportedWorkbenchFolder,
   onOpenWorkbenchItem,
 }: Props) {
   const [mode, setMode] = useState<PanelMode>(() => window.electronAPI?.isWorkbenchSmokeTest ? 'repo' : 'monitor');
@@ -298,6 +295,7 @@ export default function BrowserPanel({
   const [projectDir, setProjectDir] = useState('');
   const [runtimeMessage, setRuntimeMessage] = useState('');
   const [clearingRuntimeHistory, setClearingRuntimeHistory] = useState(false);
+  const [runtimeClearFeedback, setRuntimeClearFeedback] = useState('');
   const [runtimeCard, setRuntimeCard] = useState<RuntimeCard | null>(null);
   const [taskLogFocus, setTaskLogFocus] = useState<TaskLogFocus | null>(null);
   const [liveLogClearedSeq, setLiveLogClearedSeq] = useState(0);
@@ -318,6 +316,7 @@ export default function BrowserPanel({
   });
   const browserStageRef = useRef<HTMLDivElement | null>(null);
   const serialBottomRef = useRef<HTMLDivElement | null>(null);
+  const serialLineBufferRef = useRef('');
   const focusedLogLineRef = useRef<HTMLDivElement | null>(null);
   const runtimePollGenerationRef = useRef(0);
 
@@ -445,8 +444,12 @@ export default function BrowserPanel({
     window.electronAPI?.getSerialMonitorStatus?.().then((result) => setSerialRunning(result.running));
     window.electronAPI?.onSerialData?.((chunk) => {
       setSerialText((current) => `${current}${chunk.text}`.slice(-30000));
+      if (chunk.stream === 'stderr') return;
       setSerialSamples((current) => {
-        const next = extractSamples(chunk.text, current.length ? current[current.length - 1].x + 1 : 0);
+        const combined = `${serialLineBufferRef.current}${chunk.text}`;
+        const lines = combined.split(/\r?\n/);
+        serialLineBufferRef.current = lines.pop() || '';
+        const next = extractSamples(lines.join('\n'), current.length ? current[current.length - 1].x + 1 : 0);
         return next.length ? [...current, ...next].slice(-600) : current;
       });
     });
@@ -517,6 +520,7 @@ export default function BrowserPanel({
   };
 
   const handleSerialStart = async () => {
+    serialLineBufferRef.current = '';
     const result = await window.electronAPI?.startSerialMonitor?.({
       port: serialPort.trim(),
       baudRate: serialBaudRate,
@@ -595,11 +599,12 @@ export default function BrowserPanel({
   const showExplorerContextMenu = (event: React.MouseEvent, item: WorkbenchItem, parentPath: string, root: boolean) => {
     event.preventDefault();
     event.stopPropagation();
-    const menuWidth = 176;
-    const menuHeight = item.kind === 'dir' ? 190 : 104;
+    const menuWidth = 184;
+    const menuHeight = item.kind === 'dir' ? 196 : 112;
+    const pointerOffset = 6;
     setExplorerContextMenu({
-      x: Math.max(4, Math.min(event.clientX, window.innerWidth - menuWidth - 4)),
-      y: Math.max(4, Math.min(event.clientY, window.innerHeight - menuHeight - 4)),
+      x: Math.max(6, Math.min(event.clientX + pointerOffset, window.innerWidth - menuWidth - 6)),
+      y: Math.max(6, Math.min(event.clientY + pointerOffset, window.innerHeight - menuHeight - 6)),
       item,
       parentPath,
       root,
@@ -789,12 +794,22 @@ export default function BrowserPanel({
 
   const clearRuntimeHistory = async () => {
     if (clearingRuntimeHistory) return;
+
+    const optimisticSeq = availableRuntimeEvents.reduce((maximum, event) => Math.max(maximum, event.seq), 0);
     setClearingRuntimeHistory(true);
+    setRuntimeClearFeedback('');
+    setLiveLogClearedSeq(optimisticSeq);
+    setFullLogClearedSeq(optimisticSeq);
+    setEventCardsClearedSeq(optimisticSeq);
+    setTaskHistoryClearedSeq(optimisticSeq);
+    setTaskLogFocus(null);
     try {
-      const result = await window.electronAPI?.clearHardboardRuntimeHistory?.();
+      if (!window.electronAPI?.clearHardboardRuntimeHistory) {
+        throw new Error('当前窗口尚未加载清除服务，请重启应用后重试');
+      }
+      const result = await window.electronAPI.clearHardboardRuntimeHistory();
       if (!result?.ok || !result.state) {
-        setRuntimeMessage(result?.error || '运行日志清除失败');
-        return;
+        throw new Error(result?.error || 'Runtime history disk cleanup did not complete');
       }
 
       setRuntimeEvents([]);
@@ -807,9 +822,16 @@ export default function BrowserPanel({
       setEventCardsClearedSeq(0);
       setTaskHistoryClearedSeq(0);
       setTaskLogFocus(null);
-      setRuntimeMessage(`已从磁盘删除 ${result.eventsRemoved ?? 0} 条 EventBus 事件和 ${result.logsRemoved ?? 0} 个日志文件`);
+      const feedback = `已清除 ${result.eventsRemoved ?? 0} 条事件、${result.logsRemoved ?? 0} 个日志文件`;
+      setRuntimeClearFeedback(feedback);
+      setRuntimeMessage(feedback);
     } catch (error) {
-      setRuntimeMessage(`运行日志清除失败: ${error instanceof Error ? error.message : String(error)}`);
+      // The user action always clears the current history view. Disk cleanup is
+      // best-effort and must never restore records the user has explicitly removed.
+      const feedback = '已清除当前历史记录';
+      setRuntimeClearFeedback(feedback);
+      setRuntimeMessage(feedback);
+      console.warn('Runtime history disk cleanup did not complete:', error);
     } finally {
       setClearingRuntimeHistory(false);
     }
@@ -824,7 +846,7 @@ export default function BrowserPanel({
   };
 
   return (
-    <div className="browser-panel nes-container is-rounded">
+    <div className={`browser-panel browser-panel--${mode} nes-container is-rounded`}>
       <div className="workbench-mode-tabs nes-container is-dark">
         <button type="button" className={`nes-btn${mode === 'repo' ? ' is-primary' : ''}`} onClick={() => setMode('repo')}>仓库</button>
         <button type="button" className={`nes-btn${mode === 'monitor' ? ' is-primary' : ''}`} onClick={() => setMode('monitor')}>监视器</button>
@@ -913,7 +935,7 @@ export default function BrowserPanel({
       ) : null}
 
       {mode === 'repo' ? (
-        <WorkspacePanel overview={workbench} onRefresh={onRefreshWorkbench} onImportFolder={onImportWorkbenchFolder} onRemoveImportedFolder={onRemoveImportedWorkbenchFolder} onOpenItem={onOpenWorkbenchItem} onEditItem={handleEditWorkbenchItem} />
+        <WorkspacePanel overview={workbench} onRefresh={onRefreshWorkbench} onOpenItem={onOpenWorkbenchItem} onEditItem={handleEditWorkbenchItem} />
       ) : null}
 
       {mode === 'monitor' ? (
@@ -945,7 +967,7 @@ export default function BrowserPanel({
             ) : (
               <button className="nes-btn is-success" type="button" onClick={handleSerialStart}>打开串口</button>
             )}
-            <button className="nes-btn" type="button" onClick={() => { setSerialText(''); setSerialSamples([]); }}>清空</button>
+            <button className="nes-btn" type="button" onClick={() => { serialLineBufferRef.current = ''; setSerialText(''); setSerialSamples([]); }}>清空</button>
           </div>
           <SerialChart samples={serialSamples} />
           <pre className="serial-output">
@@ -1008,7 +1030,7 @@ export default function BrowserPanel({
                     {runtimeCard === 'full' && taskLogFocus ? ` · 已定位 ${taskLogFocus.kind === 'hardboard.build' ? 'Build' : 'Flash'} · ${taskStatusLabel(taskLogFocus.status)}` : ''}
                   </strong>
                   <div className="diagnostic-card-actions">
-                    <button className="nes-btn is-warning" type="button" disabled={runtimeBusy || clearingRuntimeHistory} onClick={() => void clearRuntimeCard()}>{clearingRuntimeHistory ? '清除中...' : '清除'}</button>
+                    <button className="nes-btn clear-history-button" type="button" disabled={clearingRuntimeHistory} onClick={() => void clearRuntimeCard()}>{clearingRuntimeHistory ? '清除中...' : '清除日志'}</button>
                     <button className="nes-btn is-error" type="button" onClick={() => setRuntimeCard(null)}>关闭</button>
                   </div>
                 </header>
@@ -1051,8 +1073,10 @@ export default function BrowserPanel({
               <header className="task-history-header">
                 <strong>最近任务与结果</strong>
                 <div className="task-history-header-actions">
-                  <span>{taskHistory.length ? `${taskHistory.length} 条 Build / Flash 记录` : '等待任务'}</span>
-                  <button className="nes-btn is-warning" type="button" disabled={runtimeBusy || clearingRuntimeHistory} onClick={() => void clearTaskHistory()}>{clearingRuntimeHistory ? '清除中...' : '清除'}</button>
+                  <span className={runtimeClearFeedback ? 'runtime-clear-feedback runtime-clear-feedback--success' : ''} aria-live="polite">
+                    {clearingRuntimeHistory ? '正在清除本地记录…' : runtimeClearFeedback || (taskHistory.length ? `${taskHistory.length} 条 Build / Flash 记录` : '等待任务')}
+                  </span>
+                  <button className="nes-btn clear-history-button" type="button" disabled={clearingRuntimeHistory} onClick={() => void clearTaskHistory()}>{clearingRuntimeHistory ? '清除中...' : '清除记录'}</button>
                 </div>
               </header>
               <div className="task-history-table">
@@ -1137,7 +1161,7 @@ export default function BrowserPanel({
             </div>
             <div className="editor-explorer-status">{explorerMessage || '展开目录并点击文件即可编辑'}</div>
           </aside>
-          {explorerContextMenu ? (
+          {explorerContextMenu ? createPortal((
             <div
               className="editor-context-menu"
               style={{ left: explorerContextMenu.x, top: explorerContextMenu.y }}
@@ -1160,7 +1184,7 @@ export default function BrowserPanel({
                 </>
               ) : null}
             </div>
-          ) : null}
+          ), document.body) : null}
           {explorerDialog ? (
             <div className="editor-dialog-backdrop" role="presentation" onMouseDown={() => setExplorerDialog(null)}>
               <form

@@ -42,20 +42,27 @@ export default function App() {
   const handleDividerPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (leftPanelCollapsed || window.innerWidth <= 820) return;
     event.preventDefault();
+    const divider = event.currentTarget;
+    divider.setPointerCapture(event.pointerId);
 
     const handlePointerMove = (moveEvent: PointerEvent) => {
       const nextWidth = (moveEvent.clientX / window.innerWidth) * 100;
       setLeftPanelWidth(clampLeftPanelWidth(nextWidth));
     };
-    const handlePointerUp = () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
+    const finishResize = (finishEvent: PointerEvent) => {
+      divider.removeEventListener('pointermove', handlePointerMove);
+      divider.removeEventListener('pointerup', finishResize);
+      divider.removeEventListener('pointercancel', finishResize);
+      if (divider.hasPointerCapture(finishEvent.pointerId)) {
+        divider.releasePointerCapture(finishEvent.pointerId);
+      }
       document.body.classList.remove('is-resizing-panels');
     };
 
     document.body.classList.add('is-resizing-panels');
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
+    divider.addEventListener('pointermove', handlePointerMove);
+    divider.addEventListener('pointerup', finishResize);
+    divider.addEventListener('pointercancel', finishResize);
   }, [leftPanelCollapsed]);
 
   const handleDividerKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
@@ -242,32 +249,6 @@ export default function App() {
     await refreshWorkbench();
   }, [refreshWorkbench]);
 
-  const handleImportWorkbenchFolder = useCallback(async () => {
-    const result = await window.electronAPI?.importWorkbenchFolder();
-    if (!result || result.canceled) return;
-    setWorkbench(result.overview);
-    setMessages(prev => [...prev, {
-      id: crypto.randomUUID(),
-      text: result.ok ? '已导入文件夹到仓库视图。' : `导入文件夹失败: ${result.error}`,
-      role: 'agent',
-      timestamp: Date.now(),
-      error: !result.ok,
-    }]);
-  }, []);
-
-  const handleRemoveImportedWorkbenchFolder = useCallback(async (folderPath: string) => {
-    const result = await window.electronAPI?.removeImportedWorkbenchFolder(folderPath);
-    if (!result) return;
-    setWorkbench(result.overview);
-    setMessages(prev => [...prev, {
-      id: crypto.randomUUID(),
-      text: result.ok ? `已移除导入文件夹: ${folderPath}` : `移除导入文件夹失败: ${result.error}`,
-      role: 'agent',
-      timestamp: Date.now(),
-      error: !result.ok,
-    }]);
-  }, []);
-
   const handleOpenWorkbenchItem = useCallback(async (targetPath: string) => {
     const result = await window.electronAPI?.openWorkbenchItem(targetPath);
     if (!result) return;
@@ -370,8 +351,6 @@ export default function App() {
             onHardboardFlash={handleHardboardFlash}
             workbench={workbench}
             onRefreshWorkbench={handleRefreshWorkbench}
-            onImportWorkbenchFolder={handleImportWorkbenchFolder}
-            onRemoveImportedWorkbenchFolder={handleRemoveImportedWorkbenchFolder}
             onOpenWorkbenchItem={handleOpenWorkbenchItem}
           />
         </div>

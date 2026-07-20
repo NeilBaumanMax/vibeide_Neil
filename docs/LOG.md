@@ -2,20 +2,30 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
-## 2026-07-20 — `25065b4` 后文档漂移复核
+## 2026-07-20 — electron_design Apple UI 与 1.0.0-7201 文档/Git 收口
 
-- 以本地 `git status`、`git log`、`git branch -vv` 和现代码为真相源复核；当前分支为 `agent_task_queue_fix`，功能 HEAD 为 `25065b4`，分支仍无 upstream，本轮只维护本地 Git。
+- 当前施工分支切换为 `electron_design`；正式产品名为 `奥德赛1.0.0-7201`，npm 版本为 `1.0.0-7201`，Windows PE 四段版本为 `1.0.0.7201`。
+- 全面移除 NES.css 依赖与像素式视觉，新增 `electron/src/renderer/styles/apple.less`，统一冷色材质、系统字体、弱边框、圆角、直接反馈和 reduced-motion/reduced-transparency。
+- 仓库固定为四个受控目录并增加资源管理器入口；顶部导入功能和当前概览中的历史导入分组已删除。
+- 任务管理器清除改为用户动作优先：立即清空旧记录并物理删除 EventBus/`.log`，不再因残留 PID/运行状态拒绝或回滚界面；隔离测试覆盖 running/activePid 状态。
+- 监视器确认使用真实 `pyserial` 后端；界面改名“串口数值趋势”，仅解析 stdout 完整行，stderr 不绘图，趋势/文本比例约 3:7，曲线改为冷蓝色。
+- 编辑器右键菜单改用 Portal 贴近视口指针；标签等宽弹性分配，关闭按钮和字号按钮补齐 Apple 风格 hover/focus/press 反馈。
+- 新增 `docs/ELECTRON_APPLE_UI_CONSTRUCTION.md`，并同步 README、INDEX、ARCHITECTURE、DEV_PROGRESS、HANDOFF、GITHUB_SYNC 与任务管理器施工文档；旧迁移和测试报告继续保留为历史事实。
+
+## 2026-07-20 — `25065b4` 后历史文档漂移复核
+
+- 当时以本地 `git status`、`git log`、`git branch -vv` 和现代码为真相源复核；施工分支为 `agent_task_queue_fix`，功能 HEAD 为 `25065b4`。该记录已被上方 `electron_design` 1.0.0-7201 基线取代。
 - README、HANDOFF 和 GITHUB_SYNC 补齐 `443a0a6` 的旧回调隔离与 `25065b4` 的 Runtime 日志真实清理，不再把当前施工状态停留在早期 `39ef92d/86af2c8`。
 - 任务管理器施工文档把“独立前端清除”修正为多个入口调用统一的后端历史清理；HANDOFF 补齐 `verify:event-clear` 和本轮完整验证事实。
 - 当前打包版 Hardboard 短路径按 `runtime/src/paths.ts` 修正为 `C:\vibeide-hw\hardboard` junction；旧 `%LOCALAPPDATA%\vibeide-hardboard-runtime` 只保留在明确的历史测试记录中。
 - README 的下一步移除旧 Linux/C/E 盘三方并行同步说法，继续以 `E:\Agent\vibeide\vibeide` 为唯一施工目录。
 
-## 2026-07-20 — 任务管理器运行日志改为真实磁盘清理
+## 2026-07-20 — 任务管理器运行日志改为真实磁盘清理（历史首版）
 
 - 用户复测发现任务管理器“清除”后重开前端旧日志再次出现；根因是 `clearRuntimeCard` / `clearTaskHistory` 只推进 Renderer 的显示游标，磁盘上的 EventBus 和构建日志从未删除。
-- Runtime 新增 `hardboard:events-clear`：仅在任务非运行状态执行，删除 `hardboard/events/events.jsonl`、把 `state.json` 重置为空闲状态，并精确删除 `hardboard/logs` 目录中的 `.log` 文件；其他文件不会删除。
+- Runtime 新增 `hardboard:events-clear` 的首版：当时仅在任务非运行状态执行。1.0.0-7201 已移除该限制，但仍只删除 `hardboard/events/events.jsonl` 和 `hardboard/logs` 目录中的 `.log` 文件；其他文件不会删除。
 - Electron 新增 `hardboard:runtimeHistoryClear` IPC，Renderer 的诊断日志和最近任务“清除”统一调用该后端接口，成功后同步归零事件、任务记录和轮询序号。
-- Build/Flash 运行中禁用清除按钮，Runtime 后端也会二次拒绝，避免清理时与日志写入竞争。
+- 当时 Build/Flash 运行中禁用清除按钮并由 Runtime 二次拒绝；该行为已被 1.0.0-7201 的直接清除语义取代。
 - 新增 `npm.cmd --prefix runtime run verify:event-clear`，在隔离临时目录验证 EventBus 和 `.log` 文件真实消失、状态归零且非日志文件保留。
 - 验证通过：Runtime build/清理烟测、Electron typecheck、main/renderer build和 `git diff --check`。
 

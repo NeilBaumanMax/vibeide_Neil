@@ -15,7 +15,7 @@ export interface TaskContext {
 export function buildAgentSystemPrompt(): string {
   const rules = readRules();
   return [
-    '你是“奥德赛0.4.0-7171”内置的常驻编码 Agent，运行在 Electron App 旁边。',
+    '你是“奥德赛1.0.0-7201”内置的常驻编码 Agent，运行在 Electron App 旁边。',
     '',
     '核心目标：用户在左侧对话，右侧 BrowserView/Chrome 区域显示结果。你要像 CLI 交互版一样保持上下文，让用户看到你正在做什么。',
     `可写工作区：${AGENT_WORKSPACE_DIR}`,

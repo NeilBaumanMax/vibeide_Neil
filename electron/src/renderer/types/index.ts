@@ -171,9 +171,8 @@ export interface WindowAPI {
   setBrowserBounds: (bounds: { x: number; y: number; width: number; height: number }) => Promise<{ ok: boolean }>;
   listBrowserTabs: () => Promise<{ tabs: BrowserTab[] }>;
   getWorkbenchOverview: () => Promise<WorkbenchOverview>;
-  importWorkbenchFolder: () => Promise<{ ok: boolean; canceled?: boolean; error?: string; overview: WorkbenchOverview }>;
-  removeImportedWorkbenchFolder: (folderPath: string) => Promise<{ ok: boolean; error?: string; overview: WorkbenchOverview }>;
   openWorkbenchItem: (targetPath: string) => Promise<{ ok: boolean; kind?: 'file' | 'dir'; path?: string; url?: string; error?: string }>;
+  openWorkbenchFolder: (targetPath: string) => Promise<{ ok: boolean; path?: string; error?: string }>;
   readWorkbenchFile: (targetPath: string) => Promise<{ ok: boolean; path?: string; text?: string; error?: string }>;
   listWorkbenchDirectory: (targetPath: string) => Promise<{ ok: boolean; path?: string; items?: WorkbenchItem[]; error?: string }>;
   writeWorkbenchFile: (targetPath: string, text: string) => Promise<{ ok: boolean; path?: string; text?: string; error?: string }>;
@@ -199,7 +198,7 @@ export interface WindowAPI {
   startSerialMonitor: (options: { port: string; baudRate: number; encoding: string }) => Promise<{ ok: boolean; running: boolean; error?: string }>;
   stopSerialMonitor: () => Promise<{ ok: boolean; running: boolean }>;
   getSerialMonitorStatus: () => Promise<{ running: boolean }>;
-  onSerialData: (cb: (chunk: { text: string; timestamp: number }) => void) => void;
+  onSerialData: (cb: (chunk: { text: string; timestamp: number; stream: 'stdout' | 'stderr' }) => void) => void;
   onSerialExit: (cb: (result: { code: number | null; signal: string | null }) => void) => void;
   onBrowserTabs: (cb: (result: { tabs: BrowserTab[] }) => void) => void;
 }

@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { ipcMain, BrowserWindow, dialog } from 'electron';
+import { ipcMain, BrowserWindow, shell } from 'electron';
 import { getOrchestrator } from './worker';
 import type { TaskSubmitMode } from './worker/orchestrator';
 import { activateTab, closeTab, listTabs, openTabUrl, setBrowserTabsEmitter, setBrowserViewBoundsFromRenderer } from './browser-view';
 import { listBrowserRecordingSummaries, listBrowserRecordings, replayBrowserRecording, replayLatestBrowserRecording, startBrowserRecording, stopBrowserRecording } from './browser-recorder';
-import { createWorkbenchEntry, deleteWorkbenchEntry, getWorkbenchOverview, importWorkbenchFolder, listWorkbenchDirectory, openWorkbenchItem, readWorkbenchFile, removeImportedWorkbenchFolder, renameWorkbenchEntry, writeWorkbenchFile } from './workbench';
+import { createWorkbenchEntry, deleteWorkbenchEntry, getWorkbenchOverview, listWorkbenchDirectory, openWorkbenchItem, readWorkbenchFile, renameWorkbenchEntry, writeWorkbenchFile } from './workbench';
 import {
   isSerialMonitorRunning,
   clearHardboardRuntimeHistory,
@@ -76,31 +76,6 @@ export function startGateway(mainWindow: BrowserWindow): void {
     return getWorkbenchOverview();
   });
 
-  ipcMain.handle('workbench:importFolder', async () => {
-    const picked = await dialog.showOpenDialog(mainWindow, {
-      title: '导入文件夹到仓库',
-      properties: ['openDirectory'],
-    });
-    if (picked.canceled || !picked.filePaths[0]) {
-      return { ok: false, canceled: true, overview: getWorkbenchOverview() };
-    }
-    try {
-      return { ok: true, overview: importWorkbenchFolder(picked.filePaths[0]) };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return { ok: false, error: message, overview: getWorkbenchOverview() };
-    }
-  });
-
-  ipcMain.handle('workbench:removeImportedFolder', async (_event, folderPath: string) => {
-    try {
-      return { ok: true, overview: removeImportedWorkbenchFolder(folderPath) };
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return { ok: false, error: message, overview: getWorkbenchOverview() };
-    }
-  });
-
   ipcMain.handle('workbench:openItem', async (_event, targetPath: string) => {
     try {
       const result = openWorkbenchItem(targetPath);
@@ -109,6 +84,17 @@ export function startGateway(mainWindow: BrowserWindow): void {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       return { ok: false, error: message };
+    }
+  });
+
+  ipcMain.handle('workbench:openFolder', async (_event, targetPath: string) => {
+    try {
+      const result = openWorkbenchItem(targetPath);
+      if (result.kind !== 'dir') return { ok: false, error: '只能在资源管理器中打开目录' };
+      const error = await shell.openPath(result.path);
+      return error ? { ok: false, error } : { ok: true, path: result.path };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
     }
   });
 

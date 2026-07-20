@@ -1,8 +1,8 @@
-# 奥德赛0.4.0-7171
+# 奥德赛1.0.0-7201
 
-`奥德赛0.4.0-7171` 是一个面向硬件 vibecoding 的本地桌面 IDE 原型。它把 Electron 内置浏览器、Claude Code Agent、Runtime MCP 工具、ESP-IDF hardboard 工具链和可复用录制工作流放在同一个桌面应用里，用来完成 ESP32/ESP32-S3 工程编写、编译、烧录、串口监视、文档查看和网页辅助检索。
+`奥德赛1.0.0-7201` 是一个面向硬件 vibecoding 的本地桌面 IDE。它把 Electron 内置浏览器、Claude Code Agent、Runtime MCP 工具、ESP-IDF hardboard 工具链和可复用录制工作流放在同一个桌面应用里，用来完成 ESP32/ESP32-S3 工程编写、编译、烧录、串口监视、文档查看和网页辅助检索。
 
-当前 GitHub 仓库和内部 npm 包名仍沿用 `vibeide`，作为工程代号和迁移兼容名；用户可见正式产品名统一为 `奥德赛0.4.0-7171`。
+当前 GitHub 仓库和内部 npm 包名仍沿用 `vibeide`，作为工程代号和迁移兼容名；用户可见正式产品名统一为 `奥德赛1.0.0-7201`。
 
 当前主线不是旧的纯 Python scaffold，而是：
 
@@ -13,20 +13,21 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 ## 当前状态
 
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
-- 当前施工分支：`agent_task_queue_fix`（从本地 `electron_fix_neil` 的 `d10245d` 分出；当前功能 HEAD 为 `25065b4`）
-- 当前发布版本：`0.4.0-7171`（Windows PE 四段版本映射为 `0.4.0.7171`）
+- 当前施工分支：`electron_design`
+- 当前发布版本：`1.0.0-7201`（Windows PE 四段版本映射为 `1.0.0.7201`）
 - 当前 Windows 源码目录：`E:\Agent\vibeide\vibeide`
 - 上一版 Windows v0.1.0 unpacked 包：`E:\vibeide-0.1-win-unpacked`（历史验证对象）
 - 历史 Linux、`C:\vibeide` 和旧 `E:\vibeide` 路径仅用于迁移记录，不再作为当前施工目录。
-- 当前代码来源：Windows 工作区在 `agent_task_queue_fix` 分支维护 Agent 单活动任务、异步回调隔离和 Runtime 日志真实清理；该分支当前没有 upstream，GitHub 推送状态以 `git branch -vv` 为准。
+- 当前代码来源：Windows 工作区在 `electron_design` 分支维护 Apple 风格 Electron 界面、任务历史真实清理、四仓库入口、串口数值趋势和编辑器交互修正；GitHub 推送状态以 `git branch -vv` 为准。
 
 ## 能力边界
 
-- Electron 桌面窗口提供聊天区、任务进度、仓库、串口监视、任务管理和 VS Code 风格代码编辑入口；编辑器支持多根文件树、Monaco 语法高亮、多文件标签、保存、字号持久化及带内置对话框的右键文件管理。浏览器工作台前端入口当前隐藏，相关后端能力暂时保留。
+- Electron 桌面窗口采用 Apple 风格冷色界面，提供聊天区、任务进度、固定四仓库、串口监视、任务管理和 Monaco 代码编辑入口；编辑器支持多根文件树、多文件等宽标签、保存、字号持久化及贴近指针的右键文件管理。浏览器工作台前端入口当前隐藏，相关后端能力暂时保留。
 - Worker 负责快捷任务、搜索预处理、任务上下文构造和 Agent 生命周期；同一时间只运行一个活动任务，执行中消息默认追加到当前任务，显式“排队”才建立独立后续任务。
 - Agent 负责推理和任务执行规划，但所有浏览器操作必须通过 MCP 工具完成。
 - Runtime 通过 CDP 连接 Electron Chromium，提供 `browser.*`、`storage.*` 和 `hardboard.*` MCP tools。
-- 任务管理器的日志“清除”会在 Runtime 空闲时真实删除 EventBus 历史和 Hardboard `.log` 文件，不再只是隐藏前端记录。
+- 任务管理器的日志“清除”会立即清空历史视图，并真实删除 EventBus 历史和 Hardboard `.log` 文件；残留 PID/运行状态不再阻止清除，后续新事件仍继续显示。
+- 监视器由真实 `pyserial` 服务读取串口；“串口数值趋势”按完整文本行提取最后一个数字绘图，不等同于示波器电压波形。
 - `runtime/hardboard` 保存 ESP-IDF 工具、ESP32-S3 示例、施工文档、本地工程和固件产物。
 - 录制、回放和 workflow 保留，用于把网页/调试流程沉淀为可复用辅助任务。
 
@@ -112,6 +113,7 @@ pytest tests/test_project.py
 - [安全和账号规则](docs/SECURITY.md)
 - [接力开发文档](docs/HANDOFF.md)
 - [Hardboard 施工文档](docs/HARDBOARD_CONSTRUCTION.md)
+- [Electron Apple 风格界面施工文档](docs/ELECTRON_APPLE_UI_CONSTRUCTION.md)
 - [开发进度](docs/DEV_PROGRESS.md)
 - [施工日志](docs/LOG.md)
 - [Windows 0.1 测试报告](docs/WINDOWS_0_1_TEST_REPORT.md)

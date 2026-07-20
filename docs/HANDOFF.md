@@ -1,27 +1,27 @@
-# 奥德赛0.4.0-7171 接力开发文档
+# 奥德赛1.0.0-7201 接力开发文档
 
 > 本文是下一次 Codex 接力的第一入口。敏感账号密码不写在本文，见本机私有文件 `.local-secrets/HANDOFF_PRIVATE.md`，该目录已被 `.gitignore` 排除。
 
 ## 当前事实
 
 - 当前日期：2026-07-20。
-- 正式产品名：奥德赛0.4.0-7171。
+- 正式产品名：奥德赛1.0.0-7201。
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
-- 当前施工分支：`agent_task_queue_fix`，从 `electron_fix_neil` 的编辑器与文档基线 `d10245d` 分出；任务串行化为 `39ef92d`，首轮施工文档为 `86af2c8`，文档漂移复核为 `3df82c8`，旧异步回调隔离为 `443a0a6`，Runtime 日志真实清理为当前功能 HEAD `25065b4`。该分支当前没有 upstream，本轮只维护本地 Git，不推送远端。
+- 当前施工分支：`electron_design`。该分支在既有任务串行化、编辑器和 Runtime EventBus 基线上完成 Apple 风格界面、四仓库入口、任务清除、串口数值趋势与编辑器交互修正。本轮维护本地 Git，不推送远端。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
 
-- 当前发布版本：`0.4.0-7171`；Windows PE 四段版本映射为 `0.4.0.7171`。
-- `agent_task_queue_fix` 当前源码已通过 Runtime build/日志清理烟测、Electron typecheck、main/renderer build、任务队列/会话/Hardboard 规则烟测和 `git diff --check`；尚未执行本版本 Windows 打包、真实 Agent 连续对话及真实硬件回归。
+- 当前发布版本：`1.0.0-7201`；Windows PE 四段版本映射为 `1.0.0.7201`。
+- `electron_design` 当前源码需以 Runtime 日志清理烟测、Electron typecheck、main/renderer build、版本一致性和 `git diff --check` 作为提交门禁；尚未执行本版本 Windows 打包、真实 Agent 连续对话及真实硬件回归。
 - 本轮继续加固任务生命周期：turn 完成后的页面验收、恢复和异常回调均校验原 `taskId`，停止或队列切换后的旧异步回调不会再完成新任务或复活旧任务；任务队列烟测已覆盖取消竞态及停止清空两类等待项。
 - 上一版 Windows exe PE 版本已验证（历史 v0.1.0）：
   - `FileVersion=0.1.0`
   - `ProductVersion=0.1.0`
 - 本机源码目录：`E:\Agent\vibeide\vibeide`
-- 目标打包 exe：`electron\dist-package\win-unpacked\奥德赛0.4.0-7171.exe`
+- 目标打包 exe：`electron\dist-package\win-unpacked\奥德赛1.0.0-7201.exe`
 - 产线 API key：`resources\apikey.txt`（DeepSeek，与应用同目录，删包即删 key）
 - 仓库 remote：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
 - SSH key：`~/.ssh/id_ed25519`，已配置 `git config core.sshCommand` 绕过中文路径编码问题
@@ -48,7 +48,16 @@
 - `奥德赛0.4.0.7161.exe` PE 元数据：`ProductName=奥德赛0.4.0.7161`、`FileVersion=0.4.0.7161`、`ProductVersion=0.4.0.7161`
 - 本轮尚未重新执行 exe 启动和 ESP32-S3 实机闭环，详见 `docs/WINDOWS_0_4_0_7161_TEST_REPORT.md`
 
-当前 `0.4.0-7171` 在 `agent_task_queue_fix` 分支维护 Agent 串行化、异步回调隔离和 Runtime 日志真实清理；版本一致性和打包结果仍沿用父分支记录，本轮新增验证见下文。
+下方 0.4.0-7171、0.4.0.7161、0.1.0 的记录均为历史验证事实，不代表当前 1.0.0-7201 已完成打包或硬件回归。
+
+已通过（Electron Apple UI 与 1.0.0-7201，2026-07-20）：
+
+- 全面移除 NES.css 依赖与像素式控件表达，新增 `styles/apple.less` 冷色材质与无障碍覆盖。
+- 仓库固定为 Agent 生成、硬件工程、参考代码、Skills 四组；移除导入入口，每组可在资源管理器打开。
+- 任务历史清除不再被残留 PID/运行状态阻止，界面即时归零，Runtime 删除 EventBus 与 `.log` 文件。
+- 监视器确认使用真实 `pyserial`；“串口数值趋势”仅解析 stdout 完整文本行，趋势/文本比例约 3:7。
+- 编辑器标签等宽分配，关闭按钮有 hover/focus 反馈，右键菜单使用 Portal 贴近鼠标定位。
+- 详细施工基线见 `docs/ELECTRON_APPLE_UI_CONSTRUCTION.md`。
 
 已通过（编辑器功能 `5afcef3`、交互修复 `63992ea`，2026-07-18）：
 
@@ -112,18 +121,17 @@
 
 - 顶部可见页签：仓库、监视器、任务管理器、编辑器。
 - 工作台：前端入口已隐藏；React 内部逻辑、IPC、`WebContentsView` 和主进程后端暂时保留，避免贸然删除早期链路。
-- 监视器：已复原为串口监视器。
+- 监视器：使用真实 `pyserial` 串口服务；上方“串口数值趋势”不是示波器电压波形，只绘制 stdout 每个完整文本行的最后一个数字，趋势区与文本区约为 3:7。
 - 主布局：左侧默认 34%，支持拖动、键盘微调、宽度持久化以及收起/展开对话区。
 - Agent 对话：同一时间只运行一个活动任务；执行中“追加要求”会在当前任务下一执行点继续处理，“排队”才建立独立后续任务。标题显示空闲/执行中/暂停，状态条显示追加与排队数量，输入框支持 `Shift+Enter` 换行。
-- 可读性：中文正文改用系统字体，代码和日志使用等宽字体，按钮、下拉框和标签尺寸已与增大的字号同步。
+- 可读性：界面已放弃像素风；中文正文使用系统字体，代码和日志使用等宽字体，基础正文 15px，控件和元信息同步增大并提高对比度。
 - 任务管理器：先从 `hardboard/projects/<name>` 相对路径选择工程，再执行对齐的 Build/Flash 控制；旧文件选择器、源码预览和 PID/Task/Tool 摘要块已移除。
-- 任务诊断：实时日志、完整日志、事件卡片按需打开；最近任务结果按 `taskId` 汇总，成功/失败颜色分离，支持滚动。任一“清除”都会在 Runtime 空闲时真正删除 EventBus 历史和 Hardboard `.log` 文件，运行中按钮禁用。
-- 日志定位：点击某条任务的“查看”会在完整日志中自动定位对应 `taskId`，成功段绿色高亮、失败段红色高亮。
-- 编辑器：左侧显示来自仓库分组和导入目录的多根文件资源管理器，目录按需展开；右侧使用 Monaco Editor，支持 C/C++、CMake、Markdown、JSON、TypeScript 等语法高亮、多文件标签、切换、`Ctrl+S` 保存和关闭。
+- 任务诊断：实时日志、完整日志、事件卡片按需打开；最近任务结果按 `taskId` 汇总并支持滚动。任一“清除”都会立即清空旧记录并删除 EventBus 历史和 Hardboard `.log` 文件，不再因残留运行状态拒绝或回滚界面。
+- 日志定位：点击某条任务的“查看”会在完整日志中自动定位对应 `taskId`；失败使用克制红色，其余状态避免突兀高饱和强调。
+- 编辑器：左侧显示固定四仓库的多根文件资源管理器，目录按需展开；右侧使用 Monaco Editor，支持语法高亮、等宽弹性多文件标签、`Ctrl+S` 保存和关闭。右键菜单通过 Portal 贴近鼠标显示。
 - 编辑器字号：底部提供减小、增大和重置，范围 10–24px，使用 `localStorage` 保存用户上次字号。
 - 编辑器文件管理：目录右键可新建文件/文件夹，文件和子目录可重命名或移到系统回收站，所有节点可刷新；新建、重命名和删除确认均使用软件内置对话框。主进程只允许操作工作台许可范围，禁止覆盖同名条目和修改资源管理器根目录。
-- 仓库：默认分组不显示施工文档；支持导入文件夹，导入分组支持移除。
-- 运行态导入文件记录在 `runtime/workbench-imports.json`，该文件已被 `.gitignore` 忽略。
+- 仓库：固定为 Agent 生成、硬件工程、参考代码、Skills 四组；不再显示“导入文件夹”，每组提供“在资源管理器中打开”。历史 `runtime/workbench-imports.json` 不再进入当前仓库概览。
 
 ## 必读顺序
 
@@ -171,7 +179,7 @@ npm --prefix electron run typecheck
 npm --prefix electron run build:main
 npm --prefix electron run build:renderer
 npm --prefix electron run pack:win
-npm --prefix electron run stamp:win -- "dist-package/win-unpacked/奥德赛0.4.0-7171.exe"
+npm --prefix electron run stamp:win -- "dist-package/win-unpacked/奥德赛1.0.0-7201.exe"
 ```
 
 如果改了 Agent session 或 hardboard context：
@@ -238,5 +246,5 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 2. 根据启动和包体实测决定是否拆分 Monaco 语言资源；当前完整 Worker 已本地打包。
 3. 修复 `hardboard:serial` 的 reset/open 时序和 UI 状态呈现。
 4. 给任务管理器补一条 Windows packaged runtime smoke，覆盖 build/flash/serial 三个入口。
-5. 发布 `0.4.0-7171` Windows 包后，新建对应版本报告；旧版本报告继续保留为历史实测。
+5. 发布 `1.0.0-7201` Windows 包后，新建对应版本报告；旧版本报告继续保留为历史实测。
 6. 在 ESP-IDF 真实编译测试通过后，补全 `WINDOWS_0_1_TEST_REPORT.md` 的中文路径修复验证项。

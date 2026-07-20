@@ -22,6 +22,7 @@ export interface SerialMonitorOptions {
 export interface SerialMonitorChunk {
   text: string;
   timestamp: number;
+  stream: 'stdout' | 'stderr';
 }
 
 export interface HardboardRuntimeLaunchResult {
@@ -48,7 +49,6 @@ export interface HardboardFlashLaunchOptions {
 
 let serialProcess: ChildProcessWithoutNullStreams | null = null;
 let serialStopTimer: NodeJS.Timeout | null = null;
-const activeRuntimeLaunchPids = new Set<number>();
 
 export async function listHardboardDevices(): Promise<HardboardDevice[]> {
   if (process.platform === 'win32') {
@@ -112,11 +112,11 @@ export function startSerialMonitor(options: SerialMonitorOptions, onData: (chunk
   });
 
   serialProcess.stdout.on('data', (data: Buffer) => {
-    onData({ text: decoder.decode(data, { stream: true }), timestamp: Date.now() });
+    onData({ text: decoder.decode(data, { stream: true }), timestamp: Date.now(), stream: 'stdout' });
   });
 
   serialProcess.stderr.on('data', (data: Buffer) => {
-    onData({ text: decoder.decode(data, { stream: true }), timestamp: Date.now() });
+    onData({ text: decoder.decode(data, { stream: true }), timestamp: Date.now(), stream: 'stderr' });
   });
 
   serialProcess.on('exit', (code, signal) => {
@@ -150,9 +150,6 @@ export async function readHardboardRuntimeEvents(sinceSeq = 0): Promise<unknown>
 }
 
 export async function clearHardboardRuntimeHistory(): Promise<unknown> {
-  if (activeRuntimeLaunchPids.size > 0) {
-    return { ok: false, error: 'Build/Flash 启动进程仍在运行，不能清除日志' };
-  }
   try {
     return await execRuntimeJson(['hardboard:events-clear']);
   } catch (error) {
@@ -269,13 +266,6 @@ function spawnRuntimeCommand(args: string[], launchOptions?: object): HardboardR
     windowsHide: true,
     stdio: 'ignore',
   });
-  if (child.pid) {
-    const launchPid = child.pid;
-    activeRuntimeLaunchPids.add(launchPid);
-    const releasePid = () => activeRuntimeLaunchPids.delete(launchPid);
-    child.once('exit', releasePid);
-    child.once('error', releasePid);
-  }
   child.unref();
   return {
     ok: true,

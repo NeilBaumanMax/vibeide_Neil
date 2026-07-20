@@ -2,7 +2,7 @@
 
 ## 一句话
 
-`奥德赛0.4.0-7171` 是一个 Electron 桌面自动化 IDE：用户在左侧对话，右侧提供仓库、监视器、任务管理器和编辑器；浏览器工作台后端暂时保留。任务由 Worker 编排，Agent 通过 Runtime MCP tools 控制同一个 Electron Chromium。
+`奥德赛1.0.0-7201` 是一个 Electron 桌面自动化 IDE：用户在左侧对话，右侧提供固定四仓库、串口监视器、任务管理器和编辑器；浏览器工作台后端暂时保留。任务由 Worker 编排，Agent 通过 Runtime MCP tools 控制同一个 Electron Chromium。
 
 ## 分层
 
@@ -39,15 +39,16 @@ Electron Chromium / WebContentsView
 - `electron/src/main/gateway.ts`：IPC 注册，唯一入口。
 - `electron/src/main/browser-view.ts`：右侧 WebContentsView tabs、持久 session、bounds 同步。
 - `electron/src/main/browser-recorder.ts`：Electron 侧录制和回放。
-- `electron/src/main/workbench.ts`：工作台概览和编辑器文件系统边界；提供允许根目录下的目录枚举、文本读写、新建、重命名及移到系统回收站，禁止修改资源管理器根目录。
-- `electron/src/main/hardboard.ts`：硬件设备、串口、Runtime EventBus、日志历史清理、Build/Flash 的 IPC 桥接。
+- `electron/src/main/workbench.ts`：固定四仓库概览和编辑器文件系统边界；提供允许根目录下的目录枚举、文本读写、新建、重命名及移到系统回收站，禁止修改资源管理器根目录。
+- `electron/src/main/hardboard.ts`：硬件设备、真实 `pyserial` 串口读取、Runtime EventBus、日志历史清理、Build/Flash 的 IPC 桥接。
 - `electron/src/main/paths.ts`：开发版与 packaged 环境的资源、Runtime、Agent 和 API key 路径解析。
 - `electron/src/main/agent.ts`：Claude Agent 进程、动态 MCP 配置和生命周期管理。
 - `electron/src/main/first-run.ts`：首次运行目录与资源初始化。
 - `electron/src/main/tray.ts`：Windows 系统托盘和窗口显隐。
 - `electron/src/main/worker/session-store.ts`：Claude 会话上下文持久化。
 - `electron/src/renderer/App.tsx`：主 UI 状态，以及左右面板宽度持久化、拖动分隔和对话区收起/展开。
-- `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器和编辑器；工作台前端入口隐藏，但组件内部浏览器工作台实现保留。任务管理器负责相对工程选择、Build/Flash 控制、EventBus 诊断卡片和最近任务结果；编辑器负责多根资源树、懒加载目录、多文件标签、内置文件操作对话框、字号持久化和保存状态同步。
+- `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器和编辑器；工作台前端入口隐藏，但组件内部浏览器工作台实现保留。任务管理器负责相对工程选择、Build/Flash 控制、可直接清除的 EventBus 历史和最近任务结果；监视器把完整串口文本行解析为数值趋势；编辑器负责多根资源树、懒加载目录、等宽标签、Portal 右键菜单、字号持久化和保存状态同步。
+- `electron/src/renderer/styles/apple.less`：1.0.0-7201 最终视觉覆盖，定义冷色材质、排版层级、圆角、反馈动效和 reduced-motion/reduced-transparency 适配。
 - `electron/src/renderer/components/CodeEditor.tsx`：基于 Monaco Editor 的代码区，按扩展名选择 C/C++、CMake、Markdown、JSON、TypeScript 等语言，使用内置 C/C++ 深色主题并接收用户字号设置。
 - `electron/src/renderer/monaco.ts`：本地 Monaco editor/json/css/html/typescript Worker 注册，保证开发版和打包版不依赖在线 CDN。
 
@@ -134,7 +135,7 @@ Electron Chromium / WebContentsView
 - `runtime/src/mcp/hardboard.tool.ts`：Hardboard MCP tools 注册。
 - `runtime/src/mcp/tool-events.ts`：MCP 工具事件写入 EventBus。
 - `runtime/src/hardboard/runner.ts`：ESP-IDF Build/Flash 进程执行。
-- `runtime/src/eventbus/event-store.ts`：EventBus JSONL 和最近状态持久化；提供空闲期历史事件与 Hardboard `.log` 文件的受限清理。
+- `runtime/src/eventbus/event-store.ts`：EventBus JSONL 和最近状态持久化；删除历史事件与 Hardboard `.log` 文件，不再因残留运行状态拒绝用户清除。
 - `runtime/src/process/process-runner.ts`：受管子进程生命周期。
 - `runtime/src/task/task-manager.ts`：Runtime 任务状态机。
 
@@ -178,7 +179,7 @@ Electron Chromium / WebContentsView
 
 ## 当前架构风险
 
-1. 用户可见正式名已是奥德赛0.4.0-7171，但内部仓库、npm 包和部分运行态目录仍沿用 `vibeide` 作为工程代号；后续如要彻底迁移需单独设计兼容策略。
+1. 用户可见正式名已是奥德赛1.0.0-7201，但内部仓库、npm 包和部分运行态目录仍沿用 `vibeide` 作为工程代号；后续如要彻底迁移需单独设计兼容策略。
 2. `tests/test_scaffold.py` 依赖旧 `src/coddecat`，与当前主线不一致。
 3. 历史文档仍保留部分 `coffecat/coddecat` 迁移记录；这些只作为历史，不应作为当前实现依据。
 4. Electron 侧和 Runtime 侧都有录制/回放实现，需要明确长期边界。

@@ -211,22 +211,6 @@ export function removeImportedWorkbenchFolder(folderPath: string): WorkbenchOver
   return getWorkbenchOverview();
 }
 
-function getImportedSections(): WorkbenchSection[] {
-  return readImportedFolders().map((folderPath, index) => ({
-    id: `imported-${index}-${Buffer.from(folderPath).toString('hex').slice(0, 10)}`,
-    title: `导入: ${path.basename(folderPath) || folderPath}`,
-    description: '用户导入的额外文件夹',
-    folderPath,
-    removable: true,
-    items: listFilesRecursive(folderPath, {
-      limit: 32,
-      include: /(?:CMakeLists\.txt|README\.md|sdkconfig(?:\.defaults)?|\.html?$|\.svg$|\.c$|\.h$|\.cpp$|\.hpp$|\.S$|\.md$|\.json$|\.txt$|\.yaml$|\.yml$)/i,
-      category: 'imported',
-    }),
-    emptyText: '导入文件夹里没有可显示文件',
-  }));
-}
-
 function enrichRecording(item: WorkbenchItem): WorkbenchItem {
   if (item.kind !== 'file' || !item.name.endsWith('.json')) return item;
 
@@ -334,7 +318,6 @@ export function getWorkbenchOverview(): WorkbenchOverview {
         }),
         emptyText: '还没有 skills 文件',
       },
-      ...getImportedSections(),
     ],
   };
 }

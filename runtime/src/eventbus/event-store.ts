@@ -73,11 +73,6 @@ export function clearRuntimeEventHistory(): {
   logsRemoved: number;
   state: HardboardRuntimeState;
 } {
-  const current = getRuntimeEventState();
-  if (current.status === 'running' || current.activePid != null) {
-    throw new Error('Runtime 任务仍在运行，不能清除日志；请等待任务结束或先停止任务');
-  }
-
   let eventsRemoved = 0;
   if (fs.existsSync(EVENT_LOG_FILE)) {
     const lines = fs.readFileSync(EVENT_LOG_FILE, 'utf-8').split(/\r?\n/).filter(Boolean);

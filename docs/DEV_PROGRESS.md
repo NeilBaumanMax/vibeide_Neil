@@ -6,7 +6,7 @@
 
 ## 当前版本
 
-奥德赛0.4.0-7171；当前发布版本 `0.4.0-7171`，Windows PE 四段版本映射为 `0.4.0.7171`
+奥德赛1.0.0-7201；当前发布版本 `1.0.0-7201`，Windows PE 四段版本映射为 `1.0.0.7201`
 
 ---
 
@@ -14,20 +14,20 @@
 
 - [x] GitHub 仓库 `https://github.com/NeilBaumanMax/vibeide_Neil.git` 已作为当前接力源码仓库接入本机
 - [x] 当前唯一施工源码目录已统一为 Windows `E:\Agent\vibeide\vibeide`；旧 `C:\vibeide` 和 `E:\vibeide` 仅保留在历史迁移记录中
-- [x] README 已重写为奥德赛0.4.0-7171 当前 Electron + Runtime + Agent 主线，`vibeide` 保留为仓库和内部工程代号
+- [x] README 已重写为奥德赛1.0.0-7201 当前 Electron + Runtime + Agent 主线，`vibeide` 保留为仓库和内部工程代号
 - [x] 新文档体系已建立：INDEX / ARCHITECTURE / DEVELOPMENT / GITHUB_SYNC / REFACTOR_PLAN / SECURITY / HANDOFF
 - [x] Claude CLI 已接入软件级持续会话上下文，最近轮次持久化到 `runtime/claude-session/`
 - [x] Claude CLI 启动增加 `--continue` 续接策略，并用 prompt 注入作为兜底
 - [x] Agent 对话改为单活动任务：执行中发送默认追加到当前任务，显式“排队”才创建下一任务；状态、消息和结果使用 `taskId` 关联
 - [x] 新增 Agent 任务队列烟测：`npm.cmd --prefix electron run verify:task-queue`
 - [x] Agent 异步完成回调绑定活动 `taskId`：停止或切换任务后，旧 turn/页面验收/恢复回调会被忽略；烟测覆盖取消竞态和停止清空追加/排队项
-- [x] Electron 前端已重构为 NES.css / 蓝白机视觉
+- [x] Electron 前端已全面放弃 NES.css / 像素视觉，改为 Apple 风格冷色材质、系统字体、克制边框和直接反馈
 - [x] 右侧工作台文件 / 目录现在可点击，会在右侧浏览页层打开 `file://` 地址
 - [x] 新增 Electron 工作台点击烟测：`cd electron && npm run smoke:workbench`
 - [x] 新增 Claude 软件会话记忆烟测：`cd electron && npm run verify:session`
 - [x] Windows `E:\vibeide` 已同步到 0.1 接力版本；`E:\vibeide-0.1-win-unpacked` 已通过 exe 版本、编译和烧录验证
-- [x] 应用图标已新增像素风 `electron/assets/icon.svg/png/ico`
-- [x] 产品名、Windows PE 版本和 npm SemVer 已统一映射到奥德赛0.4.0-7171，并停止把真实 `apikey.txt` 打进安装包
+- [x] 应用图标文件保留在 `electron/assets/icon.svg/png/ico`；当前界面不再继承旧像素风表达
+- [x] 产品名、Windows PE 版本和 npm SemVer 已统一映射到奥德赛1.0.0-7201，并停止把真实 `apikey.txt` 打进安装包
 - [x] 右侧“工作台”前端入口已隐藏，早期浏览器工作台 React/IPC/WebContentsView 后端链路暂时保留
 - [x] API Key 路径收敛到 `resources/apikey.txt`（与应用同目录），移除 `%APPDATA%` 持久化，删包即删 key
 - [x] runtime/electron/agent package 命名已从 `@coffecat/*` 迁移到 `@vibeide/*`
@@ -62,7 +62,7 @@
 - [x] `hardboard.idf_build` / `hardboard.idf_flash` 已改为 compact 输出，完整 stdout/stderr 写入 `runtime/hardboard/logs/*.log`
 - [x] `agent/skills/espidf_hardboard.md` 已补齐 docsDir/projectsDir、排除 build、先读 `main/CMakeLists.txt` 的文件定位规则
 - [x] Runtime task / pid / eventbus / heartbeat / hardboard build-flash events 已接入任务管理器
-- [x] 编辑器页支持多文件标签，仓库页支持导入和移除文件夹
+- [x] 编辑器页支持 Edge 风格等宽多文件标签；仓库页固定为四个受控仓库，每个仓库可在系统资源管理器中打开
 - [x] 编辑器升级为 VS Code 风格两栏布局：左侧按仓库分组显示多根文件资源管理器并懒加载目录，右侧保留多文件标签、当前路径、保存状态和 Monaco 代码区
 - [x] Monaco、语言定义和 Worker 已随 Electron 本地打包；C/C++、CMake、Markdown、JSON、TypeScript 等文件支持语法高亮、行号、括号配色和代码缩略图
 - [x] 文件资源管理器支持右键新建文件/文件夹、重命名、刷新和移到系统回收站；文件操作使用软件内置对话框，主进程限制允许路径、拒绝覆盖同名条目并保护根目录
@@ -72,7 +72,9 @@
 - [x] 任务管理器改为“先选相对工程，再 Build/Flash”，工程列表来自 `runtime/hardboard/projects`，两行控件、状态和进度统一对齐
 - [x] 任务管理器删除旧文件选择器、源码预览和进程摘要块；实时日志、完整日志、事件卡片改为按需诊断卡片
 - [x] 最近任务结果按 `taskId` 聚合并区分成功/失败颜色，支持滚动、清除、查看对应日志和按状态高亮定位
-- [x] 任务管理器“清除”已改为真实后端清理：空闲时删除 EventBus `events.jsonl`、重置状态并删除 Hardboard `.log` 文件；运行中拒绝清理，非日志文件保留
+- [x] 任务管理器“清除”已改为直接真实清理：立即移除当前历史视图，删除 EventBus `events.jsonl`、重置状态并删除 Hardboard `.log` 文件；残留 PID/运行状态不再拒绝，非日志文件保留
+- [x] 监视器确认使用真实 `pyserial` 后端；界面明确为“串口数值趋势”，仅解析 stdout 完整行，比例调整为趋势 30% / 文本 70%
+- [x] 编辑器右键菜单通过 Portal 使用视口坐标贴近指针，关闭按钮补齐 hover/focus 反馈，字号控件改为圆角冷蓝按钮组
 - [x] 文档路径漂移已修正：当前 Windows 工作区统一为 `E:\Agent\vibeide\vibeide`，旧 Linux、`C:\vibeide`、`D:\vibeide` 和 `E:\vibeide` 路径仅作为历史迁移记录保留
 - [x] `ARCHITECTURE.md` 已补齐 Runtime hardboard/eventbus/process/task/MCP 子系统和 Electron hardboard/paths/agent/first-run/tray/session-store 模块
 - [x] 删除已被 Electron 动态 MCP 配置取代的 `runtime/mcp-config.json`、孤立根 `package-lock.json`，并清理活动脚本中的旧 `coffecat` 名称和绝对路径

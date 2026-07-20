@@ -23,9 +23,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setBrowserBounds: (bounds: { x: number; y: number; width: number; height: number }) => ipcRenderer.invoke('browser:setBounds', bounds),
   listBrowserTabs: () => ipcRenderer.invoke('browser:listTabs'),
   getWorkbenchOverview: () => ipcRenderer.invoke('workbench:getOverview'),
-  importWorkbenchFolder: () => ipcRenderer.invoke('workbench:importFolder'),
-  removeImportedWorkbenchFolder: (folderPath: string) => ipcRenderer.invoke('workbench:removeImportedFolder', folderPath),
   openWorkbenchItem: (targetPath: string) => ipcRenderer.invoke('workbench:openItem', targetPath),
+  openWorkbenchFolder: (targetPath: string) => ipcRenderer.invoke('workbench:openFolder', targetPath),
   readWorkbenchFile: (targetPath: string) => ipcRenderer.invoke('workbench:readFile', targetPath),
   listWorkbenchDirectory: (targetPath: string) => ipcRenderer.invoke('workbench:listDirectory', targetPath),
   writeWorkbenchFile: (targetPath: string, text: string) => ipcRenderer.invoke('workbench:writeFile', targetPath, text),
@@ -51,7 +50,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startSerialMonitor: (options: { port: string; baudRate: number; encoding: string }) => ipcRenderer.invoke('hardboard:serialStart', options),
   stopSerialMonitor: () => ipcRenderer.invoke('hardboard:serialStop'),
   getSerialMonitorStatus: () => ipcRenderer.invoke('hardboard:serialStatus'),
-  onSerialData: (cb: (chunk: { text: string; timestamp: number }) => void) => {
+  onSerialData: (cb: (chunk: { text: string; timestamp: number; stream: 'stdout' | 'stderr' }) => void) => {
     ipcRenderer.on('hardboard:serial-data', (_event, chunk) => cb(chunk));
   },
   onSerialExit: (cb: (result: { code: number | null; signal: string | null }) => void) => {

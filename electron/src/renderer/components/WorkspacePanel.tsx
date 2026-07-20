@@ -1,11 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { WorkbenchItem, WorkbenchOverview, WorkbenchSection } from '../types';
 
 interface Props {
   overview: WorkbenchOverview | null;
   onRefresh: () => void;
-  onImportFolder: () => void;
-  onRemoveImportedFolder: (folderPath: string) => void;
   onOpenItem: (targetPath: string) => void;
   onEditItem: (item: WorkbenchItem) => void;
 }
@@ -35,7 +33,7 @@ function isEditable(item: WorkbenchItem): boolean {
   return item.kind === 'file' && /(?:CMakeLists\.txt|\.c|\.h|\.cpp|\.hpp|\.S|\.md|\.json|\.txt|\.yaml|\.yml)$/i.test(item.name);
 }
 
-function renderSection(section: WorkbenchSection, onOpenItem: (item: WorkbenchItem) => void, onRemoveImportedFolder: (folderPath: string) => void) {
+function renderSection(section: WorkbenchSection, onOpenItem: (item: WorkbenchItem) => void, onOpenFolder: (folderPath: string) => void) {
   return (
     <section key={section.id} className="workspace-section nes-container is-rounded">
       <div className="workspace-section-header">
@@ -45,9 +43,7 @@ function renderSection(section: WorkbenchSection, onOpenItem: (item: WorkbenchIt
         </div>
         <div className="workspace-section-tools">
           <code>{section.folderPath}</code>
-          {section.removable ? (
-            <button className="nes-btn is-error" type="button" onClick={() => onRemoveImportedFolder(section.folderPath)}>移除</button>
-          ) : null}
+          <button className="nes-btn workspace-open-folder" type="button" onClick={() => onOpenFolder(section.folderPath)}>在资源管理器中打开</button>
         </div>
       </div>
       <div className="workspace-items">
@@ -79,7 +75,15 @@ function renderSection(section: WorkbenchSection, onOpenItem: (item: WorkbenchIt
   );
 }
 
-export default function WorkspacePanel({ overview, onRefresh, onImportFolder, onRemoveImportedFolder, onOpenItem, onEditItem }: Props) {
+export default function WorkspacePanel({ overview, onRefresh, onOpenItem, onEditItem }: Props) {
+  const [folderFeedback, setFolderFeedback] = useState('');
+
+  const handleOpenFolder = async (folderPath: string) => {
+    setFolderFeedback('正在打开目录…');
+    const result = await window.electronAPI?.openWorkbenchFolder?.(folderPath);
+    setFolderFeedback(result?.ok ? '已在资源管理器中打开' : `打开失败：${result?.error || '目录不可用'}`);
+  };
+
   const handleOpenItem = async (item: WorkbenchItem) => {
     if (window.electronAPI?.isWorkbenchSmokeTest) {
       onOpenItem(item.path);
@@ -102,12 +106,12 @@ export default function WorkspacePanel({ overview, onRefresh, onImportFolder, on
           <p>只保留 skills、Agent 生成文件、硬件工程、参考代码和施工文档。HTML 直接运行，源码和 Markdown 可预览修改。</p>
         </div>
         <div className="workspace-actions">
-          <button className="nes-btn is-primary" type="button" onClick={onImportFolder}>导入文件夹</button>
+          <span className="workspace-folder-feedback" aria-live="polite">{folderFeedback}</span>
           <button className="nes-btn" type="button" onClick={onRefresh}>刷新目录</button>
         </div>
       </div>
       <div className="workspace-grid">
-        {overview?.sections.map((section) => renderSection(section, handleOpenItem, onRemoveImportedFolder))}
+        {overview?.sections.map((section) => renderSection(section, handleOpenItem, (folderPath) => void handleOpenFolder(folderPath)))}
       </div>
     </div>
   );

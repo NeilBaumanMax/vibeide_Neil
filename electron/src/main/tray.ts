@@ -13,7 +13,7 @@ export function setupTray(): Tray {
     { label: '退出', role: 'quit' },
   ]);
 
-  tray.setToolTip('奥德赛0.4.0-7171');
+  tray.setToolTip('奥德赛1.0.0-7201');
   tray.setContextMenu(menu);
 
   return tray;
