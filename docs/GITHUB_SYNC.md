@@ -20,12 +20,11 @@ GitHub
 
 - GitHub SSH 访问已验证。
 - 当前本机记录的 `origin/main` 为 `5e6ba3b`；`electron_fix_neil` 本地基线为 `d10245d`。
-- 当前施工分支为 `electron_design`；当前版本为 `1.0.0-7201`，最新本地功能提交为 `9848c33`（持久化主题与可拖动外观入口），其前一轮为 `508174a`（随包 Python 与双向串口工作流）；施工基线见 `docs/ELECTRON_APPLE_UI_CONSTRUCTION.md`。
+- 当前施工分支为 `electron_design`，版本为 `1.0.0-7201`；近期本地基线包括 `9848c33`（主题入口）、`5493f39`（packaged 工作台路径）和 `3c091ec`（任务页比例）。动态 HEAD 以本地 `git log -1` 为准，施工基线见 `docs/ELECTRON_APPLE_UI_CONSTRUCTION.md`。
 - 本轮只维护本地 Git，不执行远端推送。需要同步时由用户明确决定并运行 `git push -u origin electron_design`。
 - `electron_fix_neil` 早期推送曾因 GitHub HTTPS 连接重置失败；远端分支事实不能根据本地分支存在与否推断，必须以成功的 `git push` 或远端查询结果为准。
 - Windows SSH 已连通。
-- Windows 源码已同步到 `C:\vibeide` 和 `E:\vibeide`。
-- Windows 0.1 unpacked 包已同步到 `E:\vibeide-0.1-win-unpacked`。
+- `C:\vibeide`、`E:\vibeide` 与 `E:\vibeide-0.1-win-unpacked` 是历史同步目标；当前唯一施工目录为 `E:\Agent\vibeide\vibeide`，不得再将旧目录描述为当前同步状态。
 - 本机私有连接信息已写入 `.local-secrets/HANDOFF_PRIVATE.md`，该目录不会提交。
 
 ## 推荐长期流程

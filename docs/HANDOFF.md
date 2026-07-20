@@ -9,7 +9,7 @@
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
-- 当前施工分支：`electron_design`。该分支在既有任务串行化、编辑器和 Runtime EventBus 基线上完成 Apple 风格界面、四仓库入口、任务清除、内置双向串口助手、随包 Python/MCP 修复、应用内持久化主题和可拖动外观入口。本轮维护本地 Git，不推送远端；当前最新功能提交为 `9848c33`，其前一轮硬件/串口提交为 `508174a`。
+- 当前施工分支：`electron_design`。该分支在既有任务串行化、编辑器和 Runtime EventBus 基线上完成 Apple 风格界面、四仓库入口、任务清除、内置双向串口助手、随包 Python/MCP 修复、应用内持久化主题和可拖动外观入口。本轮维护本地 Git，不推送远端；近期本地基线包括主题入口 `9848c33`、packaged 工作台修复 `5493f39` 和任务页比例调整 `3c091ec`，不要再把其中任一旧提交写成动态“最新 HEAD”。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
@@ -155,6 +155,7 @@
 - 任务诊断：实时日志、完整日志、事件卡片按需打开；最近任务结果按 `taskId` 汇总并支持滚动。任一“清除”都会立即清空旧记录并删除 EventBus 历史和 Hardboard `.log` 文件，不再因残留运行状态拒绝或回滚界面。
 - 日志定位：点击某条任务的“查看”会在完整日志中自动定位对应 `taskId`；失败使用克制红色，其余状态避免突兀高饱和强调。
 - 编辑器：左侧显示固定四仓库的多根文件资源管理器，目录按需展开；右侧使用 Monaco Editor，支持语法高亮、等宽弹性多文件标签、`Ctrl+S` 保存和关闭。右键菜单通过 Portal 贴近鼠标显示。
+- 编辑器空状态：标签栏提示、未打开路径和代码区说明使用主题文字令牌；旧版固定深蓝色不再覆盖深色主题。修复后 Electron typecheck、renderer build、Windows `pack:win` 与 `git diff --check` 已通过，并已启动成品复测。
 - 编辑器字号：底部提供减小、增大和重置，范围 10–24px，使用 `localStorage` 保存用户上次字号。
 - 编辑器文件管理：目录右键可新建文件/文件夹，文件和子目录可重命名或移到系统回收站，所有节点可刷新；新建、重命名和删除确认均使用软件内置对话框。主进程只允许操作工作台许可范围，禁止覆盖同名条目和修改资源管理器根目录。
 - 仓库：固定为 Agent 生成、硬件工程、参考代码、Skills 四组；不再显示“导入文件夹”，每组提供“在资源管理器中打开”。历史 `runtime/workbench-imports.json` 不再进入当前仓库概览。

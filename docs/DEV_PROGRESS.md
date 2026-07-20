@@ -83,6 +83,7 @@
 - [x] 任务管理器“清除”已改为直接真实清理：立即移除当前历史视图，删除 EventBus `events.jsonl`、重置状态并删除 Hardboard `.log` 文件；残留 PID/运行状态不再拒绝，非日志文件保留
 - [x] 监视器使用真实 `pyserial` 双向后端；原“串口数值趋势”及数字采样状态已删除，收发区获得完整可用空间
 - [x] 编辑器右键菜单通过 Portal 使用视口坐标贴近指针，关闭按钮补齐 hover/focus 反馈，字号控件改为圆角冷蓝按钮组
+- [x] 编辑器“从左侧资源管理器选择文件”空标签提示已从旧固定深蓝色切换为主题次级文字令牌，深色/浅色背景均保持可读
 - [x] 文档路径漂移已修正：当前 Windows 工作区统一为 `E:\Agent\vibeide\vibeide`，旧 Linux、`C:\vibeide`、`D:\vibeide` 和 `E:\vibeide` 路径仅作为历史迁移记录保留
 - [x] `ARCHITECTURE.md` 已补齐 Runtime hardboard/eventbus/process/task/MCP 子系统和 Electron hardboard/paths/agent/first-run/tray/session-store 模块
 - [x] 删除已被 Electron 动态 MCP 配置取代的 `runtime/mcp-config.json`、孤立根 `package-lock.json`，并清理活动脚本中的旧 `coffecat` 名称和绝对路径

@@ -611,11 +611,16 @@ body.is-resizing-panels .panel-divider::before {
 .editor-tab { border: 0; border-radius: 7px; color: var(--ui-text-secondary); background: transparent; }
 .editor-tab--active { color: var(--ui-text); background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); }
 .editor-tab i { color: var(--ui-text-secondary); background: var(--ui-fill); border: 0; border-radius: 50%; }
+.editor-empty-tabs,
 .editor-current-path,
-.editor-status { color: var(--ui-text-secondary); background: transparent; border: 0; }
+.editor-status { color: var(--ui-text-secondary) !important; background: transparent; border: 0; }
 .editor-code-host,
 .editor-code-empty,
 .editor-code-loading { border: 1px solid var(--ui-separator); border-radius: var(--ui-radius); }
+.editor-code-empty,
+.editor-code-loading { color: var(--ui-text-secondary) !important; }
+.editor-code-empty,
+.editor-code-loading { color: var(--ui-text-secondary) !important; }
 
 /* Monitor and task views. */
 .task-manager-panel {
