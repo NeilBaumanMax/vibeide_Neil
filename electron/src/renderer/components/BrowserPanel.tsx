@@ -757,6 +757,12 @@ export default function BrowserPanel({
   const runtimeBusy = runtimeState?.status === 'running';
   const selectedPort = selectedDevicePort || serialPort;
   const hasSelectedProject = projectOptions.some((project) => project.value === projectDir);
+  const buildStatusTone = !hasSelectedProject
+    ? 'needs-input'
+    : runtimeState?.phase === 'build' ? runtimeState.status : 'idle';
+  const flashStatusTone = !hasSelectedProject || !selectedPort
+    ? 'needs-input'
+    : runtimeState?.phase === 'flash' ? runtimeState.status : 'idle';
   const toggleRuntimeCard = (card: RuntimeCard) => {
     setTaskLogFocus(null);
     setRuntimeCard((current) => current === card ? null : card);
@@ -1013,7 +1019,7 @@ export default function BrowserPanel({
             <div className="compile-control-grid">
               <div className="compile-control-row compile-control-row--build nes-container is-rounded">
                 <strong>Build</strong>
-                <span className="compile-row-prompt">编译工程</span>
+                <button className="nes-btn compile-refresh-button" type="button" onClick={onRefreshWorkbench}>刷新工程</button>
                 <select className="nes-select project-select" value={projectDir} onChange={(e) => setProjectDir(e.target.value)}>
                   <option value="">请选择 hardboard 工程</option>
                   {projectOptions.map((project) => (
@@ -1021,7 +1027,7 @@ export default function BrowserPanel({
                   ))}
                 </select>
                 <button className="nes-btn is-warning" type="button" onClick={handleManualBuild} disabled={!hasSelectedProject || runtimeBusy}>编译</button>
-                <span className="compile-action-status">
+                <span className={`compile-action-status is-${buildStatusTone}`} aria-live="polite">
                   {!hasSelectedProject ? '请先选择工作工程' : runtimeState?.phase === 'build' ? `${runtimeState.status} · ${progressValue}%` : '等待编译'}
                 </span>
                 <div className="runtime-progress compile-row-progress"><span style={{ width: `${runtimeState?.phase === 'build' ? Math.max(0, Math.min(100, progressValue)) : 0}%` }} /></div>
@@ -1034,7 +1040,7 @@ export default function BrowserPanel({
                   {hardboardDevices.map((device) => <option key={device.port} value={device.port}>{device.port} · {device.label}</option>)}
                 </select>
                 <button className="nes-btn is-error" type="button" onClick={handleManualFlash} disabled={!hasSelectedProject || !selectedPort || runtimeBusy}>烧录</button>
-                <span className="compile-action-status">
+                <span className={`compile-action-status is-${flashStatusTone}`} aria-live="polite">
                   {!hasSelectedProject ? '请先选择工作工程' : !selectedPort ? '请选择串口' : runtimeState?.phase === 'flash' ? `${runtimeState.status} · ${progressValue}%` : '等待烧录'}
                 </span>
                 <div className="runtime-progress compile-row-progress"><span style={{ width: `${runtimeState?.phase === 'flash' ? Math.max(0, Math.min(100, progressValue)) : 0}%` }} /></div>

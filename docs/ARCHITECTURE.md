@@ -39,7 +39,7 @@ Electron Chromium / WebContentsView
 - `electron/src/main/gateway.ts`：IPC 注册，唯一入口。
 - `electron/src/main/browser-view.ts`：右侧 WebContentsView tabs、持久 session、bounds 同步。
 - `electron/src/main/browser-recorder.ts`：Electron 侧录制和回放。
-- `electron/src/main/workbench.ts`：固定四仓库概览和编辑器文件系统边界；提供允许根目录下的目录枚举、文本读写、新建、重命名及移到系统回收站，禁止修改资源管理器根目录。
+- `electron/src/main/workbench.ts`：固定四仓库概览和编辑器文件系统边界；打包资源通过 `getAgentDir()`、`getResourcesDir()`、`getHardboardDir()` 解析，Skills 位于 `resources/agent/skills`。只允许 Agent 工作区、硬件、Skills/Tools、文档、录制与工作流等明确根目录，不把整个安装根目录开放给编辑器；提供许可根目录下的枚举、文本读写、新建、重命名及移到系统回收站，并保护根目录。
 - `electron/src/main/hardboard.ts`：硬件设备枚举、真实 `pyserial` 双向串口服务、Runtime EventBus、日志历史清理、Build/Flash 的 IPC 桥接。
 - `electron/src/main/paths.ts`：开发版与 packaged 环境的资源、Runtime、Agent 和 API key 路径解析。
 - `electron/src/main/agent.ts`：Claude Agent 进程、动态 MCP 配置和生命周期管理。
@@ -47,7 +47,8 @@ Electron Chromium / WebContentsView
 - `electron/src/main/tray.ts`：Windows 系统托盘和窗口显隐。
 - `electron/src/main/worker/session-store.ts`：Claude 会话上下文持久化。
 - `electron/src/renderer/App.tsx`：主 UI 状态、左右面板宽度持久化、拖动分隔和对话区收起/展开；同时管理独立于系统实时偏好的深色/浅色主题、可拖动外观按钮坐标和对应 `localStorage` 状态。
-- `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器和编辑器；工作台前端入口隐藏，但组件内部浏览器工作台实现保留。任务管理器负责相对工程选择、Build/Flash 控制、可直接清除的 EventBus 历史和最近任务结果；监视器提供文本/HEX 双向收发及完整串口参数；编辑器负责多根资源树、懒加载目录、等宽标签、Portal 右键菜单、字号持久化和保存状态同步。
+- `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器和编辑器；工作台前端入口隐藏，但组件内部浏览器工作台实现保留。任务管理器负责工程/设备刷新、相对工程选择、Build/Flash 控制、语义状态胶囊、可直接清除的 EventBus 历史和最近任务结果；监视器提供文本/HEX 双向收发及完整串口参数；编辑器负责多根资源树、懒加载目录、等宽标签、Portal 右键菜单、字号持久化和保存状态同步。
+- `electron/src/renderer/components/WorkspacePanel.tsx`：四仓库卡片、资源管理器入口和简短目录打开反馈；完整错误保留为悬停提示，反馈区域受最大宽度约束，不参与挤压主标题。
 - `electron/src/renderer/styles/apple.less`：1.0.0-7201 最终视觉覆盖，使用 `data-theme="dark|light"` 定义显式主题令牌，并提供冷色材质、排版层级、圆角、可拖动外观浮层、反馈动效和 reduced-motion/reduced-transparency 适配。
 - `electron/src/renderer/components/CodeEditor.tsx`：基于 Monaco Editor 的代码区，按扩展名选择 C/C++、CMake、Markdown、JSON、TypeScript 等语言，使用内置 C/C++ 深色主题并接收用户字号设置。
 - `electron/src/renderer/monaco.ts`：本地 Monaco editor/json/css/html/typescript Worker 注册，保证开发版和打包版不依赖在线 CDN。

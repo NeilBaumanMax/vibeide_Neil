@@ -17,6 +17,7 @@
 - 当前发布版本：`1.0.0-7201`；Windows PE 四段版本映射为 `1.0.0.7201`。
 - `electron_design` 当前源码需以 Runtime/Electron typecheck、main/renderer build、Windows unpacked 打包和 `git diff --check` 作为提交门禁。当前版本已执行 Windows 打包、MCP handshake、随包 Python、ESP-IDF 冷构建及 COM5 串口回归；真实 Agent 长时间连续对话仍需持续观察。
 - 当前主题不再持续跟随 Windows/Electron 的 `prefers-color-scheme`。首次无记录时读取一次系统偏好，之后由外观菜单选择并持久化；按钮位置也独立持久化，可拖动避开编辑器字号工具条。
+- Windows packaged 工作台资源不得用 `win-unpacked/<资源>` 手工拼接：Skills 通过 `getAgentDir()` 指向 `resources/agent/skills`，文档和硬件分别通过 `getResourcesDir()` / `getHardboardDir()` 解析。工作台允许范围是明确仓库，不包含整个安装根目录。
 - 本轮继续加固任务生命周期：turn 完成后的页面验收、恢复和异常回调均校验原 `taskId`，停止或队列切换后的旧异步回调不会再完成新任务或复活旧任务；任务队列烟测已覆盖取消竞态及停止清空两类等待项。
 - 上一版 Windows exe PE 版本已验证（历史 v0.1.0）：
   - `FileVersion=0.1.0`
@@ -67,6 +68,13 @@
 - 深色 `#131315` 与浅色 `#e9eaed` 可由应用内菜单切换；页面重载后主题仍保持，最终验收状态恢复为深色。
 - 使用成品窗口真实指针事件将按钮拖至 `(100,100)`，松开后 `is-dragging` 正常清除，坐标写入 `vibeide.appearance.position`，页面重载后位置保持。
 - 按钮位于左上区域时浮层自动向右下展开，实测边界完全位于视口内；最终按钮移回右侧、距底部约 86px，不遮挡字号工具条。
+
+已通过（任务状态 UI 与 packaged Skills 路径，2026-07-21）：
+
+- Build 行“编译工程”静态文字已替换为“刷新工程”按钮；成品点击后工程下拉保持 4 个选项。Build/Flash 标识改为透明底，等待/输入/运行/成功/失败使用 Apple 语义状态胶囊。
+- 修复 Skills 卡片路径为 `win-unpacked/resources/agent/skills`；成品仓库页列出 12 个可见 Skills 文件，点击“在资源管理器中打开”成功。
+- 目录打开反馈显示绿色短状态，完整路径放在悬停提示；成功后仓库标题正文宽 632px、头部高 147px，没有再被长错误挤成竖排。
+- Electron typecheck、renderer build、Windows `pack:win` 和 `git diff --check` 通过。
 
 已通过（Electron Apple UI 与 1.0.0-7201，2026-07-20）：
 
@@ -143,7 +151,7 @@
 - 主布局：左侧默认 34%，支持拖动、键盘微调、宽度持久化以及收起/展开对话区。
 - Agent 对话：同一时间只运行一个活动任务；执行中“追加要求”会在当前任务下一执行点继续处理，“排队”才建立独立后续任务。标题显示空闲/执行中/暂停，状态条显示追加与排队数量，输入框支持 `Shift+Enter` 换行。
 - 可读性：界面已放弃像素风；中文正文使用系统字体，代码和日志使用等宽字体，基础正文 15px，控件和元信息同步增大并提高对比度。
-- 任务管理器：先从 `hardboard/projects/<name>` 相对路径选择工程，再执行对齐的 Build/Flash 控制；旧文件选择器、源码预览和 PID/Task/Tool 摘要块已移除。
+- 任务管理器：先从 `hardboard/projects/<name>` 相对路径选择工程，再执行对齐的 Build/Flash 控制；Build/Flash 第二列分别刷新工程/设备，状态为语义胶囊；旧文件选择器、源码预览和 PID/Task/Tool 摘要块已移除。
 - 任务诊断：实时日志、完整日志、事件卡片按需打开；最近任务结果按 `taskId` 汇总并支持滚动。任一“清除”都会立即清空旧记录并删除 EventBus 历史和 Hardboard `.log` 文件，不再因残留运行状态拒绝或回滚界面。
 - 日志定位：点击某条任务的“查看”会在完整日志中自动定位对应 `taskId`；失败使用克制红色，其余状态避免突兀高饱和强调。
 - 编辑器：左侧显示固定四仓库的多根文件资源管理器，目录按需展开；右侧使用 Monaco Editor，支持语法高亮、等宽弹性多文件标签、`Ctrl+S` 保存和关闭。右键菜单通过 Portal 贴近鼠标显示。

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { shell } from 'electron';
-import { getAppRoot, getRecordingsDir, getWorkflowsDir, getAgentWorkspaceDir, getHardboardDir, getRuntimeDataDir } from './paths';
+import { getAgentDir, getRecordingsDir, getWorkflowsDir, getAgentWorkspaceDir, getHardboardDir, getResourcesDir, getRuntimeDataDir } from './paths';
 
 export interface WorkbenchItem {
   name: string;
@@ -62,22 +62,23 @@ export interface WorkbenchMutationResult {
   error?: string;
 }
 
-const PROJECT_ROOT = getAppRoot();
+const AGENT_DIR = getAgentDir();
+const AGENT_TOOLS_DIR = path.join(AGENT_DIR, 'tools');
+const SKILLS_DIR = path.join(AGENT_DIR, 'skills');
+const DOCS_DIR = getResourcesDir('docs');
 const IMPORTED_FOLDERS_FILE = getRuntimeDataDir('workbench-imports.json');
 const EDITOR_EXCLUDED_DIRECTORIES = new Set(['.git', 'node_modules', 'build', 'managed_components', 'dist', 'dist-package', '__pycache__']);
 const EDITOR_TEXT_FILE = /(?:^|\/)(?:CMakeLists\.txt|Makefile|Dockerfile|Kconfig(?:\.projbuild)?|sdkconfig(?:\.defaults)?|[^/]+\.(?:c|h|cpp|hpp|cc|hh|S|asm|md|mdx|json|jsonc|txt|yaml|yml|toml|ini|cfg|conf|html?|css|less|scss|js|mjs|cjs|ts|tsx|jsx|py|sh|ps1|cmd|bat|xml|csv))$/i;
 
 function allowedWorkbenchRoots(): string[] {
   return [
-    PROJECT_ROOT,
     getAgentWorkspaceDir(),
     getRecordingsDir(),
     getWorkflowsDir(),
-    path.join(PROJECT_ROOT, 'agent', 'tools'),
+    AGENT_TOOLS_DIR,
     getHardboardDir(),
-    path.join(PROJECT_ROOT, 'docs'),
-    path.join(PROJECT_ROOT, 'runtime', 'hardboard'),
-    path.join(PROJECT_ROOT, 'agent', 'skills'),
+    DOCS_DIR,
+    SKILLS_DIR,
     ...readImportedFolders(),
   ].map((entry) => path.resolve(entry));
 }
@@ -93,7 +94,7 @@ function isWorkbenchRoot(targetPath: string): boolean {
     ...allowedWorkbenchRoots(),
     getHardboardDir('projects'),
     getHardboardDir('example'),
-    path.join(PROJECT_ROOT, 'agent', 'skills'),
+    SKILLS_DIR,
   ].map((entry) => path.resolve(entry));
   return protectedRoots.some((root) => resolved === root);
 }
@@ -310,8 +311,8 @@ export function getWorkbenchOverview(): WorkbenchOverview {
         id: 'skills',
         title: 'Skills',
         description: 'Agent skills、工具说明和可编辑 Markdown',
-        folderPath: path.join(PROJECT_ROOT, 'agent', 'skills'),
-        items: listFilesRecursive(path.join(PROJECT_ROOT, 'agent', 'skills'), {
+        folderPath: SKILLS_DIR,
+        items: listFilesRecursive(SKILLS_DIR, {
           limit: 16,
           include: /\.(md|json|txt)$/i,
           category: 'skill',

@@ -76,12 +76,14 @@ function renderSection(section: WorkbenchSection, onOpenItem: (item: WorkbenchIt
 }
 
 export default function WorkspacePanel({ overview, onRefresh, onOpenItem, onEditItem }: Props) {
-  const [folderFeedback, setFolderFeedback] = useState('');
+  const [folderFeedback, setFolderFeedback] = useState<{ message: string; detail: string; tone: 'pending' | 'success' | 'error' } | null>(null);
 
   const handleOpenFolder = async (folderPath: string) => {
-    setFolderFeedback('正在打开目录…');
+    setFolderFeedback({ message: '正在打开目录…', detail: folderPath, tone: 'pending' });
     const result = await window.electronAPI?.openWorkbenchFolder?.(folderPath);
-    setFolderFeedback(result?.ok ? '已在资源管理器中打开' : `打开失败：${result?.error || '目录不可用'}`);
+    setFolderFeedback(result?.ok
+      ? { message: '已在资源管理器中打开', detail: result.path || folderPath, tone: 'success' }
+      : { message: '目录打开失败', detail: result?.error || '目录不可用', tone: 'error' });
   };
 
   const handleOpenItem = async (item: WorkbenchItem) => {
@@ -106,7 +108,15 @@ export default function WorkspacePanel({ overview, onRefresh, onOpenItem, onEdit
           <p>只保留 skills、Agent 生成文件、硬件工程、参考代码和施工文档。HTML 直接运行，源码和 Markdown 可预览修改。</p>
         </div>
         <div className="workspace-actions">
-          <span className="workspace-folder-feedback" aria-live="polite">{folderFeedback}</span>
+          {folderFeedback ? (
+            <span
+              className={`workspace-folder-feedback is-${folderFeedback.tone}`}
+              aria-live="polite"
+              title={folderFeedback.detail}
+            >
+              {folderFeedback.message}
+            </span>
+          ) : null}
           <button className="nes-btn" type="button" onClick={onRefresh}>刷新目录</button>
         </div>
       </div>

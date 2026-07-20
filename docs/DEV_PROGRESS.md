@@ -69,13 +69,15 @@
 - [x] `agent/skills/espidf_hardboard.md` 已补齐 docsDir/projectsDir、排除 build、先读 `main/CMakeLists.txt` 的文件定位规则
 - [x] Runtime task / pid / eventbus / heartbeat / hardboard build-flash events 已接入任务管理器
 - [x] 编辑器页支持 Edge 风格等宽多文件标签；仓库页固定为四个受控仓库，每个仓库可在系统资源管理器中打开
+- [x] 修复 Windows packaged Skills 路径从 `win-unpacked/agent/skills` 漂移的问题，当前由 `getAgentDir()` 正确解析到 `resources/agent/skills`；成品已列出 12 个 Skills 文件并成功打开目录
+- [x] 仓库目录打开反馈改为短状态与悬停详情，标题正文可收缩、操作区限制宽度，长 ENOENT 不再把仓库标题挤成竖排
 - [x] 编辑器升级为 VS Code 风格两栏布局：左侧按仓库分组显示多根文件资源管理器并懒加载目录，右侧保留多文件标签、当前路径、保存状态和 Monaco 代码区
 - [x] Monaco、语言定义和 Worker 已随 Electron 本地打包；C/C++、CMake、Markdown、JSON、TypeScript 等文件支持语法高亮、行号、括号配色和代码缩略图
 - [x] 文件资源管理器支持右键新建文件/文件夹、重命名、刷新和移到系统回收站；文件操作使用软件内置对话框，主进程限制允许路径、拒绝覆盖同名条目并保护根目录
 - [x] 编辑器底部支持 10–24px 字号减小、增大和重置，并用 `localStorage` 保存用户上次字号
 - [x] Electron 左右栏默认比例调整为 34%，支持拖动、键盘微调、宽度持久化和对话区收起/展开
 - [x] Electron 中文正文、日志、按钮和标签完成可读性与控件尺寸修正，代码/串口/日志统一使用等宽字体
-- [x] 任务管理器改为“先选相对工程，再 Build/Flash”，工程列表来自 `runtime/hardboard/projects`，两行控件、状态和进度统一对齐
+- [x] 任务管理器改为“先选相对工程，再 Build/Flash”，工程列表来自 `runtime/hardboard/projects`；Build/Flash 第二列分别提供刷新工程/刷新设备，状态改为内容宽度的 Apple 语义胶囊
 - [x] 任务管理器删除旧文件选择器、源码预览和进程摘要块；实时日志、完整日志、事件卡片改为按需诊断卡片
 - [x] 最近任务结果按 `taskId` 聚合并区分成功/失败颜色，支持滚动、清除、查看对应日志和按状态高亮定位
 - [x] 任务管理器“清除”已改为直接真实清理：立即移除当前历史视图，删除 EventBus `events.jsonl`、重置状态并删除 Hardboard `.log` 文件；残留 PID/运行状态不再拒绝，非日志文件保留

@@ -2,6 +2,14 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
+## 2026-07-21 — 任务状态去像素化与 packaged Skills 路径修复
+
+- Build 行第二列由“编译工程”静态提示改为“刷新工程”按钮，复用工作台刷新链路；Flash 保持“刷新设备”。Build/Flash 左侧英文标识移除蓝色块底和阴影。
+- 旧 `.compile-action-status` 的浅蓝实底与 2px 蓝边框由 Apple 主题覆盖为内容宽度胶囊，使用灰/橙/蓝/绿/红圆点区分等待、需输入、运行、完成和失败。
+- 修复 packaged 仓库 Skills 路径错误：不再从 `win-unpacked/agent/skills` 拼接，改用 `getAgentDir()` 指向 `resources/agent/skills`；同时移除整个安装根目录的宽泛工作台许可，只保留明确受控根目录。
+- 仓库打开反馈改为短状态，完整路径/错误放入悬停提示；标题正文允许收缩、操作区限制最大宽度，长 ENOENT 不再把页面文字挤成竖排。
+- 验证通过：Electron typecheck、renderer build、Windows `pack:win`；成品工程刷新保持 4 个选项，Skills 列出 12 个文件并成功打开资源管理器，成功反馈下仓库标题布局正常。
+
 ## 2026-07-21 — 应用内主题与可拖动外观入口
 
 - 修复界面只依赖 `prefers-color-scheme` 导致运行中可能随 Windows/Electron 偏好突然由深色变浅色的问题；首次无记录时读取一次系统偏好，此后用 `data-theme="dark|light"` 和 `vibeide.appearance.theme` 固定用户选择。

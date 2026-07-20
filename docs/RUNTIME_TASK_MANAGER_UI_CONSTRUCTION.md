@@ -6,8 +6,8 @@
 
 - 当前分支为 `electron_design`，可见页签为仓库、监视器、任务管理器、编辑器；浏览器工作台前端入口隐藏。
 - 界面已全面放弃 NES/像素风，使用 Apple 风格冷色材质、系统字体、弱分隔和邻近反馈。
-- 仓库固定为 Agent 生成、硬件工程、参考代码、Skills 四组；不再提供导入/移除，每组可以在资源管理器中打开。
-- 任务管理器保持相对工程选择和 Build/Flash 两行控制；项目与串口使用带原生指示器的下拉框。
+- 仓库固定为 Agent 生成、硬件工程、参考代码、Skills 四组；不再提供导入/移除，每组可以在资源管理器中打开。打包版 Skills 使用 `resources/agent/skills`，目录打开反馈不得挤压仓库标题。
+- 任务管理器保持相对工程选择和 Build/Flash 两行控制；Build 第二列刷新工程，Flash 第二列刷新设备，项目与串口使用带原生指示器的下拉框，状态使用内容宽度的语义胶囊。
 - 最近任务按 `taskId` 聚合。清除会立即从 UI 移除旧记录，并删除 EventBus `events.jsonl` 与 Hardboard `.log`；残留 PID 或 `running` 状态不再拒绝清除，运行任务之后产生的新事件继续显示。
 - 监视器后端是真实双向 `pyserial` 服务，使用左侧接收/发送、右侧配置布局，支持完整串口参数及文本/HEX 收发；原数值趋势图已删除。Windows CIM 枚举失败时回退到随包 `pyserial`。
 - 编辑器标签等宽弹性分配，关闭按钮有 hover/focus 反馈；右键菜单用 Portal 和视口坐标定位在指针附近。
@@ -21,7 +21,7 @@
 
 > 本节记录 1.0.0-7201 之前的编辑器基线；其中用户导入目录等描述已被当前固定四仓库方案取代。
 
-- 左侧文件资源管理器直接复用仓库的 Agent 生成、硬件工程、参考代码、Skills 和用户导入目录作为多根工作区；目录按需通过 `workbench:listDirectory` 懒加载，并过滤 `.git`、`node_modules`、build、dist 等内容。
+- 左侧文件资源管理器直接复用仓库的 Agent 生成、硬件工程、参考代码、Skills 四个固定受控根目录作为多根工作区；目录按需通过 `workbench:listDirectory` 懒加载，并过滤 `.git`、`node_modules`、build、dist 等内容。历史用户导入目录不再进入当前概览。
 - 右侧上方保留多文件标签、当前绝对路径和保存按钮，下方改用 Monaco Editor；`Ctrl+S`、未保存标记、切换标签、关闭标签和保存结果提示继续生效。
 - Monaco、C/C++/Markdown/JSON/TypeScript 等语言定义及 editor/json/css/html/typescript Worker 均打进 renderer，本地开发和 packaged 环境不从 CDN 下载资源。
 - C/C++ 使用内置深色主题；CMake 额外注册基础 Monarch tokenizer。编辑区显示行号、括号配色、代码缩略图、选择高亮和缩进辅助线。
@@ -38,7 +38,7 @@
 - 当前右侧可见页签为“仓库、监视器、任务管理器、编辑器”；工作台前端入口隐藏，但 React、IPC、`WebContentsView` 和主进程后端链路保留。
 - 左侧对话区默认占 34%，支持拖动分隔条、键盘左右调整、收起/展开，并用 `localStorage` 保存宽度。
 - 正文、按钮、标签、代码和日志完成可读性调整；中文正文使用系统字体，日志和代码使用等宽字体，控件尺寸同步增大以避免文字溢出。
-- 任务管理器先选择 `hardboard/projects/<project>` 相对工程路径，再执行 Build/Flash。Build 和 Flash 固定为对齐的六列控制行，分别显示状态和进度；Flash 行提供串口选择与设备刷新。
+- 任务管理器先选择 `hardboard/projects/<project>` 相对工程路径，再执行 Build/Flash。Build 和 Flash 固定为对齐的六列控制行，分别显示状态和进度；Build 行提供工程列表刷新，Flash 行提供串口选择与设备刷新。
 - 工程下拉项由主进程枚举 `runtime/hardboard/projects` 目录提供。主进程保留安全的 `hardboard/projects/<name>` 相对引用，交给 runtime 按开发版或 packaged 环境解析。
 - 删除旧的 CMake/config/source/artifact 选择器、源码预览和 PID/Task/Tool/Port/Project/Current 摘要块，避免用户先选文件再选工作目录的倒置流程。
 - 实时日志、完整日志和事件卡片改为按按钮打开的诊断卡片，给页面下半区留出任务结果空间；各视图均提供统一的运行历史清除入口。
