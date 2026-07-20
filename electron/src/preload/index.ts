@@ -47,10 +47,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startHardboardBuild: (options?: { projectDir?: string; cmakeFile?: string; configFile?: string; sourceFile?: string }) => ipcRenderer.invoke('hardboard:buildStart', options),
   startHardboardFlash: (options: { projectDir?: string; port: string; artifactFile?: string; configFile?: string }) => ipcRenderer.invoke('hardboard:flashStart', options),
   readHardboardSourceFile: (targetPath: string) => ipcRenderer.invoke('hardboard:readSource', targetPath),
-  startSerialMonitor: (options: { port: string; baudRate: number; encoding: string }) => ipcRenderer.invoke('hardboard:serialStart', options),
+  startSerialMonitor: (options: { port: string; baudRate: number; encoding: string; dataBits?: number; stopBits?: number; parity?: 'none' | 'odd' | 'even' }) => ipcRenderer.invoke('hardboard:serialStart', options),
   stopSerialMonitor: () => ipcRenderer.invoke('hardboard:serialStop'),
+  writeSerialMonitor: (data: string, mode: 'text' | 'hex', encoding: string) => ipcRenderer.invoke('hardboard:serialWrite', data, mode, encoding),
   getSerialMonitorStatus: () => ipcRenderer.invoke('hardboard:serialStatus'),
-  onSerialData: (cb: (chunk: { text: string; timestamp: number; stream: 'stdout' | 'stderr' }) => void) => {
+  onSerialData: (cb: (chunk: { text: string; hex?: string; timestamp: number; stream: 'stdout' | 'stderr' }) => void) => {
     ipcRenderer.on('hardboard:serial-data', (_event, chunk) => cb(chunk));
   },
   onSerialExit: (cb: (result: { code: number | null; signal: string | null }) => void) => {

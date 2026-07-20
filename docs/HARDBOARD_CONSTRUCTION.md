@@ -13,7 +13,7 @@
 
 ```text
 runtime/hardboard/
-  esptools/        ESP-IDF 5.4.3 源码、Python venv、CMake/Ninja/Xtensa 工具链
+  esptools/        ESP-IDF 5.4.3 源码、CMake/Ninja/Xtensa 工具链
   example/         按芯片保存示例工程；当前包含 ESP32-S3 示例
   projects/        Agent 修改、编译、烧录的工作工程
   doc/             Agent 可读施工文档、设备记录、硬件约束
@@ -21,6 +21,8 @@ runtime/hardboard/
   firmware/        预留 bin/elf/map 等交付固件
   logs/            编译、烧录、串口日志
 ```
+
+Windows Python 独立放在 `runtime/python/`；安装后唯一运行入口为 `resources/runtime/python/Scripts/python.exe`。`esptools/idf-tools/python_env/**` 属于旧机器 venv，已从打包资源排除。
 
 ## ESP-IDF 版本
 
@@ -143,11 +145,22 @@ find <project> -path '*/build' -prune -o -type f -print
 - MCP 和 CLI 返回 compact JSON：`exitCode`、`ok`、`cwd`、`stdoutLogPath`、`stderrLogPath`、`stdoutTail`、`stderrTail`、`stdoutBytes`、`stderrBytes`。
 - Agent 不再需要读取 Claude 自己保存的超长 tool-result 文件。
 
-## 当前接力状态
+## 2026-07-21 当前接力状态
+
+- 唯一施工目录：`E:\Agent\vibeide\vibeide`。
+- 当前打包目录：`electron\dist-package\win-unpacked`；正式入口为 `奥德赛1.0.0-7201.exe`。
+- Windows 随包 Python、pyserial 与 ESP-IDF 冷构建已在最终目录验证；Python 不再引用 `C:\Users\HP\...`。
+- 当前硬件工程 `runtime/hardboard/projects/touch_hello` 面向 Waveshare ESP32-S3-Touch-AMOLED-1.8；已编译、烧录 COM5，并验证触摸按钮输出 `hello`。
+- 内置串口助手通过 CIM + pyserial fallback 枚举设备，支持完整串口参数与文本/HEX 双向收发；重开前等待旧子进程退出。
+- Agent 动态 MCP 配置已补齐 `mcp` 参数，开发模式通过 `ELECTRON_RUN_AS_NODE=1` 启动 stdio 服务。
+
+## 历史 0.1 接力状态
+
+> 本节只保留旧设备和旧包的测试事实，不代表当前工作目录、Python 策略或串口状态。
 
 - Windows 源码目录：`C:\vibeide`、`E:\vibeide`。
 - Windows 0.1 unpacked 包：`E:\vibeide-0.1-win-unpacked`。
-- 当前硬件测试报告：`docs/WINDOWS_0_1_TEST_REPORT.md`。
+- 当时硬件测试报告：`docs/WINDOWS_0_1_TEST_REPORT.md`。
 - Windows 发现串口：`COM7`、`COM8`、`COM9`。
 - ESP32-S3 实测烧录端口：`COM7`。
 - `COM7` 经 esptool 识别为 ESP32-S3 QFN56 revision v0.2：
@@ -174,17 +187,18 @@ find <project> -path '*/build' -prune -o -type f -print
 
 ## 随包环境策略
 
-`runtime/src/hardboard.ts` 不要求用户打开 ESP-IDF shell。每次运行 `idf.py` 前会自动设置：
+`runtime/src/hardboard/env.ts` 不要求用户打开 ESP-IDF shell。每次运行 `idf.py` 前会自动设置：
 
 - `IDF_PATH`
 - `IDF_TOOLS_PATH`
 - `IDF_PYTHON_ENV_PATH`
 - `ESP_ROM_ELF_DIR`
 - `IDF_PYTHON_CHECK_CONSTRAINTS=no`
-- `PATH`：自动追加 Python venv、ESP-IDF tools、已安装工具链 bin 目录。
+- `PYTHON` / `PYTHONHOME` / `PYTHONNOUSERSITE=1`：Windows 指向同一个随包 Python 根目录。
+- `PATH`：自动追加随包 Python 根目录、`Scripts`、ESP-IDF tools 和已安装工具链 bin 目录。
 - `CPLUS_INCLUDE_PATH`：自动追加当前 target 对应的 Xtensa GCC C++ multilib include，例如 `xtensa-esp-elf/include/c++/14.2.0/xtensa-esp-elf/esp32s3/no-rtti`。
 
-Windows 打包配置包含 `runtime/hardboard`，但排除 ESP-IDF 自带 `examples/**`，避免 NSIS/7zip 处理 Unix 脚本路径时报错。奥德赛1.0.0-7201 自己的 `runtime/hardboard/example/**` 保留。
+Windows 打包配置包含 `runtime/hardboard`，但排除 ESP-IDF 自带 `examples/**` 和旧 `idf-tools/python_env/**`。`runtime/python/sitecustomize.py` 在 embeddable Python 的 `._pth` 隔离下只恢复当前脚本目录导入，防止混入用户机器的 Python 安装。奥德赛1.0.0-7201 自己的 `runtime/hardboard/example/**` 保留。
 
 ## Agent 开发规则
 
@@ -201,8 +215,8 @@ Windows 打包配置包含 `runtime/hardboard`，但排除 ESP-IDF 自带 `examp
 
 - 串口监视器继续增强：
   - 前端入口在右侧 `监视器` 标签。
-  - 已有 COM、波特率、字符编码选择。
-  - 已有实时文本和数值曲线；曲线会从每行提取最后一个数字，适配 `sin:0.7071`、`value=0.7071` 等格式。
+  - 已有 COM、波特率、数据位、停止位、校验位和字符编码选择。
+  - 已有文本/HEX 双向收发和 LF/CRLF 行尾；原数值曲线已按用户反馈删除。
   - 后续要补 Electron smoke，直接调用主进程串口监视器并等待真实 `serial-data` IPC。
 - 为 ESP32-C3/ESP32-C6 增加示例、target、真实设备记录。
 - 增加固件归档工具，把 `.bin/.elf/.map/flasher_args.json` 复制到 `runtime/hardboard/firmware`。

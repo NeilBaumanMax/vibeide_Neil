@@ -4,18 +4,18 @@
 
 ## 当前事实
 
-- 当前日期：2026-07-20。
+- 当前日期：2026-07-21。
 - 正式产品名：奥德赛1.0.0-7201。
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
-- 当前施工分支：`electron_design`。该分支在既有任务串行化、编辑器和 Runtime EventBus 基线上完成 Apple 风格界面、四仓库入口、任务清除、串口数值趋势与编辑器交互修正。本轮维护本地 Git，不推送远端。
+- 当前施工分支：`electron_design`。该分支在既有任务串行化、编辑器和 Runtime EventBus 基线上完成 Apple 风格界面、四仓库入口、任务清除、内置双向串口助手、随包 Python/MCP 修复与编辑器交互修正。本轮维护本地 Git，不推送远端。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
 
 - 当前发布版本：`1.0.0-7201`；Windows PE 四段版本映射为 `1.0.0.7201`。
-- `electron_design` 当前源码需以 Runtime 日志清理烟测、Electron typecheck、main/renderer build、版本一致性和 `git diff --check` 作为提交门禁；尚未执行本版本 Windows 打包、真实 Agent 连续对话及真实硬件回归。
+- `electron_design` 当前源码需以 Runtime/Electron typecheck、main/renderer build、Windows unpacked 打包和 `git diff --check` 作为提交门禁。当前版本已执行 Windows 打包、MCP handshake、随包 Python、ESP-IDF 冷构建及 COM5 串口回归；真实 Agent 长时间连续对话仍需持续观察。
 - 本轮继续加固任务生命周期：turn 完成后的页面验收、恢复和异常回调均校验原 `taskId`，停止或队列切换后的旧异步回调不会再完成新任务或复活旧任务；任务队列烟测已覆盖取消竞态及停止清空两类等待项。
 - 上一版 Windows exe PE 版本已验证（历史 v0.1.0）：
   - `FileVersion=0.1.0`
@@ -36,7 +36,7 @@
 - 上一版 `奥德赛0.0.exe` 启动验证通过（历史 v0.1.0，进程正常启动，无崩溃）
 - **修复 ESP-IDF 编译三大问题**（2026-07-11）：
   - 中文路径 GCC linker 乱码 → junction 改用 `C:\vibeide-hw`
-  - Python venv 绑定旧机器 HP 路径 → 优先系统 Python
+  - Python venv 绑定旧机器 HP 路径 → Windows 固定使用随包 `runtime/python/Scripts/python.exe`
   - 缺少 `espidf.constraints` → 运行时自动生成
   - 便携 Python 3.12.9 + ESP-IDF 56 依赖包已装好
 
@@ -48,14 +48,24 @@
 - `奥德赛0.4.0.7161.exe` PE 元数据：`ProductName=奥德赛0.4.0.7161`、`FileVersion=0.4.0.7161`、`ProductVersion=0.4.0.7161`
 - 本轮尚未重新执行 exe 启动和 ESP32-S3 实机闭环，详见 `docs/WINDOWS_0_4_0_7161_TEST_REPORT.md`
 
-下方 0.4.0-7171、0.4.0.7161、0.1.0 的记录均为历史验证事实，不代表当前 1.0.0-7201 已完成打包或硬件回归。
+下方 0.4.0-7171、0.4.0.7161、0.1.0 的记录均为历史验证事实；当前 1.0.0-7201 的验证以紧随其后的 2026-07-21 记录为准。
+
+已通过（随包 Python、MCP、串口助手与触摸板回归，2026-07-21）：
+
+- 动态 MCP 配置补齐 `mcp` 参数；开发模式以 `ELECTRON_RUN_AS_NODE=1` 启动，stdio initialize handshake 成功。
+- 最终包只使用 `resources/runtime/python/Scripts/python.exe`，`pyserial 3.5` 可导入；旧 `idf-tools/python_env` 未进入包内。
+- 打包版使用同一 Python 完成 `hello_world_esp32s3` 冷构建 1047/1047。
+- `touch_hello` 面向 Waveshare ESP32-S3-Touch-AMOLED-1.8，已在 COM5 编译、烧录并验证触摸输出 `hello`。
+- 内置串口助手支持完整参数、文本/HEX 双向收发、编码和行尾；COM5 枚举、打开、关闭释放均通过界面验证。
+- 串口助手保持左侧收发/右侧配置布局，并按 `apple-design` 原则适配浅色/深色主题、材质、状态反馈和辅助功能媒体查询；趋势图已删除。
+- `npm.cmd --prefix runtime run typecheck`、`npm.cmd --prefix runtime run build`、`npm.cmd --prefix electron run typecheck`、main/renderer build 和 `npm.cmd --prefix electron run pack:win` 通过。
 
 已通过（Electron Apple UI 与 1.0.0-7201，2026-07-20）：
 
 - 全面移除 NES.css 依赖与像素式控件表达，新增 `styles/apple.less` 冷色材质与无障碍覆盖。
 - 仓库固定为 Agent 生成、硬件工程、参考代码、Skills 四组；移除导入入口，每组可在资源管理器打开。
 - 任务历史清除不再被残留 PID/运行状态阻止，界面即时归零，Runtime 删除 EventBus 与 `.log` 文件。
-- 监视器确认使用真实 `pyserial`；“串口数值趋势”仅解析 stdout 完整文本行，趋势/文本比例约 3:7。
+- 监视器确认使用真实 `pyserial`；2026-07-21 已升级为双向串口助手并删除数值趋势图，见下方最新验证。
 - 编辑器标签等宽分配，关闭按钮有 hover/focus 反馈，右键菜单使用 Portal 贴近鼠标定位。
 - 详细施工基线见 `docs/ELECTRON_APPLE_UI_CONSTRUCTION.md`。
 
@@ -111,7 +121,7 @@
 - `hello_world_esp32s3` 编译通过
 - `hello_world_esp32s3` 烧录 `COM7` 通过，hash verified
 
-剩余问题：
+历史 0.1 包剩余问题（当前 1.0.0-7201 已用 COM5/`touch_hello` 完成新闭环）：
 
 - `hardboard:serial` 可以打开 `COM7` / `COM8` 并生成日志，但当前没有抓到应用层 `Hello world!` 输出。
 - `COM9` 打开失败，Windows 返回串口超时。
@@ -121,7 +131,7 @@
 
 - 顶部可见页签：仓库、监视器、任务管理器、编辑器。
 - 工作台：前端入口已隐藏；React 内部逻辑、IPC、`WebContentsView` 和主进程后端暂时保留，避免贸然删除早期链路。
-- 监视器：使用真实 `pyserial` 串口服务；上方“串口数值趋势”不是示波器电压波形，只绘制 stdout 每个完整文本行的最后一个数字，趋势区与文本区约为 3:7。
+- 监视器：使用随包 Python 的真实双向 `pyserial` 服务；左侧为接收/发送区，右侧为串口/接收/发送配置，支持文本与 HEX；数值趋势图已删除。
 - 主布局：左侧默认 34%，支持拖动、键盘微调、宽度持久化以及收起/展开对话区。
 - Agent 对话：同一时间只运行一个活动任务；执行中“追加要求”会在当前任务下一执行点继续处理，“排队”才建立独立后续任务。标题显示空闲/执行中/暂停，状态条显示追加与排队数量，输入框支持 `Shift+Enter` 换行。
 - 可读性：界面已放弃像素风；中文正文使用系统字体，代码和日志使用等宽字体，基础正文 15px，控件和元信息同步增大并提高对比度。
@@ -200,7 +210,7 @@ node dist\index.js hardboard:flash hardboard\projects\hello_world_esp32s3 COM7
 node dist\index.js hardboard:serial COM7 10 115200
 ```
 
-注意：当前 `hardboard:serial` 无应用输出是已知剩余问题，不要把它记录成通过。
+注意：历史 0.1 包的 `hardboard:serial` 无应用输出只作为旧测试事实保留；当前版本报告串口成功仍必须附带具体端口、工程和实际捕获内容。
 
 ## 同步策略
 

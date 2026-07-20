@@ -2,13 +2,25 @@
 
 > 当前日志只保留对现代码仍然成立的记录。
 
-## 2026-07-20 — electron_design Apple UI 与 1.0.0-7201 文档/Git 收口
+## 2026-07-21 — 随包 Python、MCP、双向串口助手与 Apple 主题收口
+
+- Windows Python 运行时统一为 `resources/runtime/python/Scripts/python.exe`；打包排除旧 `esptools/idf-tools/python_env/**`，保留 embeddable `python312._pth` 隔离，并用 `runtime/python/sitecustomize.py` 恢复当前脚本目录导入。
+- Agent 动态 MCP 配置补齐 `mcp` 命令参数；开发模式增加 `ELECTRON_RUN_AS_NODE=1`，stdio initialize handshake 已验证。
+- Windows 串口设备名强制 UTF-8；CIM 查询失败或为空时回退到随包 `serial.tools.list_ports`，解决中文乱码和普通权限下 COM 下拉为空。
+- 串口后端由只读监视改为单一 pyserial 子进程双向收发，支持完整串口参数、文本/HEX、编码与行尾；重开前等待旧进程退出，端口占用返回中文提示。
+- 前端改为左侧接收/发送、右侧配置的传统串口助手布局；按用户反馈删除数值趋势图及数字采样状态。
+- 使用 `apple-design` 规则在不改变布局的前提下接入整体主题变量、卡片材质、主次/危险按钮、连接状态反馈、深色模式和 reduced-motion/reduced-transparency/prefers-contrast。
+- 新增 `runtime/hardboard/projects/touch_hello`：Waveshare ESP32-S3-Touch-AMOLED-1.8 触摸按钮通过 COM5 输出 `hello`。
+- 验证通过：Runtime/Electron TypeScript、main/renderer build、Windows `pack:win`、随包 Python/pyserial、打包版 ESP-IDF 冷构建、COM5 枚举/打开/关闭释放和 `touch_hello` 编译/烧录/串口输出。
+- Git 边界：本轮只创建本地提交，不推送远端；`apikey.txt`、打包产物、构建目录和运行态文件继续排除。
+
+## 2026-07-20 — electron_design Apple UI 与 1.0.0-7201 文档/Git 收口（历史基线）
 
 - 当前施工分支切换为 `electron_design`；正式产品名为 `奥德赛1.0.0-7201`，npm 版本为 `1.0.0-7201`，Windows PE 四段版本为 `1.0.0.7201`。
 - 全面移除 NES.css 依赖与像素式视觉，新增 `electron/src/renderer/styles/apple.less`，统一冷色材质、系统字体、弱边框、圆角、直接反馈和 reduced-motion/reduced-transparency。
 - 仓库固定为四个受控目录并增加资源管理器入口；顶部导入功能和当前概览中的历史导入分组已删除。
 - 任务管理器清除改为用户动作优先：立即清空旧记录并物理删除 EventBus/`.log`，不再因残留 PID/运行状态拒绝或回滚界面；隔离测试覆盖 running/activePid 状态。
-- 监视器确认使用真实 `pyserial` 后端；界面改名“串口数值趋势”，仅解析 stdout 完整行，stderr 不绘图，趋势/文本比例约 3:7，曲线改为冷蓝色。
+- 当时监视器增加了“串口数值趋势”；该图表及采样逻辑已于 2026-07-21 按用户反馈删除。
 - 编辑器右键菜单改用 Portal 贴近视口指针；标签等宽弹性分配，关闭按钮和字号按钮补齐 Apple 风格 hover/focus/press 反馈。
 - 新增 `docs/ELECTRON_APPLE_UI_CONSTRUCTION.md`，并同步 README、INDEX、ARCHITECTURE、DEV_PROGRESS、HANDOFF、GITHUB_SYNC 与任务管理器施工文档；旧迁移和测试报告继续保留为历史事实。
 

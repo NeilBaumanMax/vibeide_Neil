@@ -9,13 +9,13 @@
 - 仓库固定为 Agent 生成、硬件工程、参考代码、Skills 四组；不再提供导入/移除，每组可以在资源管理器中打开。
 - 任务管理器保持相对工程选择和 Build/Flash 两行控制；项目与串口使用带原生指示器的下拉框。
 - 最近任务按 `taskId` 聚合。清除会立即从 UI 移除旧记录，并删除 EventBus `events.jsonl` 与 Hardboard `.log`；残留 PID 或 `running` 状态不再拒绝清除，运行任务之后产生的新事件继续显示。
-- 监视器后端是真实 `pyserial` 服务。“串口数值趋势”只提取 stdout 完整文本行最后一个数字，stderr 仅进入文本；趋势/文本布局约 30%/70%。
+- 监视器后端是真实双向 `pyserial` 服务，使用左侧接收/发送、右侧配置布局，支持完整串口参数及文本/HEX 收发；原数值趋势图已删除。Windows CIM 枚举失败时回退到随包 `pyserial`。
 - 编辑器标签等宽弹性分配，关闭按钮有 hover/focus 反馈；右键菜单用 Portal 和视口坐标定位在指针附近。
 - 当前版本：npm `1.0.0-7201`、PE `1.0.0.7201`、产品名 `奥德赛1.0.0-7201`。
 
-## 目标
+## 历史目标
 
-本轮不是继续隐藏式接入 runtime eventbus，而是把编译、烧录、MCP 工具调用和进程状态真正显示到 Electron 里，让用户在 `win-unpacked/奥德赛0.0.exe` 中能直接看到 runtime 正在做什么。
+本节记录任务管理器最初落地时的目标；当前可执行文件为 `win-unpacked/奥德赛1.0.0-7201.exe`，当前实现以上方 2026-07-20/21 基线为准。
 
 ## 2026-07-18 编辑器历史实现
 
@@ -46,7 +46,7 @@
 - 点击任务“查看”会打开完整日志，按 `taskId` 定位该任务的日志段并自动滚动；失败日志红色高亮、成功日志绿色高亮，其余状态使用各自颜色。
 - 历史行为（已废止）：Renderer 最多保留最近 500 条 Runtime 事件用于完整日志和任务结果；清除通过 IPC 删除 `events.jsonl`、重置 `state.json` 并删除 `hardboard/logs` 下的 `.log` 文件，但当时 Build/Flash 期间会禁用。1.0.0-7201 已改为上方的直接清除语义。
 
-## 用户反馈对应要求
+## 历史用户反馈对应要求
 
 - 编译过程数据必须实时显示，不能只在 Agent 最后回复里出现。
 - runtime 消息订阅必须可见：stdout / stderr / tool event / pid / 串口 / 报错都要进入 UI。
@@ -63,7 +63,7 @@
   - 施工文档
 - HTML 文件点击后在工作台浏览器运行。
 - C / H / CMake / Markdown / skills 文档可以预览和修改。
-- 监视器除了实时曲线和串口数据，也要打印 build / flash / runtime 日志。
+- 当时要求监视器同时显示曲线和 runtime 日志；当前已改为独立双向串口助手，曲线删除，runtime 日志集中到任务管理器。
 - 新增任务管理器，显示 runtime 消息、当前进程 pid、MCP 工具、build/flash 端口、错误和事件流。
 
 ## UI 结构
@@ -116,14 +116,15 @@ Code preview:
 
 ### 监视器
 
-保留串口曲线和串口输出，同时新增 runtime 日志流：
+当前监视器是独立串口助手，不混入任务管理器日志：
 
 ```text
-serial output
-runtime stdout/stderr
-hardboard build/flash progress
-tool failed / process exited
+左侧：接收区 / 发送区
+右侧：串口配置 / 接收区配置 / 发送区配置
+后端：随包 Python + pyserial 双向子进程
 ```
+
+Build/Flash、MCP tool、runtime stdout/stderr 和任务结果继续由“任务管理器”页承载。下方历史章节中“串口曲线”或“监视器同时显示 runtime 日志”的描述仅代表早期需求，不是 1.0.0-7201 当前实现。
 
 ### 任务管理器
 

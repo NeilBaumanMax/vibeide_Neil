@@ -195,10 +195,11 @@ export interface WindowAPI {
   startHardboardBuild: (options?: { projectDir?: string; cmakeFile?: string; configFile?: string; sourceFile?: string }) => Promise<HardboardRuntimeLaunchResult>;
   startHardboardFlash: (options: { projectDir?: string; port: string; artifactFile?: string; configFile?: string }) => Promise<HardboardRuntimeLaunchResult>;
   readHardboardSourceFile: (targetPath: string) => Promise<{ ok: boolean; path?: string; text?: string; error?: string }>;
-  startSerialMonitor: (options: { port: string; baudRate: number; encoding: string }) => Promise<{ ok: boolean; running: boolean; error?: string }>;
+  startSerialMonitor: (options: { port: string; baudRate: number; encoding: string; dataBits?: number; stopBits?: number; parity?: 'none' | 'odd' | 'even' }) => Promise<{ ok: boolean; running: boolean; error?: string }>;
   stopSerialMonitor: () => Promise<{ ok: boolean; running: boolean }>;
+  writeSerialMonitor: (data: string, mode: 'text' | 'hex', encoding: string) => Promise<{ ok: boolean; error?: string }>;
   getSerialMonitorStatus: () => Promise<{ running: boolean }>;
-  onSerialData: (cb: (chunk: { text: string; timestamp: number; stream: 'stdout' | 'stderr' }) => void) => void;
+  onSerialData: (cb: (chunk: { text: string; hex?: string; timestamp: number; stream: 'stdout' | 'stderr' }) => void) => void;
   onSerialExit: (cb: (result: { code: number | null; signal: string | null }) => void) => void;
   onBrowserTabs: (cb: (result: { tabs: BrowserTab[] }) => void) => void;
 }

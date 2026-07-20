@@ -11,7 +11,7 @@
 5. [GITHUB_SYNC](GITHUB_SYNC.md)：Windows 实机、Linux 本机和 GitHub 的同步方案。
 6. [REFACTOR_PLAN](REFACTOR_PLAN.md)：下一步重构路线和验收口径。
 7. [SECURITY](SECURITY.md)：账号、密码、API key、运行态文件规则。
-8. [ELECTRON_APPLE_UI_CONSTRUCTION](ELECTRON_APPLE_UI_CONSTRUCTION.md)：1.0.0-7201 的 Apple 风格界面、四仓库、任务清除、串口趋势和编辑器交互施工基线。
+8. [ELECTRON_APPLE_UI_CONSTRUCTION](ELECTRON_APPLE_UI_CONSTRUCTION.md)：1.0.0-7201 的 Apple 风格界面、四仓库、任务清除、内置双向串口助手和编辑器交互施工基线。
 9. [HARDBOARD_CONSTRUCTION](HARDBOARD_CONSTRUCTION.md)：ESP-IDF 5.4.3、打包、烧录、串口和 log.txt 复盘出的硬件问题。
 10. [RUNTIME_EVENTBUS_CONSTRUCTION](RUNTIME_EVENTBUS_CONSTRUCTION.md)：runtime task、pid、eventbus、MCP 触发、心跳监视和 Electron 编译/烧录监控施工方案。
 11. [RUNTIME_TASK_MANAGER_UI_CONSTRUCTION](RUNTIME_TASK_MANAGER_UI_CONSTRUCTION.md)：把 runtime eventbus、任务进程、编译/烧录日志和任务结果真正显示到 Electron。

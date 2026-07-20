@@ -36,11 +36,13 @@
 
 ### 监视器
 
-- 后端使用随包 Python/ESP-IDF Python 的 `pyserial` 读取真实串口字节，经主进程 IPC 推送到 Renderer。
-- “串口数值趋势”不是示波器电压波形：它只提取串口标准输出中每个完整文本行的最后一个数字。
-- stderr 只进入文本输出，不参与绘图；跨 IPC 数据块的半行会缓存到下一块，避免截断数字被误采样。
-- 页面纵向比例为趋势图约 30%、串口文本约 70%；SVG 自适应填满趋势图区。
-- 曲线与网格使用冷蓝色，不使用突兀绿色。
+- 后端固定使用随包 `runtime/python/Scripts/python.exe` 的 `pyserial`，同一个子进程负责读取与写入，字节经主进程 IPC 双向传递。
+- Windows 设备枚举优先使用 UTF-8 PowerShell/CIM；权限不足或返回空时自动回退到 `serial.tools.list_ports`，避免安装后串口下拉为空。
+- 页面保留传统串口助手的熟悉布局：左侧为接收区和发送区，右侧为串口配置、接收区配置、发送区配置。原数值趋势图、数字采样和跨行缓存已删除。
+- 支持波特率、数据位、停止位、校验位、文本/HEX 收发、GBK/UTF-8/ASCII/Latin1，以及不追加/LF/CRLF 行尾。
+- 重开端口前等待旧 Python 子进程退出，降低 COM 独占释放竞态；端口被其他程序占用时输出可读中文提示。
+- 串口页不再强制 WinForms 浅色。布局保持不变，颜色、卡片材质、圆角、主次按钮、危险操作和连接状态使用 `apple.less` 主题变量，随系统浅色/深色模式适配。
+- 按钮按下即时缩放；连接状态使用带圆点的状态胶囊和 `aria-live="polite"`。同时覆盖 `prefers-reduced-motion`、`prefers-reduced-transparency` 与 `prefers-contrast`。
 
 ### 任务管理器
 
@@ -60,10 +62,10 @@
 ## 关键实现
 
 - `electron/src/renderer/styles/apple.less`：Apple 风格材质、排版、颜色、动效和无障碍覆盖。
-- `electron/src/renderer/components/BrowserPanel.tsx`：四页面交互、任务清除、串口趋势采样、编辑器标签和右键菜单。
+- `electron/src/renderer/components/BrowserPanel.tsx`：四页面交互、任务清除、双向串口助手、编辑器标签和右键菜单。
 - `electron/src/renderer/components/WorkspacePanel.tsx`：四仓库与资源管理器入口。
 - `electron/src/main/gateway.ts` / `preload/index.ts`：受限文件夹打开和硬件 IPC。
-- `electron/src/main/hardboard.ts`：真实串口服务、Runtime 历史清理与 Build/Flash 桥接。
+- `electron/src/main/hardboard.ts`：真实双向串口服务、设备枚举回退、Runtime 历史清理与 Build/Flash 桥接。
 - `runtime/src/eventbus/event-store.ts`：EventBus 与 `.log` 物理清理。
 
 ## 验收
@@ -77,4 +79,4 @@ npm.cmd --prefix electron run verify:version
 git diff --check
 ```
 
-界面验收至少确认：只有一个 Electron 主窗口；四个仓库按钮存在；清除前后的任务行数归零；趋势图内部 SVG 填满图区；编辑器右键菜单贴近指针；标签关闭按钮可见且有 hover/focus 反馈。
+界面验收至少确认：只有一个 Electron 主窗口；四个仓库按钮存在；清除前后的任务行数归零；监视器没有趋势图且左侧收发/右侧配置布局不变；浅色/深色主题下控件可读；COM 设备可枚举、打开后可关闭释放；编辑器右键菜单贴近指针；标签关闭按钮可见且有 hover/focus 反馈。

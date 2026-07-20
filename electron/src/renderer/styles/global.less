@@ -856,9 +856,12 @@ body.is-resizing-panels * {
   min-height: 0;
   flex: 1;
   display: grid;
-  grid-template-rows: auto minmax(140px, 0.3fr) minmax(240px, 0.7fr);
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 10px;
+  padding: 10px;
   overflow: hidden;
+  color: #202124;
+  background: #f3f3f3;
 }
 
 .runtime-monitor {
@@ -1025,53 +1028,140 @@ body.is-resizing-panels * {
   background: var(--nes-red);
 }
 
-.serial-toolbar {
-  display: grid;
-  grid-template-columns: minmax(84px, 0.85fr) minmax(96px, 1fr) minmax(88px, 0.9fr) minmax(68px, 0.7fr) minmax(112px, 1.15fr) minmax(68px, 0.7fr);
-  gap: 4px;
-  align-items: center;
-  padding: 4px !important;
-  background: var(--chrome-bar);
-  border-color: var(--nes-border) !important;
-}
-
-.serial-chart {
+.serial-assistant-main {
   min-height: 0;
-  padding: 6px;
-  background: #08111f;
-  border: 4px solid var(--nes-border);
-  color: #bbf7d0;
+  display: grid;
+  grid-template-rows: minmax(0, 2fr) minmax(150px, 1fr);
+  gap: 10px;
+  overflow: hidden;
 }
 
-.serial-chart-head {
+.serial-box,
+.serial-config-group {
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid #c8c8c8;
+  border-radius: 0;
+  background: #f7f7f7;
+}
+
+.serial-box {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.serial-box legend,
+.serial-config-group legend {
+  padding: 0 5px;
+  color: #202124;
+  font-size: 13px;
+}
+
+.serial-box-actions {
+  min-height: 0;
   display: flex;
+  justify-content: flex-end;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 5px;
-  color: #e0f2fe;
-  font-size: 8px;
+  gap: 10px;
 }
 
-.serial-chart svg {
+.serial-box-actions span {
+  margin-right: auto;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.serial-box button,
+.serial-config-group button {
+  min-height: 30px;
+  padding: 4px 14px;
+  border: 1px solid #b9b9b9;
+  border-radius: 3px;
+  color: #202124;
+  background: linear-gradient(#fff, #ededed);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.serial-box button:hover:not(:disabled),
+.serial-config-group button:hover:not(:disabled) {
+  border-color: #7f9db9;
+  background: #eaf3fb;
+}
+
+.serial-box button:disabled,
+.serial-config-group button:disabled {
+  color: #aaa;
+  cursor: default;
+  opacity: 0.75;
+}
+
+.serial-send-box textarea {
+  min-width: 0;
+  min-height: 0;
+  resize: none;
+  padding: 8px;
+  border: 1px solid #d2d2d2;
+  outline: none;
+  background: #fff;
+  color: #202124;
+  font-family: "Consolas", "Microsoft YaHei UI", monospace;
+  font-size: 13px;
+}
+
+.serial-assistant-settings {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+}
+
+.serial-config-group {
+  display: grid;
+  gap: 8px;
+}
+
+.serial-config-group label,
+.serial-operation {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.serial-config-group select {
+  min-width: 0;
+  height: 30px;
+  padding: 2px 6px;
+  border: 1px solid #b8b8b8;
+  border-radius: 2px;
+  color: #202124;
+  background: #fff;
+  font-size: 12px;
+}
+
+.serial-config-group select:disabled {
+  color: #999;
+  background: #f0f0f0;
+}
+
+.serial-operation button,
+.serial-refresh-button {
   width: 100%;
-  height: 140px;
-  display: block;
-  background:
-    linear-gradient(90deg, rgba(34, 197, 94, 0.15) 1px, transparent 1px) 0 0 / 32px 28px,
-    linear-gradient(rgba(34, 197, 94, 0.15) 1px, transparent 1px) 0 0 / 32px 28px,
-    #020617;
 }
 
-.serial-chart path {
-  stroke: rgba(147, 197, 253, 0.55);
-  stroke-width: 2;
-  fill: none;
+.serial-close-button {
+  color: #a12727 !important;
 }
 
-.serial-chart polyline {
-  stroke: #22c55e;
-  stroke-width: 3;
-  fill: none;
+.serial-refresh-button {
+  margin-top: 2px;
 }
 
 .serial-output {
@@ -1079,11 +1169,11 @@ body.is-resizing-panels * {
   margin: 0;
   overflow: auto;
   padding: 8px;
-  color: #dcfce7;
-  background: #020617;
-  border: 4px solid var(--nes-border);
-  font-family: "Consolas", "Noto Sans Mono", monospace;
-  font-size: 11px;
+  color: #202124;
+  background: #fff;
+  border: 1px solid #d2d2d2;
+  font-family: "Consolas", "Microsoft YaHei UI", monospace;
+  font-size: 13px;
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;

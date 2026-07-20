@@ -216,8 +216,13 @@ function buildMcpConfig(): { mcpServers: Record<string, unknown> } {
       mcpServers: {
         'vibeide-runtime': {
           command: process.execPath,
-          args: [tsxCli, devServerEntry],
-          env: baseEnv,
+          args: [tsxCli, devServerEntry, 'mcp'],
+          env: {
+            ...baseEnv,
+            // process.execPath is electron.exe in development. Make it behave
+            // like Node when Claude Code launches the stdio MCP subprocess.
+            ELECTRON_RUN_AS_NODE: '1',
+          },
         },
       },
     };
@@ -230,7 +235,7 @@ function buildMcpConfig(): { mcpServers: Record<string, unknown> } {
       mcpServers: {
         'vibeide-runtime': {
           command: nodeBin,
-          args: [tsxCli, prodServerEntry],
+          args: [tsxCli, prodServerEntry, 'mcp'],
           env: baseEnv,
         },
       },
@@ -242,7 +247,7 @@ function buildMcpConfig(): { mcpServers: Record<string, unknown> } {
     mcpServers: {
       'vibeide-runtime': {
         command: 'node',
-        args: [tsxCli, prodServerEntry],
+        args: [tsxCli, prodServerEntry, 'mcp'],
         env: baseEnv,
       },
     },

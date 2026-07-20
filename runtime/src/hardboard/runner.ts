@@ -35,7 +35,7 @@ export async function listHardboardDevices(): Promise<HardboardDevice[]> {
       const { stdout } = await execFileAsync(powershell, [
         '-NoProfile',
         '-Command',
-        'Get-CimInstance Win32_SerialPort | Select-Object DeviceID,Name | ConvertTo-Json -Compress',
+        '[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); Get-CimInstance Win32_SerialPort | Select-Object DeviceID,Name | ConvertTo-Json -Compress',
       ], { timeout: 8000, windowsHide: true });
       return parseWindowsSerialPorts(stdout);
     } catch {
@@ -83,7 +83,7 @@ export async function runSerialCapture(
   if (!python) throw new Error('未找到 Python。Windows 打包版应包含 runtime/python/python.exe 或 ESP-IDF Python 环境');
 
   const idfPath = resolveIdfPath(version);
-  const env = idfPath ? buildIdfEnv(idfPath, version) : process.env;
+  const env = idfPath ? buildIdfEnv(idfPath, version, undefined, python) : process.env;
   fs.mkdirSync(RUNTIME_DIRS.hardboardLogs, { recursive: true });
   const safePort = port.replace(/[^a-zA-Z0-9._-]+/g, '-');
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -222,7 +222,7 @@ export async function runIdfCommand(
   fs.mkdirSync(RUNTIME_DIRS.hardboardLogs, { recursive: true });
 
   const commandArgs = [idfPy, ...args];
-  const env = buildIdfEnv(idfPath, version, resolvedProjectDir);
+  const env = buildIdfEnv(idfPath, version, resolvedProjectDir, python);
   const logBase = createIdfLogBase(args, resolvedProjectDir);
   const launchOptions = readLaunchOptions();
 

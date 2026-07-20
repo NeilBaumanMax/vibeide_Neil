@@ -4,7 +4,7 @@
 
 ## 目录
 
-- `runtime/hardboard/esptools/`：ESP-IDF 5.4.3、Python venv、CMake、Ninja、Xtensa 工具链。
+- `runtime/hardboard/esptools/`：ESP-IDF 5.4.3、CMake、Ninja、Xtensa 工具链；Windows Python 位于独立的 `runtime/python/`，不使用这里的旧 venv。
 - `runtime/hardboard/example/esp32s3/`：ESP32-S3 示例，禁止直接当工作工程修改。
 - `runtime/hardboard/projects/`：工作工程目录，Agent 新建和修改代码放这里。
 - `runtime/hardboard/doc/`：施工说明和硬件设备记录。
@@ -15,7 +15,7 @@
 ## 默认硬件
 
 - 默认 target：`esp32s3`
-- 已验证设备端口：Windows `COM3`
+- 当前已验证设备端口：Windows `COM5`（USB 串行设备）；COM3/COM7 是历史设备记录
 - 已验证芯片：ESP32-S3 QFN56 revision v0.2，8MB PSRAM，USB-Serial/JTAG
 - 已验证 ESP-IDF：5.4.3
 
@@ -56,16 +56,15 @@ fatal error: bits/stl_iterator_base_types.h: No such file or directory
 3. 重新执行 `hardboard.idf_build`，读取 compact JSON 里的 `stderrTail` 和 `stderrLogPath`。
 4. runtime 会按工程 target 自动给 `CPLUS_INCLUDE_PATH` 注入 Xtensa GCC 14.2.0 C++ multilib include，例如 `xtensa-esp-elf/include/c++/14.2.0/xtensa-esp-elf/esp32s3/no-rtti`。如果仍然失败，先检查该目录是否存在；临时方案是在工程顶层 `CMakeLists.txt` 对 C++ 编译追加同一路径。
 
-## 验证事实
+## 当前验证事实
 
-Windows `C:\vibeide` 下已完成：
+Windows `E:\Agent\vibeide\vibeide` 和当前 `win-unpacked` 下已完成：
 
-- `npm --prefix runtime run smoke:hardboard` 通过，输出 `hardboard build smoke ok`。
-- `hardboard.idf_flash` 对 `COM3` 烧录 hello_world 成功。
+- 随包 Python 固定为 `resources/runtime/python/Scripts/python.exe`，`pyserial 3.5` 可导入；不依赖系统 Python 或旧 `C:\Users\HP\...` venv。
+- `touch_hello` 针对 Waveshare ESP32-S3-Touch-AMOLED-1.8 编译成功并烧录到 `COM5`，触摸按钮后串口输出 `hello`。
 - `hardboard.serial_capture` 用于 SSH/Agent 下非交互抓取串口日志，替代需要 TTY 的 `idf.py monitor`。
 - 打包产物正式名使用 `奥德赛1.0.0-7201`。
-- 打包版 `hardboard:build hardboard\projects\wifi_connect_fmai` 已验证 compact JSON 输出正常，`bits/c++config.h` 问题已通过 runtime C++ include 注入修复。
-- 打包版 `hardboard:flash hardboard\projects\wifi_connect_fmai COM3` 已验证写入和 hash verified 成功。
-- 打包版 `hardboard:serial COM3 8 115200` 已验证能抓到连续 `sin:<number>` 数据，可用于 IDE 串口监视器曲线测试。
+- 打包版冷构建 `hello_world_esp32s3` 已验证 1047/1047 成功。
+- Electron 内置串口助手已验证能够枚举 COM5、打开并关闭释放端口；它支持文本/HEX 双向收发，不包含数值趋势图。
 
 不要假装编译或烧录成功。只有 hardboard 工具返回 exitCode 0，才可以报告成功。

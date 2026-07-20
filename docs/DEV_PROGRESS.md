@@ -22,6 +22,10 @@
 - [x] 新增 Agent 任务队列烟测：`npm.cmd --prefix electron run verify:task-queue`
 - [x] Agent 异步完成回调绑定活动 `taskId`：停止或切换任务后，旧 turn/页面验收/恢复回调会被忽略；烟测覆盖取消竞态和停止清空追加/排队项
 - [x] Electron 前端已全面放弃 NES.css / 像素视觉，改为 Apple 风格冷色材质、系统字体、克制边框和直接反馈
+- [x] 内置串口助手采用左侧收发、右侧配置布局，支持完整串口参数、文本/HEX 双向收发、编码与行尾控制；无用数值趋势图已删除，并适配整体浅色/深色材质
+- [x] Windows 串口设备 CIM 枚举失败时自动回退到随包 `pyserial`，COM5 中文设备名、打开和关闭释放已完成打包版验证
+- [x] Windows ESP-IDF 和串口统一使用 `resources/runtime/python/Scripts/python.exe`；旧 `esptools/idf-tools/python_env` 不再进入安装包，隔离模式由 `sitecustomize.py` 恢复脚本目录导入
+- [x] Agent 动态 MCP 启动参数补齐 `mcp`；开发模式使用 `ELECTRON_RUN_AS_NODE=1`，stdio handshake 已验证
 - [x] 右侧工作台文件 / 目录现在可点击，会在右侧浏览页层打开 `file://` 地址
 - [x] 新增 Electron 工作台点击烟测：`cd electron && npm run smoke:workbench`
 - [x] 新增 Claude 软件会话记忆烟测：`cd electron && npm run verify:session`
@@ -73,12 +77,12 @@
 - [x] 任务管理器删除旧文件选择器、源码预览和进程摘要块；实时日志、完整日志、事件卡片改为按需诊断卡片
 - [x] 最近任务结果按 `taskId` 聚合并区分成功/失败颜色，支持滚动、清除、查看对应日志和按状态高亮定位
 - [x] 任务管理器“清除”已改为直接真实清理：立即移除当前历史视图，删除 EventBus `events.jsonl`、重置状态并删除 Hardboard `.log` 文件；残留 PID/运行状态不再拒绝，非日志文件保留
-- [x] 监视器确认使用真实 `pyserial` 后端；界面明确为“串口数值趋势”，仅解析 stdout 完整行，比例调整为趋势 30% / 文本 70%
+- [x] 监视器使用真实 `pyserial` 双向后端；原“串口数值趋势”及数字采样状态已删除，收发区获得完整可用空间
 - [x] 编辑器右键菜单通过 Portal 使用视口坐标贴近指针，关闭按钮补齐 hover/focus 反馈，字号控件改为圆角冷蓝按钮组
 - [x] 文档路径漂移已修正：当前 Windows 工作区统一为 `E:\Agent\vibeide\vibeide`，旧 Linux、`C:\vibeide`、`D:\vibeide` 和 `E:\vibeide` 路径仅作为历史迁移记录保留
 - [x] `ARCHITECTURE.md` 已补齐 Runtime hardboard/eventbus/process/task/MCP 子系统和 Electron hardboard/paths/agent/first-run/tray/session-store 模块
 - [x] 删除已被 Electron 动态 MCP 配置取代的 `runtime/mcp-config.json`、孤立根 `package-lock.json`，并清理活动脚本中的旧 `coffecat` 名称和绝对路径
-- [ ] `hardboard:serial` 在历史 Windows v0.1.0 包中能打开端口但未抓到应用层输出，需要后续修复 reset/open 时序
+- [x] 当前打包版已用 `touch_hello` / COM5 完成编译、烧录和串口 `hello` 输出验证；历史 v0.1.0 无输出问题不再作为当前阻塞项
 
 ---
 

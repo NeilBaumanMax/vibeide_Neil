@@ -16,6 +16,7 @@ import {
   startHardboardFlash,
   startSerialMonitor,
   stopSerialMonitor,
+  writeSerialMonitor,
 } from './hardboard';
 
 export function startGateway(mainWindow: BrowserWindow): void {
@@ -207,7 +208,7 @@ export function startGateway(mainWindow: BrowserWindow): void {
   });
 
   ipcMain.handle('hardboard:serialStart', async (_event, options: { port: string; baudRate: number; encoding: string }) => {
-    const result = startSerialMonitor(options, (chunk) => {
+    const result = await startSerialMonitor(options, (chunk) => {
       mainWindow.webContents.send('hardboard:serial-data', chunk);
     }, (exit) => {
       mainWindow.webContents.send('hardboard:serial-exit', exit);
@@ -216,8 +217,12 @@ export function startGateway(mainWindow: BrowserWindow): void {
   });
 
   ipcMain.handle('hardboard:serialStop', async () => {
-    stopSerialMonitor();
+    await stopSerialMonitor();
     return { ok: true, running: false };
+  });
+
+  ipcMain.handle('hardboard:serialWrite', async (_event, data: string, mode: 'text' | 'hex', encoding: string) => {
+    return writeSerialMonitor(data, mode, encoding);
   });
 
   ipcMain.handle('hardboard:serialStatus', async () => {

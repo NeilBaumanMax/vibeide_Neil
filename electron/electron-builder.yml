@@ -44,6 +44,7 @@ extraResources:
       - "!**/.git/**"
       - "!**/.cache/**"
       - "!esptools/esp-idf-v*/esp-idf/examples/**"
+      - "!esptools/idf-tools/python_env/**"
       - "!logs/**"
       - "!events/**"
   - from: ../scripts
@@ -57,6 +58,13 @@ extraResources:
     to: runtime/nodejs
   - from: ../_bundled/python
     to: runtime/python
+    filter:
+      - "**/*"
+      - "!python312._pth.disabled*"
+  - from: ../_bundled/python/python.exe
+    to: runtime/python/Scripts/python.exe
+  - from: ../runtime/python/sitecustomize.py
+    to: runtime/python/Lib/site-packages/sitecustomize.py
   - from: ../_bundled/playwright
     to: runtime/playwright
 

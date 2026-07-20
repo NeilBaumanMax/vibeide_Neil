@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { RUNTIME_DIRS, RUNTIME_SOURCE_DIRS } from '../paths.js';
 import type { HardboardEnvStatus } from './types.js';
 
@@ -9,6 +10,7 @@ export const DEFAULT_IDF_VERSION = '5.4.3';
 export function getHardboardEnvStatus(version = DEFAULT_IDF_VERSION): HardboardEnvStatus {
   const idfPath = resolveIdfPath(version);
   const idfToolsPath = resolveIdfToolsPath();
+  const python = resolvePython(version);
   const idfPythonEnvPath = resolveIdfPythonEnvPath(version);
   return {
     runtimeRoot: RUNTIME_DIRS.root,
@@ -16,7 +18,7 @@ export function getHardboardEnvStatus(version = DEFAULT_IDF_VERSION): HardboardE
     idfVersion: version,
     idfPath,
     idfPy: idfPath ? resolveIdfPy(idfPath) : null,
-    python: resolvePython(version),
+    python,
     idfToolsPath,
     idfPythonEnvPath,
     examplesDir: RUNTIME_DIRS.hardboardExamples,
@@ -60,41 +62,64 @@ export function resolveIdfPy(idfPath: string): string {
 }
 
 export function resolvePython(version = DEFAULT_IDF_VERSION): string | null {
-  const envPath = resolveIdfPythonEnvPath(version);
-  const bundled = process.platform === 'win32' ? path.join(RUNTIME_DIRS.root, 'python', 'python.exe') : '';
-  const venvPython = envPath ? path.join(envPath, process.platform === 'win32' ? 'Scripts' : 'bin', process.platform === 'win32' ? 'python.exe' : 'python') : '';
+  if (process.platform !== 'win32') return findUsablePython([process.env.VIBEIDE_PYTHON, 'python3', 'python']);
+
+  const roots = bundledPythonRoots();
+  prepareDevelopmentPython(roots[1]);
   const candidates = [
     process.env.VIBEIDE_PYTHON,
-    // System Python first — works with PYTHONPATH, no ._pth issues.
-    'python',
-    'python3',
-    // Bundled embedded Python as fallback (may have ._pth limitations)
-    bundled,
-    // Machine-specific venv as last resort
-    venvPython,
-  ].filter(Boolean) as string[];
+    ...roots.map((root) => path.join(root, 'Scripts', 'python.exe')),
+  ];
 
-  for (const candidate of candidates) {
+  return findUsablePython(candidates);
+}
+
+function findUsablePython(candidates: Array<string | undefined>): string | null {
+  for (const candidate of candidates.filter((value): value is string => Boolean(value))) {
     if (candidate.includes(path.sep) && !fs.existsSync(candidate)) continue;
-    if (candidate === 'python' || candidate === 'python3') {
-      // Verify system Python is actually available
-      try {
-        const result = require('child_process').execFileSync(candidate, ['--version'], { encoding: 'utf-8', timeout: 3000 });
-        if (result) return candidate;
-      } catch {
-        continue;
-      }
+    try {
+      execFileSync(candidate, ['--version'], { stdio: 'ignore', timeout: 3000, windowsHide: true });
+      return candidate;
+    } catch {
+      continue;
     }
-    return candidate;
   }
   return null;
 }
 
-export function buildIdfEnv(idfPath: string, version: string, projectDir?: string): NodeJS.ProcessEnv {
+function bundledPythonRoots(): string[] {
+  return [
+    path.join(RUNTIME_DIRS.root, 'python'),
+    path.resolve(RUNTIME_DIRS.root, '..', '_bundled', 'python'),
+  ];
+}
+
+function prepareDevelopmentPython(pythonRoot: string): void {
+  const sourcePython = path.join(pythonRoot, 'python.exe');
+  if (!fs.existsSync(sourcePython)) return;
+
+  try {
+    const scriptsDir = path.join(pythonRoot, 'Scripts');
+    const scriptsPython = path.join(scriptsDir, 'python.exe');
+    fs.mkdirSync(scriptsDir, { recursive: true });
+    if (!fs.existsSync(scriptsPython)) fs.copyFileSync(sourcePython, scriptsPython);
+
+    const siteCustomizeSource = path.join(RUNTIME_DIRS.root, 'python', 'sitecustomize.py');
+    const sitePackages = path.join(pythonRoot, 'Lib', 'site-packages');
+    if (fs.existsSync(siteCustomizeSource) && fs.existsSync(sitePackages)) {
+      fs.copyFileSync(siteCustomizeSource, path.join(sitePackages, 'sitecustomize.py'));
+    }
+  } catch {
+    // Packaging creates the same layout ahead of time; development prep is best-effort.
+  }
+}
+
+export function buildIdfEnv(idfPath: string, version: string, projectDir?: string, python = resolvePython(version)): NodeJS.ProcessEnv {
   const toolsDir = path.join(idfPath, 'tools');
   const idfToolsPath = resolveIdfToolsPath();
   const idfPythonEnvPath = resolveIdfPythonEnvPath(version);
   const pythonBin = idfPythonEnvPath ? path.join(idfPythonEnvPath, process.platform === 'win32' ? 'Scripts' : 'bin') : '';
+  const pythonRoot = process.platform === 'win32' && idfPythonEnvPath ? idfPythonEnvPath : '';
   const installedToolPaths = discoverInstalledIdfToolPaths(idfToolsPath);
   const espRomElfDir = resolveEspRomElfDir(idfToolsPath);
   const cxxIncludePaths = resolveXtensaCxxIncludePaths(idfToolsPath, projectDir);
@@ -104,17 +129,18 @@ export function buildIdfEnv(idfPath: string, version: string, projectDir?: strin
     IDF_PATH: idfPath,
     IDF_TOOLS_PATH: idfToolsPath,
     ...(idfPythonEnvPath ? { IDF_PYTHON_ENV_PATH: idfPythonEnvPath } : {}),
+    ...(python ? { PYTHON: python } : {}),
+    ...(pythonRoot ? { PYTHONHOME: pythonRoot, PYTHONNOUSERSITE: '1' } : {}),
     ...(espRomElfDir ? { ESP_ROM_ELF_DIR: espRomElfDir } : {}),
     IDF_PYTHON_CHECK_CONSTRAINTS: 'no',
     ESP_IDF_VERSION: version,
     VIBEIDE_HARDBOARD_ROOT: RUNTIME_DIRS.hardboard,
-    // Embedded Python (python312._pth) disables auto script-dir in sys.path.
-    // idf.py needs to find python_version_checker.py in its own tools/ dir.
+    // Keep the tools directory visible for system Python fallbacks too.
     ...(process.platform === 'win32' ? { PYTHONPATH: toolsDir } : {}),
     ...(cxxIncludePaths.length > 0 ? {
       CPLUS_INCLUDE_PATH: mergePathList(cxxIncludePaths, process.env.CPLUS_INCLUDE_PATH),
     } : {}),
-    PATH: [pythonBin, toolsDir, ...installedToolPaths, process.env.PATH || ''].filter(Boolean).join(path.delimiter),
+    PATH: [pythonRoot, pythonBin, toolsDir, ...installedToolPaths, process.env.PATH || ''].filter(Boolean).join(path.delimiter),
   };
 }
 
@@ -163,6 +189,15 @@ function resolveIdfToolsPath(): string {
 }
 
 function resolveIdfPythonEnvPath(version: string): string | null {
+  if (process.platform === 'win32') {
+    const roots = bundledPythonRoots();
+    prepareDevelopmentPython(roots[1]);
+    for (const root of roots) {
+      if (findUsablePython([path.join(root, 'Scripts', 'python.exe')])) return root;
+    }
+    return null;
+  }
+
   const idfToolsPath = resolveIdfToolsPath();
   const majorMinor = version.split('.').slice(0, 2).join('.');
   const candidates = [
@@ -173,8 +208,14 @@ function resolveIdfPythonEnvPath(version: string): string | null {
     path.join(idfToolsPath, 'python_env', `idf${majorMinor}_py3.10_env`),
   ].filter((candidate): candidate is string => Boolean(candidate));
   for (const candidate of candidates) {
-    const python = path.join(candidate, process.platform === 'win32' ? 'Scripts' : 'bin', process.platform === 'win32' ? 'python.exe' : 'python');
-    if (fs.existsSync(python)) return candidate;
+    const python = path.join(candidate, 'bin', 'python');
+    if (!fs.existsSync(python)) continue;
+    try {
+      execFileSync(python, ['--version'], { stdio: 'ignore', timeout: 3000, windowsHide: true });
+      return candidate;
+    } catch {
+      continue;
+    }
   }
   return null;
 }

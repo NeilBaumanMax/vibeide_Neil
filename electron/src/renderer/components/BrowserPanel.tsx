@@ -32,11 +32,6 @@ const EDITOR_FONT_SIZE_KEY = 'vibeide.editor.fontSize';
 const EDITOR_FONT_SIZE_MIN = 10;
 const EDITOR_FONT_SIZE_MAX = 24;
 
-interface SerialSample {
-  x: number;
-  value: number;
-}
-
 interface EditorTab {
   path: string;
   title: string;
@@ -204,48 +199,6 @@ function isPlaceholderTab(tab: BrowserTab, totalTabs: number): boolean {
   return totalTabs === 1 && tab.url === 'about:blank' && (!tab.title || tab.title === 'about:blank' || tab.title === '新页面');
 }
 
-function extractSamples(text: string, startIndex: number): SerialSample[] {
-  const samples: SerialSample[] = [];
-  const lines = text.split(/\r?\n/);
-  for (const line of lines) {
-    const values = line.match(/-?\d+(?:\.\d+)?/g);
-    if (!values?.length) continue;
-    const value = Number(values[values.length - 1]);
-    if (Number.isFinite(value)) {
-      samples.push({ x: startIndex + samples.length, value });
-    }
-  }
-  return samples;
-}
-
-function SerialChart({ samples }: { samples: SerialSample[] }) {
-  const width = 560;
-  const height = 148;
-  const visible = samples.slice(-180);
-  const values = visible.map((sample) => sample.value);
-  const min = values.length ? Math.min(...values) : 0;
-  const max = values.length ? Math.max(...values) : 1;
-  const span = max === min ? 1 : max - min;
-  const points = visible.map((sample, index) => {
-    const x = visible.length <= 1 ? 0 : (index / (visible.length - 1)) * width;
-    const y = height - ((sample.value - min) / span) * (height - 12) - 6;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
-
-  return (
-    <div className="serial-chart">
-      <div className="serial-chart-head">
-        <span>串口数值趋势</span>
-        <span>{values.length ? `${min.toFixed(2)} ~ ${max.toFixed(2)}` : '等待每行数值'}</span>
-      </div>
-      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-label="串口数值曲线">
-        <path d={`M 0 ${height - 20} L ${width} ${height - 20}`} />
-        <polyline points={points} />
-      </svg>
-    </div>
-  );
-}
-
 function eventText(event: RuntimeEvent): string {
   const payload = event.payload || {};
   const progress = typeof payload.progress === 'number' ? ` ${payload.progress}%` : '';
@@ -285,9 +238,15 @@ export default function BrowserPanel({
   const [serialPort, setSerialPort] = useState('');
   const [serialBaudRate, setSerialBaudRate] = useState(115200);
   const [serialEncoding, setSerialEncoding] = useState('utf-8');
+  const [serialDataBits, setSerialDataBits] = useState(8);
+  const [serialStopBits, setSerialStopBits] = useState(1);
+  const [serialParity, setSerialParity] = useState<'none' | 'odd' | 'even'>('none');
+  const [serialReceiveMode, setSerialReceiveMode] = useState<'text' | 'hex'>('text');
+  const [serialSendMode, setSerialSendMode] = useState<'text' | 'hex'>('text');
+  const [serialSendText, setSerialSendText] = useState('');
+  const [serialLineEnding, setSerialLineEnding] = useState<'none' | 'lf' | 'crlf'>('none');
   const [serialRunning, setSerialRunning] = useState(false);
   const [serialText, setSerialText] = useState('');
-  const [serialSamples, setSerialSamples] = useState<SerialSample[]>([]);
   const [runtimeState, setRuntimeState] = useState<HardboardRuntimeState | null>(null);
   const [runtimeEvents, setRuntimeEvents] = useState<RuntimeEvent[]>([]);
   const [runtimeSeq, setRuntimeSeq] = useState(0);
@@ -316,7 +275,7 @@ export default function BrowserPanel({
   });
   const browserStageRef = useRef<HTMLDivElement | null>(null);
   const serialBottomRef = useRef<HTMLDivElement | null>(null);
-  const serialLineBufferRef = useRef('');
+  const serialReceiveModeRef = useRef<'text' | 'hex'>('text');
   const focusedLogLineRef = useRef<HTMLDivElement | null>(null);
   const runtimePollGenerationRef = useRef(0);
 
@@ -441,17 +400,16 @@ export default function BrowserPanel({
   }, [mode, selectedTabId, tabs]);
 
   useEffect(() => {
+    serialReceiveModeRef.current = serialReceiveMode;
+  }, [serialReceiveMode]);
+
+  useEffect(() => {
     window.electronAPI?.getSerialMonitorStatus?.().then((result) => setSerialRunning(result.running));
     window.electronAPI?.onSerialData?.((chunk) => {
-      setSerialText((current) => `${current}${chunk.text}`.slice(-30000));
-      if (chunk.stream === 'stderr') return;
-      setSerialSamples((current) => {
-        const combined = `${serialLineBufferRef.current}${chunk.text}`;
-        const lines = combined.split(/\r?\n/);
-        serialLineBufferRef.current = lines.pop() || '';
-        const next = extractSamples(lines.join('\n'), current.length ? current[current.length - 1].x + 1 : 0);
-        return next.length ? [...current, ...next].slice(-600) : current;
-      });
+      const displayed = chunk.stream === 'stdout' && serialReceiveModeRef.current === 'hex'
+        ? `${chunk.hex || ''}${chunk.hex ? ' ' : ''}`
+        : chunk.text;
+      setSerialText((current) => `${current}${displayed}`.slice(-30000));
     });
     window.electronAPI?.onSerialExit?.(() => {
       setSerialRunning(false);
@@ -520,11 +478,13 @@ export default function BrowserPanel({
   };
 
   const handleSerialStart = async () => {
-    serialLineBufferRef.current = '';
     const result = await window.electronAPI?.startSerialMonitor?.({
       port: serialPort.trim(),
       baudRate: serialBaudRate,
       encoding: serialEncoding,
+      dataBits: serialDataBits,
+      stopBits: serialStopBits,
+      parity: serialParity,
     });
     if (!result) return;
     setSerialRunning(result.running);
@@ -536,6 +496,21 @@ export default function BrowserPanel({
   const handleSerialStop = async () => {
     const result = await window.electronAPI?.stopSerialMonitor?.();
     if (result) setSerialRunning(result.running);
+  };
+
+  const handleSerialSend = async () => {
+    if (!serialRunning) return;
+    const suffix = serialSendMode === 'text'
+      ? serialLineEnding === 'crlf' ? '\r\n' : serialLineEnding === 'lf' ? '\n' : ''
+      : '';
+    const result = await window.electronAPI?.writeSerialMonitor?.(
+      `${serialSendText}${suffix}`,
+      serialSendMode,
+      serialEncoding,
+    );
+    if (result && !result.ok) {
+      setSerialText((current) => `${current}\n[串口] ${result.error || '发送失败'}\n`);
+    }
   };
 
   const handleManualBuild = async () => {
@@ -939,41 +914,92 @@ export default function BrowserPanel({
       ) : null}
 
       {mode === 'monitor' ? (
-        <div className="serial-monitor">
-          <div className="serial-toolbar nes-container is-rounded">
-            <select className="nes-select" value={serialPort} onChange={(e) => setSerialPort(e.target.value)}>
-              <option value="">COM</option>
-              {hardboardDevices.map((device) => (
-                <option key={device.port} value={device.port}>{device.port}</option>
-              ))}
-            </select>
-            <select className="nes-select" value={serialBaudRate} onChange={(e) => setSerialBaudRate(Number(e.target.value))}>
-              <option value={9600}>9600</option>
-              <option value={57600}>57600</option>
-              <option value={115200}>115200</option>
-              <option value={230400}>230400</option>
-              <option value={460800}>460800</option>
-              <option value={921600}>921600</option>
-            </select>
-            <select className="nes-select" value={serialEncoding} onChange={(e) => setSerialEncoding(e.target.value)}>
-              <option value="utf-8">UTF-8</option>
-              <option value="gbk">GBK</option>
-              <option value="ascii">ASCII</option>
-              <option value="latin1">Latin1</option>
-            </select>
-            <button className="nes-btn" type="button" onClick={onRefreshHardboardDevices}>刷新</button>
-            {serialRunning ? (
-              <button className="nes-btn is-error" type="button" onClick={handleSerialStop}>停止</button>
-            ) : (
-              <button className="nes-btn is-success" type="button" onClick={handleSerialStart}>打开串口</button>
-            )}
-            <button className="nes-btn" type="button" onClick={() => { serialLineBufferRef.current = ''; setSerialText(''); setSerialSamples([]); }}>清空</button>
+        <div className="serial-monitor serial-assistant">
+          <div className="serial-assistant-main">
+            <fieldset className="serial-box serial-receive-box">
+              <legend>接收区</legend>
+              <pre className="serial-output">
+                {serialText || ''}
+                <span ref={serialBottomRef} />
+              </pre>
+              <div className="serial-box-actions">
+                <span className={`serial-status${serialRunning ? ' serial-status--active' : ''}`} aria-live="polite">
+                  <i aria-hidden="true" />{serialRunning ? `${serialPort} 已打开` : '串口未打开'}
+                </span>
+                <button className="serial-secondary-button" type="button" onClick={() => setSerialText('')}>清空接收区</button>
+              </div>
+            </fieldset>
+
+            <fieldset className="serial-box serial-send-box">
+              <legend>发送区</legend>
+              <textarea
+                value={serialSendText}
+                onChange={(event) => setSerialSendText(event.target.value)}
+                onKeyDown={(event) => {
+                  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                    event.preventDefault();
+                    void handleSerialSend();
+                  }
+                }}
+                placeholder={serialSendMode === 'hex' ? '输入 HEX，例如 48 65 6C 6C 6F' : '输入要发送的数据（Ctrl+Enter 发送）'}
+              />
+              <div className="serial-box-actions serial-send-actions">
+                <button className="serial-primary-button" type="button" onClick={handleSerialSend} disabled={!serialRunning || !serialSendText}>发送</button>
+                <button className="serial-secondary-button" type="button" onClick={() => setSerialSendText('')}>清空发送区</button>
+              </div>
+            </fieldset>
           </div>
-          <SerialChart samples={serialSamples} />
-          <pre className="serial-output">
-            {serialText || '等待串口数据...'}
-            <span ref={serialBottomRef} />
-          </pre>
+
+          <aside className="serial-assistant-settings">
+            <fieldset className="serial-config-group">
+              <legend>串口配置</legend>
+              <label><span>串口号</span><select value={serialPort} onFocus={onRefreshHardboardDevices} onChange={(e) => setSerialPort(e.target.value)} disabled={serialRunning}>
+                <option value="">请选择</option>
+                {hardboardDevices.map((device) => <option key={device.port} value={device.port}>{device.port} · {device.label}</option>)}
+              </select></label>
+              <label><span>波特率</span><select value={serialBaudRate} onChange={(e) => setSerialBaudRate(Number(e.target.value))} disabled={serialRunning}>
+                {[1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600].map((rate) => <option key={rate} value={rate}>{rate}</option>)}
+              </select></label>
+              <label><span>数据位</span><select value={serialDataBits} onChange={(e) => setSerialDataBits(Number(e.target.value))} disabled={serialRunning}>
+                {[5, 6, 7, 8].map((bits) => <option key={bits} value={bits}>{bits}</option>)}
+              </select></label>
+              <label><span>停止位</span><select value={serialStopBits} onChange={(e) => setSerialStopBits(Number(e.target.value))} disabled={serialRunning}>
+                <option value={1}>1</option><option value={1.5}>1.5</option><option value={2}>2</option>
+              </select></label>
+              <label><span>校验位</span><select value={serialParity} onChange={(e) => setSerialParity(e.target.value as 'none' | 'odd' | 'even')} disabled={serialRunning}>
+                <option value="none">无</option><option value="odd">奇校验</option><option value="even">偶校验</option>
+              </select></label>
+              <div className="serial-operation"><span>操作</span>{serialRunning ? (
+                <button type="button" className="serial-close-button" onClick={handleSerialStop}>关闭串口</button>
+              ) : (
+                <button type="button" className="serial-primary-button" onClick={handleSerialStart} disabled={!serialPort}>打开串口</button>
+              )}</div>
+              <button className="serial-refresh-button serial-secondary-button" type="button" onClick={onRefreshHardboardDevices}>刷新串口列表</button>
+            </fieldset>
+
+            <fieldset className="serial-config-group">
+              <legend>接收区配置</legend>
+              <label><span>接收模式</span><select value={serialReceiveMode} onChange={(e) => setSerialReceiveMode(e.target.value as 'text' | 'hex')}>
+                <option value="hex">HEX模式</option><option value="text">文本模式</option>
+              </select></label>
+              <label><span>文本编码</span><select value={serialEncoding} onChange={(e) => setSerialEncoding(e.target.value)} disabled={serialReceiveMode === 'hex' || serialRunning}>
+                <option value="gbk">GBK</option><option value="utf-8">UTF-8</option><option value="ascii">ASCII</option><option value="latin1">Latin1</option>
+              </select></label>
+            </fieldset>
+
+            <fieldset className="serial-config-group">
+              <legend>发送区配置</legend>
+              <label><span>发送模式</span><select value={serialSendMode} onChange={(e) => setSerialSendMode(e.target.value as 'text' | 'hex')}>
+                <option value="hex">HEX模式</option><option value="text">文本模式</option>
+              </select></label>
+              <label><span>文本编码</span><select value={serialEncoding} onChange={(e) => setSerialEncoding(e.target.value)} disabled={serialSendMode === 'hex' || serialRunning}>
+                <option value="gbk">GBK</option><option value="utf-8">UTF-8</option><option value="ascii">ASCII</option><option value="latin1">Latin1</option>
+              </select></label>
+              <label><span>行尾</span><select value={serialLineEnding} onChange={(e) => setSerialLineEnding(e.target.value as 'none' | 'lf' | 'crlf')} disabled={serialSendMode === 'hex'}>
+                <option value="none">不追加</option><option value="lf">LF</option><option value="crlf">CRLF</option>
+              </select></label>
+            </fieldset>
+          </aside>
         </div>
       ) : null}
 
