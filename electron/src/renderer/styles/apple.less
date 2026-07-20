@@ -618,6 +618,64 @@ body.is-resizing-panels .panel-divider::before {
 .editor-code-loading { border: 1px solid var(--ui-separator); border-radius: var(--ui-radius); }
 
 /* Monitor and task views. */
+.task-manager-panel {
+  gap: 10px;
+  grid-template-rows: auto minmax(200px, 1fr) auto;
+}
+
+.task-manager-compile,
+.compile-control-grid {
+  gap: 8px;
+}
+
+.compile-workbench-title {
+  min-height: 44px;
+  padding: 10px 12px !important;
+}
+
+.compile-control-row {
+  min-height: 56px;
+  gap: 8px;
+  padding: 8px 10px !important;
+}
+
+.compile-control-row strong,
+.compile-control-row input,
+.compile-control-row select,
+.compile-control-row button {
+  height: 40px;
+  padding-inline: 12px !important;
+}
+
+.task-manager-diagnostics {
+  gap: 8px;
+}
+
+.diagnostic-toolbar {
+  min-height: 52px;
+  gap: 8px;
+  padding: 8px !important;
+}
+
+.diagnostic-toolbar button {
+  height: 38px;
+  padding-inline: 14px !important;
+}
+
+.task-history-header {
+  min-height: 46px;
+  padding: 10px 12px;
+}
+
+.task-history-table {
+  padding: 8px;
+}
+
+.task-history-table-head {
+  min-height: 40px;
+  padding: 9px 10px;
+}
+
 .serial-output,
 .runtime-live-log,
 .runtime-monitor-log,

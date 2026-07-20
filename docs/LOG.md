@@ -6,6 +6,7 @@
 
 - Build 行第二列由“编译工程”静态提示改为“刷新工程”按钮，复用工作台刷新链路；Flash 保持“刷新设备”。Build/Flash 左侧英文标识移除蓝色块底和阴影。
 - 旧 `.compile-action-status` 的浅蓝实底与 2px 蓝边框由 Apple 主题覆盖为内容宽度胶囊，使用灰/橙/蓝/绿/红圆点区分等待、需输入、运行、完成和失败。
+- 任务页纵向比例扩容：标题、Build/Flash 控制行、诊断工具条和结果表头使用统一的 40–56px 控件尺度与 8–10px 分组间距，保持六列结构不变，缓解顶部操作区拥挤。
 - 修复 packaged 仓库 Skills 路径错误：不再从 `win-unpacked/agent/skills` 拼接，改用 `getAgentDir()` 指向 `resources/agent/skills`；同时移除整个安装根目录的宽泛工作台许可，只保留明确受控根目录。
 - 仓库打开反馈改为短状态，完整路径/错误放入悬停提示；标题正文允许收缩、操作区限制最大宽度，长 ENOENT 不再把页面文字挤成竖排。
 - 验证通过：Electron typecheck、renderer build、Windows `pack:win`；成品工程刷新保持 4 个选项，Skills 列出 12 个文件并成功打开资源管理器，成功反馈下仓库标题布局正常。
