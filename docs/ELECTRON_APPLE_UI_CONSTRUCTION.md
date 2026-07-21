@@ -3,7 +3,7 @@
 ## 当前基线
 
 - 施工分支：`electron_design`
-- 产品版本：`奥德赛1.0.0-7201`
+- 产品：`Catnip Forge`；中文全称 `Catnip 硬件智能开发平台`；版本 `v1.0.0`（Build 7201）
 - npm SemVer：`1.0.0-7201`
 - Windows PE 四段版本：`1.0.0.7201`
 - 唯一施工目录：`E:\Agent\vibeide\vibeide`

@@ -2,7 +2,7 @@
 
 ## 目标
 
-奥德赛 Skill 只有一个用户可维护源仓库：开发版为 `agent/skills`，Windows 成品为 `win-unpacked/resources/agent/skills`。该路径不迁移，也不隐藏复制为第二份用户源数据。
+Catnip Forge Skill 只有一个用户可维护源仓库：开发版为 `agent/skills`，Windows 成品为 `win-unpacked/resources/agent/skills`。该路径不迁移，也不隐藏复制为第二份用户源数据。
 
 Claude Code 原生技能目录位于 Agent 工作区的 `.claude/skills/<skill-id>/SKILL.md`。应用在 Agent 启动前把源仓库标准化部署到该目录，仓库页负责展示、编辑、新增、删除和手动同步。
 
@@ -31,8 +31,8 @@ Agent Skill tool
 
 - Skill ID 只允许小写字母、数字和连字符，最长 64 字符。
 - Skill 名称、触发描述和正文不能为空，正文限制 100KB。
-- 同步清单 `.odyssey-managed.json` 只记录奥德赛管理的部署项；清理时只删除清单中的失效项，不碰用户自行放入 Agent 工作区的其他原生 Skill。
-- 若目标存在非奥德赛管理的同名 Skill，同步中止并显示冲突，不覆盖。
+- 同步清单 `.odyssey-managed.json` 是为兼容既有部署保留的内部文件名，只记录 Catnip Forge 管理的部署项；清理时只删除清单中的失效项，不碰用户自行放入 Agent 工作区的其他原生 Skill。
+- 若目标存在非 Catnip Forge 管理的同名 Skill，同步中止并显示冲突，不覆盖。
 - 仓库页删除源 Skill 时进入系统回收站，随后撤销对应部署。
 - 安装目录不可写时，仓库页明确显示“源仓库只读”，禁止新增/保存；不静默改写到别的目录。
 

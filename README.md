@@ -1,8 +1,12 @@
-# 奥德赛1.0.0-7201
+# Catnip Forge
 
-`奥德赛1.0.0-7201` 是一个面向硬件 vibecoding 的本地桌面 IDE。它把 Electron 内置浏览器、Claude Code Agent、Runtime MCP 工具、ESP-IDF hardboard 工具链和可复用录制工作流放在同一个桌面应用里，用来完成 ESP32/ESP32-S3 工程编写、编译、烧录、串口监视、文档查看和网页辅助检索。
+**中文全称：Catnip 硬件智能开发平台**
 
-当前 GitHub 仓库和内部 npm 包名仍沿用 `vibeide`，作为工程代号和迁移兼容名；用户可见正式产品名统一为 `奥德赛1.0.0-7201`。
+**英文定位：Autonomous Hardware Development Agent**
+
+Catnip Forge 是一个面向硬件 vibecoding 的本地桌面 IDE。它把 Electron、Claude Code Agent、Runtime MCP 工具、ESP-IDF hardboard 工具链和可复用 Skill 放在同一个桌面应用里，用来完成 ESP32/ESP32-S3 工程编写、编译、烧录、串口监视、文档查看和网页辅助检索。
+
+当前 GitHub 仓库、内部 npm 包名和运行态兼容键仍沿用 `vibeide`，作为工程代号；用户可见正式产品名统一为 `Catnip Forge`。
 
 当前主线不是旧的纯 Python scaffold，而是：
 
@@ -48,7 +52,7 @@ cd /d E:\Agent\vibeide\vibeide
 scripts\start_electron_desktop.cmd
 ```
 
-发布给其他用户时，应压缩并分发完整的 `electron\dist-package\win-unpacked` 文件夹。接收方完整解压到普通可写目录后运行 `奥德赛1.0.0-7201.exe`；首次启动窗口会引导保存 DeepSeek API Key。不能只发送 exe，也不要把包含真实 `resources\apikey.txt` 的目录重新分发。详细口径见 [Windows v1.0.0 便携版发布检查](docs/WINDOWS_V1_0_0_RELEASE_CHECKLIST.md)。
+发布给其他用户时，应压缩并分发完整的 `electron\dist-package\win-unpacked` 文件夹。接收方完整解压到普通可写目录后运行 `Catnip Forge.exe`；首次启动窗口会引导保存 DeepSeek API Key。不能只发送 exe，也不要把包含真实 `resources\apikey.txt` 的目录重新分发。详细口径见 [Windows v1.0.0 便携版发布检查](docs/WINDOWS_V1_0_0_RELEASE_CHECKLIST.md)。
 
 ### Linux / macOS
 

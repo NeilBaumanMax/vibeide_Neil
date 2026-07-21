@@ -14,7 +14,7 @@
 
 - [x] GitHub 仓库 `https://github.com/NeilBaumanMax/vibeide_Neil.git` 已作为当前接力源码仓库接入本机
 - [x] 当前唯一施工源码目录已统一为 Windows `E:\Agent\vibeide\vibeide`；旧 `C:\vibeide` 和 `E:\vibeide` 仅保留在历史迁移记录中
-- [x] README 已重写为奥德赛1.0.0-7201 当前 Electron + Runtime + Agent 主线，`vibeide` 保留为仓库和内部工程代号
+- [x] README 已重写为 Catnip Forge 当前 Electron + Runtime + Agent 主线，`vibeide` 保留为仓库和内部工程代号
 - [x] 新文档体系已建立：INDEX / ARCHITECTURE / DEVELOPMENT / GITHUB_SYNC / REFACTOR_PLAN / SECURITY / HANDOFF
 - [x] Claude CLI 已接入软件级持续会话上下文，最近轮次持久化到 `runtime/claude-session/`
 - [x] Claude CLI 启动增加 `--continue` 续接策略，并用 prompt 注入作为兜底
@@ -44,8 +44,8 @@
 - [x] 新增 Electron 工作台点击烟测：`cd electron && npm run smoke:workbench`
 - [x] 新增 Claude 软件会话记忆烟测：`cd electron && npm run verify:session`
 - [x] Windows `E:\vibeide` 已同步到 0.1 接力版本；`E:\vibeide-0.1-win-unpacked` 已通过 exe 版本、编译和烧录验证
-- [x] 应用图标文件保留在 `electron/assets/icon.svg/png/ico`；当前界面不再继承旧像素风表达
-- [x] 产品名、Windows PE 版本和 npm SemVer 已统一映射到奥德赛1.0.0-7201，并停止把真实 `apikey.txt` 打进安装包
+- [x] 应用图标以 `electron/assets/icon-master.png` 为母版，派生 `icon.png`、多尺寸 `icon.ico` 和 Renderer 品牌图；旧 SVG/透明托盘占位方案已移除
+- [x] 用户可见产品名统一为 Catnip Forge，中文全称为 Catnip 硬件智能开发平台，英文定位为 Autonomous Hardware Development Agent；版本继续独立映射，并停止把真实 `apikey.txt` 打进安装包
 - [x] 右侧“工作台”前端入口已隐藏，早期浏览器工作台 React/IPC/WebContentsView 后端链路暂时保留
 - [x] API Key 路径收敛到 `resources/apikey.txt`（与应用同目录），移除 `%APPDATA%` 持久化，删包即删 key
 - [x] runtime/electron/agent package 命名已从 `@coffecat/*` 迁移到 `@vibeide/*`

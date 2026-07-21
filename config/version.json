@@ -3,5 +3,7 @@
   "buildNumber": 7201,
   "releaseVersion": "1.0.0.7201",
   "packageVersion": "1.0.0-7201",
-  "productName": "奥德赛1.0.0-7201"
+  "productName": "Catnip Forge",
+  "productFullName": "Catnip 硬件智能开发平台",
+  "productPositioning": "Autonomous Hardware Development Agent"
 }

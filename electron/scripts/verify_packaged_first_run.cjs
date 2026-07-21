@@ -21,11 +21,11 @@ async function main() {
   for (let attempt = 0; attempt < 30; attempt += 1) {
     try {
       targets = await fetch(CDP_LIST).then((response) => response.json());
-      if (targets.some((entry) => entry.title?.includes('奥德赛'))) break;
+      if (targets.some((entry) => entry.title?.includes('Catnip Forge'))) break;
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  const target = targets?.find((entry) => entry.title?.includes('奥德赛'));
+  const target = targets?.find((entry) => entry.title?.includes('Catnip Forge'));
   if (!target?.webSocketDebuggerUrl) throw new Error('packaged renderer CDP target not found');
 
   const socket = new WebSocket(target.webSocketDebuggerUrl);
@@ -38,9 +38,17 @@ async function main() {
       expression: `(async () => {
         const status = await window.electronAPI.getStartupStatus();
         const rejected = await window.electronAPI.saveStartupApiKey('sk-your-key-here');
+        const brandIcon = document.querySelector('.chat-history-brand img');
+        const brandRect = brandIcon?.getBoundingClientRect();
+        const startupIcon = document.querySelector('.startup-key-brand img');
         return {
           modal: Boolean(document.querySelector('.startup-key-dialog')),
           skillButton: Boolean(document.querySelector('.chat-skill-button')),
+          title: document.title,
+          brandIconLoaded: Boolean(brandIcon?.complete && brandIcon?.naturalWidth > 0),
+          brandIconSize: brandRect ? { width: brandRect.width, height: brandRect.height } : null,
+          startupIconLoaded: Boolean(startupIcon?.complete && startupIcon?.naturalWidth > 0),
+          positioningVisible: document.querySelector('.startup-key-positioning')?.textContent?.includes('Autonomous Hardware Development Agent') === true,
           firstRun: status.firstRun,
           apiKeyReady: status.apiKeyReady,
           playwrightReady: status.playwrightReady,
@@ -54,7 +62,9 @@ async function main() {
     const result = evaluated.result?.value;
     const ok = result?.modal && result?.skillButton && result?.firstRun && !result?.apiKeyReady
       && result?.playwrightReady && result?.placeholderRejected && /resources[\\/]apikey\.txt$/i.test(result?.keyPath || '');
-    if (!ok) throw new Error(`packaged first-run verification failed: ${JSON.stringify(result)}`);
+    const branded = result?.title?.includes('Catnip Forge') && result?.brandIconLoaded && result?.startupIconLoaded
+      && result?.positioningVisible && result?.brandIconSize?.width === 26 && result?.brandIconSize?.height === 26;
+    if (!ok || !branded) throw new Error(`packaged first-run verification failed: ${JSON.stringify(result)}`);
     console.log(JSON.stringify({ ok: true, ...result }, null, 2));
   } finally {
     socket.close();

@@ -6,7 +6,9 @@ const asar = require('@electron/asar');
 
 const electronRoot = path.resolve(__dirname, '..');
 const projectRoot = path.resolve(electronRoot, '..');
-const packageRoot = path.join(electronRoot, 'dist-package', 'win-unpacked');
+const packageRoot = process.env.CATNIP_PACKAGE_ROOT
+  ? path.resolve(process.env.CATNIP_PACKAGE_ROOT)
+  : path.join(electronRoot, 'dist-package', 'win-unpacked');
 const resources = path.join(packageRoot, 'resources');
 const version = JSON.parse(fs.readFileSync(path.join(projectRoot, 'config', 'version.json'), 'utf-8'));
 const exe = path.join(packageRoot, `${version.productName}.exe`);
@@ -15,6 +17,7 @@ assert.equal(version.publicVersion, '1.0.0');
 assert.equal(version.buildNumber, 7201);
 assert(fs.existsSync(exe), `missing ${exe}`);
 assert(fs.existsSync(path.join(packageRoot, 'README-FIRST.txt')), 'missing distribution README');
+assert(fs.existsSync(path.join(resources, 'app.asar')), 'missing app.asar');
 assert(!fs.existsSync(path.join(resources, 'apikey.txt')), 'release must not contain a real apikey.txt');
 const keyExample = fs.readFileSync(path.join(resources, 'apikey.txt.example'), 'utf-8');
 const keyLines = keyExample.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !line.startsWith('#'));
@@ -25,6 +28,8 @@ assert(distributionReadme.includes('v1.0.0（Build 7201）'), 'distribution READ
 const required = [
   'agent/node_modules/@anthropic-ai/claude-code/bin/claude.exe',
   'agent/skills/espidf_hardboard.md',
+  'electron/assets/icon.ico',
+  'electron/assets/icon.png',
   'runtime/nodejs/node.exe',
   'runtime/python/Scripts/python.exe',
   'runtime/python/Lib/site-packages/serial',
@@ -41,7 +46,7 @@ for (const relative of required) {
 const packagedVersion = JSON.parse(fs.readFileSync(path.join(resources, 'config', 'version.json'), 'utf-8'));
 assert.deepEqual(packagedVersion, version, 'packaged version metadata drifted');
 const asarEntries = new Set(asar.listPackage(path.join(resources, 'app.asar')));
-for (const entry of ['\\dist\\main\\skill-manager.js', '\\dist\\renderer\\index.html']) {
+for (const entry of ['\\assets\\icon.ico', '\\assets\\icon.png', '\\dist\\main\\skill-manager.js', '\\dist\\renderer\\index.html']) {
   assert(asarEntries.has(entry), `app.asar missing ${entry}`);
 }
 

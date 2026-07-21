@@ -352,7 +352,7 @@ export function buildClaudeSessionContext(conversationId?: string | null): { ses
   const session = loadClaudeSession(conversationId);
   const turns = session.turns.slice(-10);
   const lines = [
-    '【奥德赛历史会话上下文】',
+    '【Catnip Forge 历史会话上下文】',
     `会话 ID: ${session.id}`,
     `累计轮次: ${session.turnCount}`,
     '说明：这是用户主动选择继续的历史对话。必须延续其中的工程目标、文件路径、约束和未完成事项；不要把当前请求当成全新项目。',

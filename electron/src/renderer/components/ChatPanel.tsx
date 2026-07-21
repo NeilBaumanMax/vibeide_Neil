@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { AgentTaskStatus, ChatConversationSummary, ChatMessage, ManagedSkillSummary, TaskStep, TaskSubmitMode } from '../types';
 import MarkdownContent from './MarkdownContent';
 import TaskProgress from './TaskProgress';
+import catnipForgeIcon from '../assets/catnip-forge.png';
 
 interface Props {
   messages: ChatMessage[];
@@ -263,7 +264,10 @@ export default function ChatPanel({
     <div className={`chat-panel nes-container is-rounded${historyCollapsed ? ' chat-panel--history-collapsed' : ''}`}>
       <aside className="chat-history" aria-label="历史对话">
         <div className="chat-history-header">
-          <strong>历史对话</strong>
+          <div className="chat-history-brand" title="Catnip Forge · Catnip 硬件智能开发平台">
+            <img src={catnipForgeIcon} alt="" aria-hidden="true" />
+            <strong>历史对话</strong>
+          </div>
           <button type="button" disabled={taskStatus.busy} onClick={onCreateConversation} title={taskStatus.busy ? 'Agent 工作结束后可新建对话' : '新建对话'} aria-label="新建对话">＋</button>
         </div>
         <div className="chat-history-list">

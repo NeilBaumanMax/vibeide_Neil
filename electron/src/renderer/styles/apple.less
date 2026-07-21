@@ -302,6 +302,22 @@ body.is-resizing-panels .panel-divider::before {
   border-bottom: 1px solid var(--ui-separator);
 }
 
+.chat-history-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.chat-history-brand img {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  object-fit: cover;
+  border-radius: 7px;
+  box-shadow: 0 1px 4px rgba(0, 20, 52, 0.16);
+}
+
 .chat-history-header strong { font-size: 12px; font-weight: 680; letter-spacing: -0.01em; white-space: nowrap; }
 .chat-history-header button,
 .chat-history-toggle,
@@ -2127,10 +2143,29 @@ select.nes-select {
 }
 
 .startup-key-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   color: var(--ui-accent);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+.startup-key-brand img {
+  width: 34px;
+  height: 34px;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(0, 20, 52, 0.18);
+}
+
+.startup-key-positioning {
+  margin-top: -5px;
+  color: var(--ui-text-tertiary);
+  font-size: 10px;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
 }
 
 .startup-key-dialog h2 { margin: 0; font-size: 21px; letter-spacing: -0.02em; }

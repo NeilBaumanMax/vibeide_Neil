@@ -2,7 +2,7 @@
 
 ## 一句话
 
-`奥德赛1.0.0-7201` 是一个 Electron 桌面自动化 IDE：用户在左侧对话，右侧提供 Skill/工程资源仓库、串口监视器、任务管理器和编辑器；浏览器工作台后端暂时保留。任务由 Worker 编排，Agent 通过 Runtime MCP tools 控制同一个 Electron Chromium。
+`Catnip Forge`（中文全称：Catnip 硬件智能开发平台；英文定位：Autonomous Hardware Development Agent）是一个 Electron 桌面硬件开发 IDE：用户在左侧对话，右侧提供 Skill/工程资源仓库、串口监视器、任务管理器和编辑器；浏览器工作台后端暂时保留。任务由 Worker 编排，Agent 通过 Runtime MCP tools 控制同一个 Electron Chromium。
 
 ## 分层
 
@@ -204,7 +204,7 @@ Electron Chromium / WebContentsView
 
 ## 当前架构风险
 
-1. 用户可见正式名已是奥德赛1.0.0-7201，但内部仓库、npm 包和部分运行态目录仍沿用 `vibeide` 作为工程代号；后续如要彻底迁移需单独设计兼容策略。
+1. 用户可见正式名已是 Catnip Forge，但内部仓库、npm 包和部分运行态目录仍沿用 `vibeide` 作为工程代号与数据兼容键；不应直接改名，否则可能导致历史会话和设置迁移中断。
 2. `tests/test_scaffold.py` 依赖旧 `src/coddecat`，与当前主线不一致。
 3. 历史文档仍保留部分 `coffecat/coddecat` 迁移记录；这些只作为历史，不应作为当前实现依据。
 4. Electron 侧和 Runtime 侧都有录制/回放实现，需要明确长期边界。

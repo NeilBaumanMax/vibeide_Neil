@@ -10,7 +10,7 @@
 
 目标：
 
-- README 保持为奥德赛1.0.0-7201 当前真实主线。
+- README 保持为 Catnip Forge 当前真实主线。
 - 新建统一 docs 体系。
 - 排除敏感信息、依赖、构建产物、运行态。
 - 把 GitHub 作为源码真相源。
@@ -26,7 +26,7 @@
 
 状态：
 
-- 用户可见正式名：奥德赛1.0.0-7201。
+- 用户可见正式名：Catnip Forge；中文全称：Catnip 硬件智能开发平台；英文定位：Autonomous Hardware Development Agent。
 - GitHub 仓库和内部工程代号：`vibeide`。
 - Electron package/runtime/agent npm 包名仍为 `@vibeide/*`，这是当前兼容策略。
 - 旧 `coffecat/coddecat` 只应出现在历史记录、legacy 测试或迁移说明中。
@@ -34,13 +34,13 @@
 后续建议：
 
 1. 不要把用户可见名称改回 `vibeide`。
-2. 如需把内部包名也改成 odyssey/奥德赛，必须先设计 appData、API key、Chrome profile、日志目录和安装包升级兼容。
+2. 如需把内部包名和 `vibeide` 兼容键也改成 catnip-forge，必须先设计 appData、API key、Chrome profile、日志目录和安装包升级兼容。
 3. 历史 `coffecat/coddecat` 只保留在明确标注为 legacy 的文档或测试里。
 
 验收：
 
 - `grep -R "coffecat\\|coddecat" README.md docs electron runtime agent package*.json pyproject.toml` 只剩兼容说明或迁移注释。
-- Electron 启动后 UI 显示 `奥德赛1.0.0-7201`。
+- Electron 启动后 UI 显示 `Catnip Forge`。
 
 ## 阶段 2：旧 Python scaffold 决策
 

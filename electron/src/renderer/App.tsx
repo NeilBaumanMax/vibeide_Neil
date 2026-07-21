@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatPanel from './components/ChatPanel';
 import BrowserPanel from './components/BrowserPanel';
+import catnipForgeIcon from './assets/catnip-forge.png';
 import type { AgentTaskStatus, BrowserTab, ChatConversation, ChatConversationSummary, ChatMessage, ChatMessageKind, HardboardDevice, RecordingSummary, StartupStatus, TaskStep, TaskSubmitMode, WorkbenchOverview } from './types';
 
 const LEFT_PANEL_WIDTH_KEY = 'vibeide.ui.leftPanelWidth';
@@ -720,7 +721,11 @@ export default function App() {
       {startupStatus?.firstRun ? (
         <div className="startup-key-backdrop">
           <form className="startup-key-dialog" onSubmit={handleStartupApiKeySave}>
-            <div className="startup-key-brand">奥德赛 · v1.0.0</div>
+            <div className="startup-key-brand">
+              <img src={catnipForgeIcon} alt="Catnip Forge" />
+              <span>Catnip Forge · v1.0.0</span>
+            </div>
+            <div className="startup-key-positioning">Catnip 硬件智能开发平台 · Autonomous Hardware Development Agent</div>
             <h2>配置 DeepSeek API Key</h2>
             <p>首次使用需要添加 API Key。密钥只写入当前解压目录，不会进入对话记录或上传到其他服务。</p>
             <label>

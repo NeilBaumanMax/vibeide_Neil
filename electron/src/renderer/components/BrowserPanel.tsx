@@ -27,7 +27,7 @@ interface Props {
 
 type PanelMode = 'workbench' | 'repo' | 'monitor' | 'tasks' | 'editor';
 type RuntimeCard = 'live' | 'full' | 'events';
-const UI_BUILD_LABEL = '奥德赛1.0.0-7201';
+const UI_BUILD_LABEL = 'Catnip Forge · v1.0.0';
 const EDITOR_FONT_SIZE_KEY = 'vibeide.editor.fontSize';
 const EDITOR_FONT_SIZE_MIN = 10;
 const EDITOR_FONT_SIZE_MAX = 24;

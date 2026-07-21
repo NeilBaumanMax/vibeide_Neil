@@ -1,6 +1,6 @@
-# 奥德赛1.0.0-7201 文档索引
+# Catnip Forge 文档索引
 
-本文档目录是奥德赛1.0.0-7201 的主文档体系，用来支撑硬件 vibecoding IDE。后续开发优先维护这些文件。仓库名和内部工程代号仍为 `vibeide`。
+本文档目录是 Catnip Forge（Catnip 硬件智能开发平台）的主文档体系，用来支撑 Autonomous Hardware Development Agent。后续开发优先维护这些文件。仓库名和内部工程代号仍为 `vibeide`。
 
 ## 必读顺序
 

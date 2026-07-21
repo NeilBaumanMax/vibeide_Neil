@@ -1,11 +1,11 @@
-# 奥德赛1.0.0-7201 接力开发文档
+# Catnip Forge 接力开发文档
 
 > 本文是下一次 Codex 接力的第一入口。敏感账号密码不写在本文，见本机私有文件 `.local-secrets/HANDOFF_PRIVATE.md`，该目录已被 `.gitignore` 排除。
 
 ## 当前事实
 
 - 当前日期：2026-07-21。
-- 正式产品名：奥德赛1.0.0-7201。
+- 正式产品名：`Catnip Forge`；中文全称：`Catnip 硬件智能开发平台`；英文定位：`Autonomous Hardware Development Agent`。
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
@@ -29,7 +29,7 @@
   - `FileVersion=0.1.0`
   - `ProductVersion=0.1.0`
 - 本机源码目录：`E:\Agent\vibeide\vibeide`
-- 目标打包 exe：`electron\dist-package\win-unpacked\奥德赛1.0.0-7201.exe`
+- 目标打包 exe：`electron\dist-package\win-unpacked\Catnip Forge.exe`
 - 产线 API key：`resources\apikey.txt`（DeepSeek，与应用同目录，删包即删 key）
 - 仓库 remote：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
 - SSH key：`~/.ssh/id_ed25519`，已配置 `git config core.sshCommand` 绕过中文路径编码问题
@@ -70,7 +70,7 @@
 
 已通过（应用主题与可拖动外观入口，2026-07-21）：
 
-- `npm.cmd --prefix electron run typecheck`、renderer 生产构建和 Windows `pack:win` 通过，成品 `奥德赛1.0.0-7201.exe` 已启动验证。
+- `npm.cmd --prefix electron run typecheck`、renderer 生产构建和 Windows `pack:win` 通过；品牌切换后的最终验证对象改为 `Catnip Forge.exe`。
 - 深色 `#131315` 与浅色 `#e9eaed` 可由应用内菜单切换；页面重载后主题仍保持，最终验收状态恢复为深色。
 - 使用成品窗口真实指针事件将按钮拖至 `(100,100)`，松开后 `is-dragging` 正常清除，坐标写入 `vibeide.appearance.position`，页面重载后位置保持。
 - 按钮位于左上区域时浮层自动向右下展开，实测边界完全位于视口内；最终按钮移回右侧、距底部约 86px，不遮挡字号工具条。
@@ -90,7 +90,7 @@
 
 已通过（Windows v1.0.0 便携发布，2026-07-21）：
 
-- 最终 `win-unpacked` 共 `4,459,269,207` 字节，PE 文件版本和产品版本均为 `1.0.0.7201`。
+- Catnip Forge 最终 `win-unpacked` 共 `4,463,704,603` 字节，入口为 `Catnip Forge.exe`，PE 文件版本和产品版本均为 `1.0.0.7201`。
 - `verify:release` 验证便携 Node `v22.14.0`、pyserial `3.5`、Claude Code `2.1.167`、Runtime health、12 个 Skills、Playwright 与 ESP-IDF 资源。
 - 成品无 Key 实际启动后首次配置窗口正常，模板占位 Key 被拒绝；验证结束后 `resources/apikey.txt` 不存在。
 - 当前 exe 未做商业代码签名，换机运行可能出现 SmartScreen；正式对外分发前应配置可信代码签名证书。
@@ -225,7 +225,7 @@ npm --prefix electron run typecheck
 npm --prefix electron run build:main
 npm --prefix electron run build:renderer
 npm --prefix electron run pack:win
-npm --prefix electron run stamp:win -- "dist-package/win-unpacked/奥德赛1.0.0-7201.exe"
+npm --prefix electron run stamp:win -- "dist-package/win-unpacked/Catnip Forge.exe"
 ```
 
 如果改了 Agent session 或 hardboard context：

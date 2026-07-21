@@ -21,8 +21,8 @@ async function cdpCall(socket, id, method, params = {}) {
 
 async function main() {
   const targets = await fetch(CDP_LIST).then((response) => response.json());
-  const target = targets.find((entry) => entry.title?.includes('奥德赛'));
-  if (!target?.webSocketDebuggerUrl) throw new Error('未找到奥德赛 Renderer CDP target');
+  const target = targets.find((entry) => entry.title?.includes('Catnip Forge'));
+  if (!target?.webSocketDebuggerUrl) throw new Error('未找到 Catnip Forge Renderer CDP target');
 
   const socket = new WebSocket(target.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => {

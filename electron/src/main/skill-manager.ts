@@ -239,7 +239,7 @@ export function syncManagedSkills(): SkillManagerSnapshot {
     const normalizedText = serializeSkill(parseSkill(sourceText, id));
     const targetDir = path.join(DEPLOY_DIR, id);
     if (fs.existsSync(targetDir) && !previous?.skills[id]) {
-      throw new Error(`Agent 工作区已存在非奥德赛管理的同名 Skill：${id}`);
+      throw new Error(`Agent 工作区已存在非 Catnip Forge 管理的同名 Skill：${id}`);
     }
     const stagingDir = path.join(DEPLOY_DIR, `.odyssey-staging-${id}-${process.pid}-${Date.now()}`);
     fs.mkdirSync(stagingDir, { recursive: true });

@@ -1,5 +1,13 @@
 # 施工日志
 
+## 2026-07-21 — Catnip Forge 正式品牌与全量图标替换
+
+- 用户可见正式产品名改为 `Catnip Forge`，中文全称为 `Catnip 硬件智能开发平台`，英文定位为 `Autonomous Hardware Development Agent`；`vibeide` 仅保留为仓库、npm 包和运行态兼容键。
+- 用户提供的方形猫薄荷图作为唯一母版，生成 1024px 应用 PNG、16–256px 多尺寸 Windows ICO 和 256px Renderer 图；删除旧 SVG 图标。
+- BrowserWindow、Windows EXE、托盘、任务栏、打包资源和前端左上角统一使用新图标；托盘不再使用透明占位图。
+- 对话历史左上角使用 26px 克制品牌锚点，首次启动窗口同步显示图标、中文全称和英文定位，不改变主布局结构。
+- Windows 可执行文件名改为 `Catnip Forge.exe`，PE 版本继续为 `1.0.0.7201`。
+
 ## 2026-07-21 — Windows v1.0.0 便携发布收口
 
 - 对外版本固定为 `v1.0.0`，内部构建号 `7201`；npm 与 Windows PE 继续分别使用 `1.0.0-7201`、`1.0.0.7201`。

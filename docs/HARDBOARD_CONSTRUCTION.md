@@ -2,7 +2,7 @@
 
 ## 目标
 
-把奥德赛1.0.0-7201 建设为硬件 vibecoding 专用 IDE：
+把 Catnip Forge 建设为硬件 vibecoding 专用 IDE：
 
 - 左侧 Agent 负责写 ESP-IDF 代码、解释步骤、调用工具、处理编译/烧录错误。
 - 右侧 BrowserView 保留，用于打开乐鑫文档、GitHub、工作台文件和调试页面。
@@ -41,7 +41,7 @@ Windows Python 独立放在 `runtime/python/`；安装后唯一运行入口为 `
 5. 选择串口，例如 Windows 下当前实测 ESP32-S3 为 `COM7`。
 6. 执行 `idf.py -p COM7 flash`。
 
-奥德赛1.0.0-7201 对应工具：
+Catnip Forge 对应工具：
 
 ```text
 hardboard.env_status
@@ -148,7 +148,7 @@ find <project> -path '*/build' -prune -o -type f -print
 ## 2026-07-21 当前接力状态
 
 - 唯一施工目录：`E:\Agent\vibeide\vibeide`。
-- 当前打包目录：`electron\dist-package\win-unpacked`；正式入口为 `奥德赛1.0.0-7201.exe`。
+- 当前打包目录：`electron\dist-package\win-unpacked`；正式入口为 `Catnip Forge.exe`。
 - Windows 随包 Python、pyserial 与 ESP-IDF 冷构建已在最终目录验证；Python 不再引用 `C:\Users\HP\...`。
 - 当前硬件工程 `runtime/hardboard/projects/touch_hello` 面向 Waveshare ESP32-S3-Touch-AMOLED-1.8；已编译、烧录 COM5，并验证触摸按钮输出 `hello`。
 - 内置串口助手通过 CIM + pyserial fallback 枚举设备，支持完整串口参数与文本/HEX 双向收发；重开前等待旧子进程退出。
@@ -198,7 +198,7 @@ find <project> -path '*/build' -prune -o -type f -print
 - `PATH`：自动追加随包 Python 根目录、`Scripts`、ESP-IDF tools 和已安装工具链 bin 目录。
 - `CPLUS_INCLUDE_PATH`：自动追加当前 target 对应的 Xtensa GCC C++ multilib include，例如 `xtensa-esp-elf/include/c++/14.2.0/xtensa-esp-elf/esp32s3/no-rtti`。
 
-Windows 打包配置包含 `runtime/hardboard`，但排除 ESP-IDF 自带 `examples/**` 和旧 `idf-tools/python_env/**`。`runtime/python/sitecustomize.py` 在 embeddable Python 的 `._pth` 隔离下只恢复当前脚本目录导入，防止混入用户机器的 Python 安装。奥德赛1.0.0-7201 自己的 `runtime/hardboard/example/**` 保留。
+Windows 打包配置包含 `runtime/hardboard`，但排除 ESP-IDF 自带 `examples/**` 和旧 `idf-tools/python_env/**`。`runtime/python/sitecustomize.py` 在 embeddable Python 的 `._pth` 隔离下只恢复当前脚本目录导入，防止混入用户机器的 Python 安装。Catnip Forge 自己的 `runtime/hardboard/example/**` 保留。
 
 ## Agent 开发规则
 

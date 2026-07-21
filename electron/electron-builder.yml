@@ -1,5 +1,5 @@
 appId: com.vibeide.app
-productName: 奥德赛1.0.0-7201
+productName: Catnip Forge
 buildVersion: 1.0.0.7201
 artifactName: "${productName}-${os}-${arch}.${ext}"
 
@@ -18,6 +18,11 @@ files:
 extraResources:
   - from: apikey.txt.example
     to: apikey.txt.example
+  - from: assets
+    to: electron/assets
+    filter:
+      - "icon.ico"
+      - "icon.png"
   - from: ../agent
     to: agent
     filter:

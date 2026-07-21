@@ -6,6 +6,11 @@ const versionInfo = readJson('config/version.json');
 if (versionInfo.publicVersion !== '1.0.0' || versionInfo.buildNumber !== 7201) {
   throw new Error('config/version.json: expected public release v1.0.0 build 7201');
 }
+if (versionInfo.productName !== 'Catnip Forge'
+  || versionInfo.productFullName !== 'Catnip 硬件智能开发平台'
+  || versionInfo.productPositioning !== 'Autonomous Hardware Development Agent') {
+  throw new Error('config/version.json: Catnip Forge brand metadata drifted');
+}
 const packageFiles = [
   'electron/package.json',
   'runtime/package.json',
@@ -49,6 +54,12 @@ const productFiles = [
 
 for (const file of productFiles) {
   requireText(readText(file), versionInfo.productName, file);
+}
+
+for (const file of ['README.md', 'electron/DISTRIBUTION_README.txt', 'electron/src/main/worker/context.ts']) {
+  const text = readText(file);
+  requireText(text, versionInfo.productFullName, file);
+  requireText(text, versionInfo.productPositioning, file);
 }
 
 console.log(JSON.stringify(versionInfo, null, 2));
