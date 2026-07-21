@@ -2,7 +2,7 @@
 
 ## 当前基线
 
-- 施工分支：`electron_design`
+- 当前主分支：`main`；历史施工分支 `electron_design` 已合并。
 - 产品：`Catnip Forge`；中文全称 `Catnip 硬件智能开发平台`；版本 `v1.0.0`（Build 7201）
 - npm SemVer：`1.0.0-7201`
 - Windows PE 四段版本：`1.0.0.7201`

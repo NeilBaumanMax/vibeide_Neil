@@ -20,6 +20,8 @@ runtime/hardboard/
   git-snapshots/   本地工程快照，排除 build/.git 等产物
   firmware/        预留 bin/elf/map 等交付固件
   logs/            编译、烧录、串口日志
+  events/          EventBus 事件持久化（events.jsonl / state.json）
+  cache/           预留缓存目录（当前仅保留 .gitkeep）
 ```
 
 Windows Python 独立放在 `runtime/python/`；安装后唯一运行入口为 `resources/runtime/python/Scripts/python.exe`。`esptools/idf-tools/python_env/**` 属于旧机器 venv，已从打包资源排除。

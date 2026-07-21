@@ -70,28 +70,35 @@ Renderer UI
 ```text
 runtime/src/
   task/
+    index.ts
     task-types.ts
     task-manager.ts
     task-registry.ts
   process/
+    index.ts
     process-runner.ts
     pid-registry.ts
     kill-tree.ts
   eventbus/
+    index.ts
     event-types.ts
     event-bus.ts
     event-store.ts
     producer.ts
     consumer.ts
   hardboard/
+    index.ts
     env.ts
     runner.ts
     parser.ts
     project-files.ts
-    index.ts
+    types.ts
   mcp/
+    server.ts
     tool-events.ts
+    browser.tool.ts
     hardboard.tool.ts
+    storage.tool.ts
   paths.ts
   index.ts
 ```
@@ -283,8 +290,6 @@ type RuntimeEvent = {
 runtime/hardboard/events/
   events.jsonl
   state.json
-  consumers/
-    electron.json
 ```
 
 `events.jsonl` 是追加事件流。`state.json` 是给 Electron 快速读取的当前快照。
