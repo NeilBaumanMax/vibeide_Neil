@@ -2229,24 +2229,24 @@ select.nes-select {
 .appearance-settings {
   position: fixed;
   z-index: 160;
-  width: 52px;
-  height: 52px;
+  width: 144px;
+  height: 144px;
   will-change: left, top;
 }
 
 .appearance-settings-trigger {
   display: grid;
-  width: 52px;
-  height: 52px;
+  width: 100%;
+  height: 100%;
   padding: 0;
   place-items: center;
   color: var(--ui-text-secondary);
-  background: color-mix(in srgb, var(--ui-surface-solid) 78%, transparent);
-  border: 1px solid var(--ui-separator);
-  border-radius: 50%;
-  overflow: hidden;
-  box-shadow: var(--ui-shadow-lg);
-  backdrop-filter: blur(20px) saturate(160%);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  box-shadow: none;
+  backdrop-filter: none;
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -2256,20 +2256,21 @@ select.nes-select {
 .appearance-settings-trigger > img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: 50% 31%;
-  transform: scale(1.72);
+  object-fit: contain;
+  object-position: center;
+  transform: translateY(0) scale(1);
+  filter: drop-shadow(0 9px 12px rgba(0, 0, 0, 0.24));
   pointer-events: none;
   transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .appearance-settings-trigger:hover > img,
-.appearance-settings-trigger.is-open > img { transform: scale(1.8); }
+.appearance-settings-trigger.is-open > img { transform: translateY(-2px) scale(1.025); }
 
 .appearance-settings.is-dragging .appearance-settings-trigger {
   cursor: grabbing;
-  transform: scale(1.04);
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.24), 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: scale(1.025);
+  box-shadow: none;
 }
 
 .appearance-settings-trigger svg {
@@ -2285,8 +2286,8 @@ select.nes-select {
 .appearance-settings-trigger:hover,
 .appearance-settings-trigger.is-open {
   color: var(--ui-accent);
-  background: color-mix(in srgb, var(--ui-surface-solid) 92%, var(--ui-accent) 8%);
-  border-color: color-mix(in srgb, var(--ui-accent) 46%, var(--ui-separator));
+  background: transparent;
+  border-color: transparent;
 }
 
 .appearance-settings-trigger:active {
@@ -2295,7 +2296,8 @@ select.nes-select {
 
 .appearance-settings-trigger:focus-visible {
   outline: 3px solid var(--ui-focus);
-  outline-offset: 2px;
+  outline-offset: -10px;
+  border-radius: 24px;
 }
 
 .appearance-popover {
@@ -2336,15 +2338,15 @@ select.nes-select {
 
 .software-assistant-identity { display: flex; min-width: 0; align-items: center; gap: 9px; }
 .software-assistant-avatar {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  overflow: hidden;
-  background: #f8f7f1;
-  border: 1px solid color-mix(in srgb, var(--ui-accent) 28%, var(--ui-separator));
-  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
 }
-.software-assistant-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 31%; transform: scale(1.65); }
+.software-assistant-avatar img { width: 100%; height: 100%; object-fit: contain; object-position: center; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.18)); }
 .software-assistant-identity > span:last-child { display: grid; min-width: 0; gap: 1px; }
 .software-assistant-identity strong { font-size: 13px; font-weight: 680; letter-spacing: -0.01em; }
 .software-assistant-identity small { overflow: hidden; color: var(--ui-text-tertiary); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
@@ -2365,6 +2367,7 @@ select.nes-select {
 }
 .software-assistant-actions button:hover { color: var(--ui-text); background: var(--ui-fill-hover); }
 .software-assistant-actions button:active { transform: scale(0.9); }
+.software-assistant-actions button:disabled { opacity: 0.28; pointer-events: none; }
 .software-assistant-actions button.is-selected { color: var(--ui-accent); background: color-mix(in srgb, var(--ui-accent) 12%, transparent); }
 .software-assistant-actions button:focus-visible { outline: 3px solid var(--ui-focus); outline-offset: 1px; }
 

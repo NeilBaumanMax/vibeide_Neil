@@ -9,8 +9,12 @@ import type { AgentTaskStatus, BrowserTab, ChatConversation, ChatConversationSum
 const LEFT_PANEL_WIDTH_KEY = 'vibeide.ui.leftPanelWidth';
 const APPEARANCE_THEME_KEY = 'vibeide.appearance.theme';
 const APPEARANCE_POSITION_KEY = 'vibeide.appearance.position';
+const ASSISTANT_SIZE_KEY = 'vibeide.assistant.size';
 const DEFAULT_LEFT_PANEL_WIDTH = 34;
-const APPEARANCE_BUTTON_SIZE = 52;
+const DEFAULT_ASSISTANT_SIZE = 144;
+const MIN_ASSISTANT_SIZE = 96;
+const MAX_ASSISTANT_SIZE = 208;
+const ASSISTANT_SIZE_STEP = 16;
 const APPEARANCE_EDGE_GAP = 12;
 const IDLE_TASK_STATUS: AgentTaskStatus = { busy: false, paused: false, activeTaskId: null, activeTask: null, queueLength: 0, guidanceCount: 0 };
 const ASSISTANT_WELCOME: SoftwareAssistantMessage = {
@@ -59,14 +63,29 @@ function applyAppearanceTheme(theme: AppearanceTheme): void {
 const INITIAL_APPEARANCE_THEME = readInitialAppearanceTheme();
 applyAppearanceTheme(INITIAL_APPEARANCE_THEME);
 
-function clampAppearancePosition(position: FloatingPosition): FloatingPosition {
+function clampAssistantSize(value: number): number {
+  return Math.min(MAX_ASSISTANT_SIZE, Math.max(MIN_ASSISTANT_SIZE, value));
+}
+
+function readInitialAssistantSize(): number {
+  try {
+    const stored = Number(window.localStorage.getItem(ASSISTANT_SIZE_KEY));
+    return Number.isFinite(stored) && stored > 0 ? clampAssistantSize(stored) : DEFAULT_ASSISTANT_SIZE;
+  } catch {
+    return DEFAULT_ASSISTANT_SIZE;
+  }
+}
+
+const INITIAL_ASSISTANT_SIZE = readInitialAssistantSize();
+
+function clampAppearancePosition(position: FloatingPosition, size = INITIAL_ASSISTANT_SIZE): FloatingPosition {
   return {
     x: Math.min(
-      Math.max(APPEARANCE_EDGE_GAP, window.innerWidth - APPEARANCE_BUTTON_SIZE - APPEARANCE_EDGE_GAP),
+      Math.max(APPEARANCE_EDGE_GAP, window.innerWidth - size - APPEARANCE_EDGE_GAP),
       Math.max(APPEARANCE_EDGE_GAP, position.x),
     ),
     y: Math.min(
-      Math.max(APPEARANCE_EDGE_GAP, window.innerHeight - APPEARANCE_BUTTON_SIZE - APPEARANCE_EDGE_GAP),
+      Math.max(APPEARANCE_EDGE_GAP, window.innerHeight - size - APPEARANCE_EDGE_GAP),
       Math.max(APPEARANCE_EDGE_GAP, position.y),
     ),
   };
@@ -82,8 +101,8 @@ function readInitialAppearancePosition(): FloatingPosition {
     // Fall through to the collision-free default position.
   }
   return clampAppearancePosition({
-    x: window.innerWidth - APPEARANCE_BUTTON_SIZE - 18,
-    y: window.innerHeight - APPEARANCE_BUTTON_SIZE - 82,
+    x: window.innerWidth - INITIAL_ASSISTANT_SIZE - 18,
+    y: window.innerHeight - INITIAL_ASSISTANT_SIZE - 18,
   });
 }
 
@@ -92,6 +111,14 @@ function storeAppearancePosition(position: FloatingPosition): void {
     window.localStorage.setItem(APPEARANCE_POSITION_KEY, JSON.stringify(position));
   } catch {
     // Dragging remains available for this session when storage is unavailable.
+  }
+}
+
+function storeAssistantSize(size: number): void {
+  try {
+    window.localStorage.setItem(ASSISTANT_SIZE_KEY, String(size));
+  } catch {
+    // Resizing remains available for this session when storage is unavailable.
   }
 }
 
@@ -126,6 +153,7 @@ export default function App() {
   const [appearanceTheme, setAppearanceTheme] = useState<AppearanceTheme>(INITIAL_APPEARANCE_THEME);
   const [appearanceMenuOpen, setAppearanceMenuOpen] = useState(false);
   const [appearancePosition, setAppearancePosition] = useState<FloatingPosition>(readInitialAppearancePosition);
+  const [assistantSize, setAssistantSize] = useState(INITIAL_ASSISTANT_SIZE);
   const [appearanceDragging, setAppearanceDragging] = useState(false);
   const [softwareAssistantMessages, setSoftwareAssistantMessages] = useState<SoftwareAssistantMessage[]>([ASSISTANT_WELCOME]);
   const [softwareAssistantInput, setSoftwareAssistantInput] = useState('');
@@ -220,14 +248,14 @@ export default function App() {
   useEffect(() => {
     const handleResize = () => {
       setAppearancePosition((current) => {
-        const next = clampAppearancePosition(current);
+        const next = clampAppearancePosition(current, assistantSize);
         storeAppearancePosition(next);
         return next;
       });
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [assistantSize]);
 
   const handleAppearancePointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0) return;
@@ -255,8 +283,8 @@ export default function App() {
     setAppearancePosition(clampAppearancePosition({
       x: drag.originX + deltaX,
       y: drag.originY + deltaY,
-    }));
-  }, []);
+    }, assistantSize));
+  }, [assistantSize]);
 
   const finishAppearanceDrag = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
     const drag = appearanceDragRef.current;
@@ -267,14 +295,14 @@ export default function App() {
     const next = clampAppearancePosition({
       x: drag.originX + event.clientX - drag.startX,
       y: drag.originY + event.clientY - drag.startY,
-    });
+    }, assistantSize);
     if (drag.moved) {
       setAppearancePosition(next);
       storeAppearancePosition(next);
     }
     appearanceDragRef.current = null;
     setAppearanceDragging(false);
-  }, []);
+  }, [assistantSize]);
 
   const handleAppearanceClick = useCallback(() => {
     if (suppressAppearanceClickRef.current) {
@@ -314,6 +342,19 @@ export default function App() {
       setSoftwareAssistantPending(false);
     }
   }, [softwareAssistantInput, softwareAssistantMessages, softwareAssistantPending]);
+
+  const resizeSoftwareAssistant = useCallback((delta: number) => {
+    setAssistantSize((current) => {
+      const next = clampAssistantSize(current + delta);
+      storeAssistantSize(next);
+      setAppearancePosition((position) => {
+        const clamped = clampAppearancePosition(position, next);
+        storeAppearancePosition(clamped);
+        return clamped;
+      });
+      return next;
+    });
+  }, []);
 
   const handleDividerPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (leftPanelCollapsed || window.innerWidth <= 820) return;
@@ -813,7 +854,7 @@ export default function App() {
       <div
         className={`appearance-settings${appearanceDragging ? ' is-dragging' : ''}${appearancePosition.x < 382 ? ' opens-right' : ''}${appearancePosition.y < 520 ? ' opens-down' : ''}`}
         ref={appearanceSettingsRef}
-        style={{ left: appearancePosition.x, top: appearancePosition.y }}
+        style={{ left: appearancePosition.x, top: appearancePosition.y, width: assistantSize, height: assistantSize }}
       >
         {appearanceMenuOpen ? (
           <section className="appearance-popover software-assistant-popover" role="dialog" aria-label="猫薄荷软件助手">
@@ -825,6 +866,8 @@ export default function App() {
               <div className="software-assistant-actions" role="group" aria-label="助手与外观设置">
                 <button type="button" className={appearanceTheme === 'light' ? 'is-selected' : ''} onClick={() => setAppearanceTheme('light')} title="浅色模式" aria-label="切换到浅色模式">☀</button>
                 <button type="button" className={appearanceTheme === 'dark' ? 'is-selected' : ''} onClick={() => setAppearanceTheme('dark')} title="深色模式" aria-label="切换到深色模式">☾</button>
+                <button type="button" disabled={assistantSize <= MIN_ASSISTANT_SIZE} onClick={() => resizeSoftwareAssistant(-ASSISTANT_SIZE_STEP)} title="缩小猫薄荷" aria-label="缩小猫薄荷">−</button>
+                <button type="button" disabled={assistantSize >= MAX_ASSISTANT_SIZE} onClick={() => resizeSoftwareAssistant(ASSISTANT_SIZE_STEP)} title="放大猫薄荷" aria-label="放大猫薄荷">＋</button>
                 <button type="button" onClick={() => setAppearanceMenuOpen(false)} title="关闭助手" aria-label="关闭助手">×</button>
               </div>
             </header>

@@ -43,11 +43,35 @@ async function main() {
         const trigger = document.querySelector('.appearance-settings-trigger');
         trigger?.click();
         await new Promise((resolve) => setTimeout(resolve, 180));
+        if (!document.querySelector('.software-assistant-popover')) {
+          trigger?.click();
+          await new Promise((resolve) => setTimeout(resolve, 180));
+        }
         const popover = document.querySelector('.software-assistant-popover');
         const triggerImage = trigger?.querySelector('img');
         const rect = popover?.getBoundingClientRect();
+        const triggerRect = trigger?.getBoundingClientRect();
+        const triggerStyle = trigger ? getComputedStyle(trigger) : null;
+        const imageStyle = triggerImage ? getComputedStyle(triggerImage) : null;
+        const growButton = popover?.querySelector('[aria-label="放大猫薄荷"]');
+        const shrinkButton = popover?.querySelector('[aria-label="缩小猫薄荷"]');
+        const storedSizeBefore = localStorage.getItem('vibeide.assistant.size');
+        const resizeButton = !growButton?.disabled ? growButton : shrinkButton;
+        const resizeDirection = resizeButton === growButton ? 1 : -1;
+        resizeButton?.click();
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        const resizedRect = trigger?.getBoundingClientRect();
+        const sizeAdjusted = Boolean(resizedRect && triggerRect
+          && Math.round(resizedRect.width - triggerRect.width) === 16 * resizeDirection
+          && Number(localStorage.getItem('vibeide.assistant.size')) === Math.round(resizedRect.width));
+        if (storedSizeBefore === null) localStorage.removeItem('vibeide.assistant.size');
+        else localStorage.setItem('vibeide.assistant.size', storedSizeBefore);
         return {
           triggerImageLoaded: Boolean(triggerImage?.complete && triggerImage?.naturalWidth > 0),
+          fullBodyTrigger: Boolean(triggerRect?.width >= 110 && triggerRect?.height >= 110
+            && triggerStyle?.backgroundColor === 'rgba(0, 0, 0, 0)'
+            && triggerStyle?.borderTopWidth === '0px'
+            && imageStyle?.objectFit === 'contain'),
           popoverVisible: Boolean(popover),
           rect: rect ? { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height } : null,
           viewport: { width: innerWidth, height: innerHeight },
@@ -55,6 +79,7 @@ async function main() {
           welcome: popover?.querySelector('.software-assistant-message--assistant')?.textContent,
           textarea: Boolean(popover?.querySelector('textarea')),
           actionButtons: popover?.querySelectorAll('.software-assistant-actions button').length || 0,
+          sizeAdjusted,
         };
       })()`,
       awaitPromise: true,
@@ -64,7 +89,7 @@ async function main() {
     const rect = result?.rect;
     const inViewport = rect && rect.left >= 0 && rect.top >= 0
       && rect.right <= result.viewport.width && rect.bottom <= result.viewport.height;
-    if (!result?.triggerImageLoaded || !result?.popoverVisible || !result?.textarea || result?.actionButtons !== 3
+    if (!result?.triggerImageLoaded || !result?.fullBodyTrigger || !result?.popoverVisible || !result?.textarea || result?.actionButtons !== 5 || !result?.sizeAdjusted
       || result?.title !== '猫薄荷' || !result?.welcome?.includes('Catnip Forge') || !inViewport) {
       throw new Error(`software assistant UI verification failed: ${JSON.stringify(result)}`);
     }

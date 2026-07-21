@@ -20,6 +20,7 @@
 - `electron_design` 当前源码需以 Runtime/Electron typecheck、main/renderer build、Windows unpacked 打包和 `git diff --check` 作为提交门禁。当前版本已执行 Windows 打包、MCP handshake、随包 Python、ESP-IDF 冷构建及 COM5 串口回归；真实 Agent 长时间连续对话仍需持续观察。
 - 当前主题不再持续跟随 Windows/Electron 的 `prefers-color-scheme`。首次无记录时读取一次系统偏好，之后由“猫薄荷”助手标题栏选择并持久化；助手位置也独立持久化，可拖动避开编辑器字号工具条。
 - “猫薄荷”是独立的软件使用帮助通道：复用 `resources/apikey.txt`，直接调用 DeepSeek Chat Completions，不得改为占用左侧硬件 Agent 队列。系统提示只允许解释 Catnip Forge 操作，真实编译/烧录/文件修改必须引导到左侧 Agent。
+- 悬浮入口必须使用 `catnip-assistant.png` 的透明全身形象完整呈现：默认 144px、`object-fit: contain`、无圆形背景与头像式裁切；角色本体承担点击和拖动入口。标题栏“− / ＋”以 16px 调节至 96–208px，尺寸写入 `vibeide.assistant.size`。
 - Windows packaged 工作台资源不得用 `win-unpacked/<资源>` 手工拼接：Skills 通过 `getAgentDir()` 指向 `resources/agent/skills`，文档和硬件分别通过 `getResourcesDir()` / `getHardboardDir()` 解析。工作台允许范围是明确仓库，不包含整个安装根目录。
 - `resources/agent/skills` 是唯一用户维护源仓库；`skill-manager.ts` 在 Agent 启动前把它标准化部署到用户数据下的 `agent-workspace/.claude/skills`。仓库页 Skill 管理器负责 CRUD/同步，不能把源路径改到 `%APPDATA%`。
 - 本轮继续加固任务生命周期：turn 完成后的页面验收、恢复和异常回调均校验原 `taskId`，停止或队列切换后的旧异步回调不会再完成新任务或复活旧任务；任务队列烟测已覆盖取消竞态及停止清空两类等待项。
