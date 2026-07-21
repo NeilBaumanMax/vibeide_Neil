@@ -22,6 +22,18 @@ fs.mkdirSync(chromeProfileDir, { recursive: true });
 
 let mainWindow: BrowserWindow | null = null;
 let shutdownInFlight: Promise<void> | null = null;
+let firstRunRestartScheduled = false;
+
+function scheduleFirstRunRestart(): void {
+  if (firstRunRestartScheduled) return;
+  firstRunRestartScheduled = true;
+  logger.info('first-run:restart-scheduled', { delayMs: 900 });
+  setTimeout(() => {
+    logger.info('first-run:restarting');
+    app.relaunch();
+    app.quit();
+  }, 900);
+}
 
 function isShellUrl(url: string): boolean {
   return (
@@ -94,7 +106,9 @@ function createWindow() {
   ipcMain.handle('startup:status', () => ({ ...checkStartupStatus(), ...getApiKeyPromptData() }));
   ipcMain.handle('startup:save-apikey', async (_event, key: string) => {
     const ok = saveApiKey(key);
-    return { ok, status: checkStartupStatus() };
+    const status = checkStartupStatus();
+    if (ok) scheduleFirstRunRestart();
+    return { ok, status, restarting: ok };
   });
 
   if (process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV === '1') {

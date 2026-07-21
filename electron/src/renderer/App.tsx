@@ -124,6 +124,7 @@ export default function App() {
   const [startupApiKey, setStartupApiKey] = useState('');
   const [startupApiKeyError, setStartupApiKeyError] = useState('');
   const [startupApiKeySaving, setStartupApiKeySaving] = useState(false);
+  const [startupApiKeyRestarting, setStartupApiKeyRestarting] = useState(false);
   const workbenchSmokeTriggered = useRef(false);
   const activeConversationIdRef = useRef('');
   const appearanceSettingsRef = useRef<HTMLDivElement>(null);
@@ -161,6 +162,10 @@ export default function App() {
     }
     setStartupApiKey('');
     setStartupApiKeyError('');
+    if (result.restarting) {
+      setStartupApiKeyRestarting(true);
+      return;
+    }
     setStartupStatus((current) => current ? { ...current, ...result.status } : null);
   }, [startupApiKey]);
 
@@ -735,6 +740,7 @@ export default function App() {
                 type="password"
                 autoComplete="off"
                 spellCheck={false}
+                disabled={startupApiKeyRestarting}
                 value={startupApiKey}
                 placeholder="粘贴 DeepSeek API Key"
                 onChange={(event) => { setStartupApiKey(event.target.value); setStartupApiKeyError(''); }}
@@ -743,10 +749,14 @@ export default function App() {
             <code title={startupStatus.keyPath}>{startupStatus.keyPath}</code>
             {startupApiKeyError ? <div className="startup-key-error" role="alert">{startupApiKeyError}</div> : null}
             {!startupStatus.playwrightReady ? <div className="startup-key-error" role="alert">发布包缺少浏览器运行资源，请重新获取完整压缩包。</div> : null}
-            <button type="submit" disabled={startupApiKeySaving || !startupStatus.playwrightReady || startupApiKey.trim().length <= 12}>
-              {startupApiKeySaving ? '正在保存…' : '保存并开始使用'}
+            <button type="submit" disabled={startupApiKeySaving || startupApiKeyRestarting || !startupStatus.playwrightReady || startupApiKey.trim().length <= 12}>
+              {startupApiKeyRestarting ? '配置完成，正在重启…' : startupApiKeySaving ? '正在保存…' : '保存并开始使用'}
             </button>
-            <small>也可以关闭软件，将 `apikey.txt.example` 复制为 `apikey.txt` 后填写密钥。</small>
+            {startupApiKeyRestarting ? (
+              <div className="startup-key-restarting" role="status">Catnip Forge 将自动重新打开，之后即可直接使用 Agent。</div>
+            ) : (
+              <small>也可以关闭软件，将 `apikey.txt.example` 复制为 `apikey.txt` 后填写密钥。</small>
+            )}
           </form>
         </div>
       ) : null}

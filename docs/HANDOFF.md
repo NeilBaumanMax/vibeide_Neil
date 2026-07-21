@@ -16,6 +16,7 @@
 
 - 当前对外发布版本：`v1.0.0`；内部构建号 `7201`，npm 包版本 `1.0.0-7201`，Windows PE 四段版本映射为 `1.0.0.7201`。
 - Windows 便携成品是完整的 `electron/dist-package/win-unpacked`，必须解压到普通可写目录后运行，不能只分发 exe。发布包不含真实 `resources/apikey.txt`，只含模板；无 Key 首启由应用内窗口完成配置。
+- 首启窗口保存 Key 成功后必须保留“状态反馈 + 自动重启”链路：Renderer 显示正在重启，主进程 900ms 后 `app.relaunch()` 并走统一退出清理；不要恢复为需要用户手工重启的流程。
 - `electron_design` 当前源码需以 Runtime/Electron typecheck、main/renderer build、Windows unpacked 打包和 `git diff --check` 作为提交门禁。当前版本已执行 Windows 打包、MCP handshake、随包 Python、ESP-IDF 冷构建及 COM5 串口回归；真实 Agent 长时间连续对话仍需持续观察。
 - 当前主题不再持续跟随 Windows/Electron 的 `prefers-color-scheme`。首次无记录时读取一次系统偏好，之后由外观菜单选择并持久化；按钮位置也独立持久化，可拖动避开编辑器字号工具条。
 - Windows packaged 工作台资源不得用 `win-unpacked/<资源>` 手工拼接：Skills 通过 `getAgentDir()` 指向 `resources/agent/skills`，文档和硬件分别通过 `getResourcesDir()` / `getHardboardDir()` 解析。工作台允许范围是明确仓库，不包含整个安装根目录。
@@ -90,9 +91,9 @@
 
 已通过（Windows v1.0.0 便携发布，2026-07-21）：
 
-- Catnip Forge 最终 `win-unpacked` 共 `4,463,704,603` 字节，入口为 `Catnip Forge.exe`，PE 文件版本和产品版本均为 `1.0.0.7201`。
+- Catnip Forge 最终 `win-unpacked` 共 `4,463,705,939` 字节，入口为 `Catnip Forge.exe`，PE 文件版本和产品版本均为 `1.0.0.7201`。
 - `verify:release` 验证便携 Node `v22.14.0`、pyserial `3.5`、Claude Code `2.1.167`、Runtime health、12 个 Skills、Playwright 与 ESP-IDF 资源。
-- 成品无 Key 实际启动后首次配置窗口正常，模板占位 Key 被拒绝；验证结束后 `resources/apikey.txt` 不存在。
+- 成品无 Key 实际启动后首次配置窗口正常，模板占位 Key 被拒绝；保存一次性测试 Key 后应用自动拉起新进程，新进程实测 `apiKeyReady=true`、`firstRun=false` 且配置窗口消失；验证结束后测试 Key 已清除。
 - 当前 exe 未做商业代码签名，换机运行可能出现 SmartScreen；正式对外分发前应配置可信代码签名证书。
 
 已通过（Electron Apple UI 与 1.0.0-7201，2026-07-20）：

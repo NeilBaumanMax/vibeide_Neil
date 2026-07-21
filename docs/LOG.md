@@ -1,5 +1,13 @@
 # 施工日志
 
+## 2026-07-21 — 首次配置 API Key 后自动重启
+
+- 修复首次启动保存 `resources/apikey.txt` 后仍需用户手工重启才能使用 Agent 的产品断点。
+- 保存成功后 Renderer 保持首启遮罩，显示“配置完成，正在重启”状态；主进程延迟 900ms 调度 `app.relaunch()`，再通过现有统一退出清理关闭旧进程。
+- 新进程重新读取 Key 并启动正常工作区；保存失败、无效占位 Key 和不可写目录仍停留在配置页并显示原有错误。
+- reduced-motion 下重启状态停用旋转动画，保留静态状态反馈。
+- 新增 `verify:first-run-restart` 发布版集成校验；无 Key 启动后写入一次性测试 Key，实测应用自动重启，新进程立即进入 Agent 可用状态，并在结束时安全清除测试 Key。
+
 ## 2026-07-21 — Catnip Forge 正式品牌与全量图标替换
 
 - 用户可见正式产品名改为 `Catnip Forge`，中文全称为 `Catnip 硬件智能开发平台`，英文定位为 `Autonomous Hardware Development Agent`；`vibeide` 仅保留为仓库、npm 包和运行态兼容键。

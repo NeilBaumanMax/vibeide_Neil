@@ -52,7 +52,7 @@ cd /d E:\Agent\vibeide\vibeide
 scripts\start_electron_desktop.cmd
 ```
 
-发布给其他用户时，应压缩并分发完整的 `electron\dist-package\win-unpacked` 文件夹。接收方完整解压到普通可写目录后运行 `Catnip Forge.exe`；首次启动窗口会引导保存 DeepSeek API Key。不能只发送 exe，也不要把包含真实 `resources\apikey.txt` 的目录重新分发。详细口径见 [Windows v1.0.0 便携版发布检查](docs/WINDOWS_V1_0_0_RELEASE_CHECKLIST.md)。
+发布给其他用户时，应压缩并分发完整的 `electron\dist-package\win-unpacked` 文件夹。接收方完整解压到普通可写目录后运行 `Catnip Forge.exe`；首次启动窗口会引导保存 DeepSeek API Key，保存成功后软件自动重启并直接启用 Agent。不能只发送 exe，也不要把包含真实 `resources\apikey.txt` 的目录重新分发。详细口径见 [Windows v1.0.0 便携版发布检查](docs/WINDOWS_V1_0_0_RELEASE_CHECKLIST.md)。
 
 ### Linux / macOS
 

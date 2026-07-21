@@ -17,7 +17,7 @@ type LogEvent =
   | 'agent:close' | 'agent:error' | 'agent:kill' | 'agent:mcp-config-write-failed'
   | 'agent:stdin' | 'agent:turn-complete' | 'agent:silence'
   | 'claude:session'
-  | 'first-run:detected' | 'first-run:apikey-saved' | 'first-run:apikey-save-failed' | 'first-run:apikey-copied-from-resources' | 'first-run:apikey-copy-failed' | 'first-run:status'
+  | 'first-run:detected' | 'first-run:apikey-saved' | 'first-run:apikey-save-failed' | 'first-run:apikey-copied-from-resources' | 'first-run:apikey-copy-failed' | 'first-run:status' | 'first-run:restart-scheduled' | 'first-run:restarting'
   | 'mcp:init'
   | 'ui:push'
   | 'browser:navigate' | 'browser:state'

@@ -32,6 +32,7 @@
 - [x] Agent 提示词由整篇 Skill 内容注入改为原生命令推荐，对话执行过程显示推荐与实际 Skill 工具调用；普通前端编译不再误触发 Hardboard
 - [x] 左侧 Agent 对话输入区新增 Skills 选择器；选中 Skill 以标签呈现，发送时自动注入 `/skill-id`，用户无需手工输入命令
 - [x] 便携包无 Key 首启时显示应用内配置窗口；只随包分发 `apikey.txt.example`，真实 Key 保存到当前解压目录 `resources/apikey.txt`
+- [x] 首次保存 API Key 后显示“配置完成，正在重启”，由主进程自动 relaunch；用户无需手工关闭，重启后的 Agent 直接读取新 Key
 - [x] 旧单会话 `session.json` 自动迁移为 v2；选中历史会话的最近问答真实注入 Agent 提示词，切换时重置常驻进程防止工程上下文串线
 - [x] Electron 前端已全面放弃 NES.css / 像素视觉，改为 Apple 风格冷色材质、系统字体、克制边框和直接反馈
 - [x] 深色/浅色主题已从持续跟随系统媒体查询改为应用内显式选择；首次读取系统偏好后持久化到 `vibeide.appearance.theme`，避免运行中因系统偏好变化突然切色

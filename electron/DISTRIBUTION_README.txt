@@ -6,7 +6,7 @@ Catnip Forge v1.0.0（Build 7201）Windows x64 便携版
 1. 必须完整解压整个 win-unpacked 文件夹，不要只复制 exe，也不要直接在压缩包内运行。
 2. 建议解压到用户可写目录，例如 D:\Odyssey-v1.0.0；不要放进需要管理员权限的 Program Files。
 3. 双击“Catnip Forge.exe”。
-4. 首次启动会要求填写 DeepSeek API Key。粘贴并保存后即可使用 Agent。
+4. 首次启动会要求填写 DeepSeek API Key。粘贴并保存后软件会自动重启，重新打开后即可直接使用 Agent。
 5. 也可以把 resources\apikey.txt.example 复制为 resources\apikey.txt，然后把占位内容替换为自己的 Key。
 
 运行要求：

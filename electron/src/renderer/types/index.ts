@@ -224,7 +224,7 @@ export interface HardboardRuntimeLaunchResult {
 
 export interface WindowAPI {
   getStartupStatus: () => Promise<StartupStatus>;
-  saveStartupApiKey: (key: string) => Promise<{ ok: boolean; status: Pick<StartupStatus, 'apiKeyReady' | 'playwrightReady' | 'firstRun'> }>;
+  saveStartupApiKey: (key: string) => Promise<{ ok: boolean; restarting: boolean; status: Pick<StartupStatus, 'apiKeyReady' | 'playwrightReady' | 'firstRun'> }>;
   sendMessage: (text: string, mode?: TaskSubmitMode, conversationId?: string, messageId?: string, timestamp?: number) => Promise<TaskSubmitResult & { message?: ChatMessage }>;
   onMessage: (cb: (msg: { id?: string; text: string; timestamp: number; kind?: ChatMessageKind; toolName?: string; error?: boolean; taskId?: string | null; conversationId?: string }) => void) => void;
   listChatConversations: () => Promise<{ activeConversationId: string; conversations: ChatConversationSummary[] }>;

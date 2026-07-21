@@ -29,7 +29,8 @@
 - 不包含 `resources/apikey.txt`，避免泄露发布者密钥。
 - 包含 `resources/apikey.txt.example`，内容只有占位符。
 - 无 Key 首次启动时显示应用内配置窗口。
-- 用户粘贴 DeepSeek API Key 后写入当前解压目录的 `resources/apikey.txt`。
+- 用户粘贴 DeepSeek API Key 后写入当前解压目录的 `resources/apikey.txt`，界面显示正在重启，软件自动重新打开。
+- 自动重启后的 Agent 从新进程读取 Key，用户不需要再手工关闭一次软件。
 - Agent 启动时从该文件设置 `ANTHROPIC_AUTH_TOKEN`、`https://api.deepseek.com/anthropic` 和 `deepseek-v4-pro`。
 
 DeepSeek 的 Anthropic 兼容地址和 `deepseek-v4-pro` 模型以官方文档为准。
@@ -55,12 +56,13 @@ npm.cmd --prefix electron run verify:hardboard
 npm.cmd --prefix electron run pack:win
 npm.cmd --prefix electron run verify:release
 npm.cmd --prefix electron run verify:first-run
+npm.cmd --prefix electron run verify:first-run-restart
 git diff --check
 ```
 
 `verify:release` 会检查版本元数据、关键目录、真实 Key 缺失、Key 模板、app.asar、便携 Node/Python/Claude Code、Runtime health、开发机绝对路径和发布目录总体积。
 
-2026-07-21 Catnip Forge 最终成品实测：目录共 `4,463,704,603` 字节；Node `v22.14.0`、Python 3.12/pyserial `3.5`、Claude Code `2.1.167` 和 Runtime health 均通过。成品实际启动后，窗口标题、左上角 26px 品牌图、首次配置窗口、英文定位、Playwright 资源和 Skills 按钮均通过 CDP 校验，占位 Key 被拒绝，测试结束后 `resources/apikey.txt` 仍不存在。
+2026-07-21 Catnip Forge 最终成品实测：目录共 `4,463,705,939` 字节；Node `v22.14.0`、Python 3.12/pyserial `3.5`、Claude Code `2.1.167` 和 Runtime health 均通过。成品实际启动后，窗口标题、左上角 26px 品牌图、首次配置窗口、英文定位、Playwright 资源和 Skills 按钮均通过 CDP 校验，占位 Key 被拒绝。首次保存一次性测试 Key 后应用自动拉起新进程，新进程实测 `apiKeyReady=true`、`firstRun=false` 且配置窗口消失；测试 Key 随后已清除。
 
 ## 使用边界
 
