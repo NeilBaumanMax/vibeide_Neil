@@ -109,6 +109,13 @@ export function getApiKeyPath(): string {
   return path.join(process.resourcesPath, 'apikey.txt');
 }
 
+/** 猫薄荷软件助手的可维护产品知识手册；发布版位于 resources 根目录。 */
+export function getSoftwareAssistantGuidePath(): string {
+  return isDev()
+    ? path.join(devProjectRoot(), 'electron', 'CATNIP_FORGE_USER_GUIDE.md')
+    : path.join(process.resourcesPath, 'CATNIP_FORGE_USER_GUIDE.md');
+}
+
 /** 运行时数据目录（recordings、workflows、logs 等） */
 export function getRuntimeDataDir(...segments: string[]): string {
   const base = isDev()

@@ -32,7 +32,7 @@ async function findTarget(excludedId = '') {
   for (let attempt = 0; attempt < 80; attempt += 1) {
     try {
       const targets = await fetch(CDP_LIST).then((response) => response.json());
-      const target = targets.find((entry) => entry.title?.includes('Catnip Forge') && entry.id !== excludedId);
+      const target = targets.find((entry) => entry.title?.includes('Catnip Forge ·') && entry.id !== excludedId);
       if (target?.webSocketDebuggerUrl) return target;
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 250));

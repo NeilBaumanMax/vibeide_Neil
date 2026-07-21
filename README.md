@@ -28,7 +28,7 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 
 - 应用启动时显示 Catnip Forge 品牌启动页；工作区、开发环境和 Renderer 的真实加载节点驱动阶段文字、百分比与进度条，工作台可显示后自动切换主窗口。
 - Electron 桌面窗口采用 Apple 风格冷色界面，提供聊天区、Skill/工程资源仓库、串口监视、任务管理和 Monaco 代码编辑入口；仓库页显示硬件工程、参考代码与 Skills，编辑器仍可访问 Agent 工作区等受控根目录。浏览器工作台前端入口当前隐藏，相关后端能力暂时保留。
-- 右下角“猫薄荷”悬浮助手复用本地 DeepSeek API Key，专门回答 Catnip Forge 的界面与操作问题；聊天浮层内保留深色/浅色切换，不占用左侧硬件 Agent 的任务队列。
+- 右下角“猫薄荷”悬浮助手复用本地 DeepSeek API Key，专门回答 Catnip Forge 的界面与操作问题；每次提问都会读取随包、可编辑的 `resources/CATNIP_FORGE_USER_GUIDE.md`，聊天浮层内保留深色/浅色切换，不占用左侧硬件 Agent 的任务队列。
 - Worker 负责快捷任务、搜索预处理、任务上下文构造和 Agent 生命周期；同一时间只运行一个活动任务，执行中消息默认追加到当前任务，显式“排队”才建立独立后续任务。
 - Agent 负责推理和任务执行规划，但所有浏览器操作必须通过 MCP 工具完成。
 - Runtime 通过 CDP 连接 Electron Chromium，提供 `browser.*`、`storage.*` 和 `hardboard.*` MCP tools。

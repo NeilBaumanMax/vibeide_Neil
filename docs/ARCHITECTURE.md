@@ -46,7 +46,8 @@ Electron Chromium / WebContentsView
 - `electron/src/main/paths.ts`：开发版与 packaged 环境的资源、Runtime、Agent 和 API key 路径解析。
 - `electron/src/main/first-run.ts`：校验并保存 DeepSeek API Key；无 Key 时通过 Preload/IPC 向 Renderer 提供首次启动状态，Renderer 显示阻塞式配置窗口。保存成功后主进程调度一次 `app.relaunch()`，先走统一退出清理再自动重启，使 Agent 从新进程读取 Key。
 - `electron/src/main/agent.ts`：Claude Agent 进程、动态 MCP 配置和生命周期管理。
-- `electron/src/main/software-assistant.ts`：独立的软件使用问答通道；复用本地 DeepSeek Key，通过 OpenAI Chat Completions 接口调用 `deepseek-v4-flash`，限制上下文长度和回答边界，不进入硬件 Agent 队列。
+- `electron/src/main/software-assistant.ts`：独立的软件使用问答通道；复用本地 DeepSeek Key，通过 OpenAI Chat Completions 接口调用 `deepseek-v4-flash`。每次请求重新读取 `CATNIP_FORGE_USER_GUIDE.md` 并与固定安全规则组合为系统提示词，限制上下文长度和回答边界，不进入硬件 Agent 队列。
+- `electron/CATNIP_FORGE_USER_GUIDE.md`：猫薄荷的可维护产品知识母版；发布后位于 `resources` 根目录、app.asar 外，修改后下一次提问立即生效。
 - `electron/src/main/tray.ts`：Windows 系统托盘和窗口显隐。
 - `electron/src/main/worker/session-store.ts`：v2 多会话索引、完整 UI 消息、精简 Agent 轮次、旧单会话迁移和重启恢复；成品数据位于用户目录，不写入安装资源。
 - `electron/src/renderer/App.tsx`：主 UI 状态、左右面板宽度持久化、拖动分隔和对话区收起/展开；同时管理独立于系统实时偏好的深色/浅色主题、可拖动“猫薄荷”助手坐标、微型帮助会话，以及 Agent 消息清理、分类和等待状态聚合。

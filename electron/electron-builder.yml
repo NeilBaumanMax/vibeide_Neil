@@ -18,6 +18,8 @@ files:
 extraResources:
   - from: apikey.txt.example
     to: apikey.txt.example
+  - from: CATNIP_FORGE_USER_GUIDE.md
+    to: CATNIP_FORGE_USER_GUIDE.md
   - from: assets
     to: electron/assets
     filter:

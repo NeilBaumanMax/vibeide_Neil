@@ -1,5 +1,17 @@
 # 施工日志
 
+## 2026-07-22 — 猫薄荷可维护软件知识手册
+
+- 将猫薄荷的软件功能事实从 `software-assistant.ts` 硬编码迁移到 `electron/CATNIP_FORGE_USER_GUIDE.md`，覆盖首启、界面、Agent 历史、Skills、仓库、编译烧录、串口、编辑器、外观和常见问题。
+- 手册通过 `extraResources` 放入发布版 `resources` 根目录、保持可编辑；每次用户提问重新读取，保存修改后下一次回答立即使用，无需重启或重新编译。
+- 固定系统提示词只保留角色、回答方式、无执行权限、防手册指令越权和 API Key 安全边界；产品功能与操作事实以动态手册为主要来源。
+- 手册限制 60,000 字符；缺失、不可读或空文件使用安全降级，要求模型回答“不确定”，不再依靠陈旧硬编码猜测界面。
+- 新增 `verify:software-assistant-guide`，实测 A→B 手册内容即时更新且无缓存，并覆盖空文件/缺失文件；发布校验新增可编辑手册的存在与完整章节断言。
+- 重新生成 Windows v1.0.0 便携目录并通过 `verify:release`：源码手册与 `win-unpacked/resources/CATNIP_FORGE_USER_GUIDE.md` 一致，最终总大小 `4,466,177,540` 字节、共 42,744 个文件，且未携带真实 API Key。
+- 对外测试前再次实测无 Key 首启与保存后自动重启：首启品牌、Skills、Playwright 和占位 Key 拒绝均正常；测试脚本适配新增 Splash，改为只连接主 Renderer，复跑确认新进程 `apiKeyReady=true`、弹窗消失，并安全删除一次性测试 Key。
+- 最终分发审计发现 `README-FIRST.txt` 仍残留旧示例目录 `D:\Odyssey-v1.0.0`；已统一改为短路径 `D:\CatnipForge`，发布校验新增旧品牌拒绝断言，并在清单记录最长随包相对路径约 221 字符。
+- VS Code 曾锁定旧包 `app.asar`，导致 builder 清空目录后无法重建；经用户授权关闭所有被 Restart Manager 确认的锁持有 `Code.exe` 后全量恢复。最终成品重新通过发布、首启、自动重启和测试 Key 清理，`app.asar` 已无文件锁。
+
 ## 2026-07-21 — Catnip Forge 品牌启动界面
 
 - 根据用户草图重新组织启动页：移除大面积纯绿横幅，改为象牙白/浅猫薄荷绿材质、深蓝排版与克制阴影；完整使用叶片、组合标识和猫咪三张透明素材。

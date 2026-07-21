@@ -18,12 +18,19 @@ assert.equal(version.buildNumber, 7201);
 assert(fs.existsSync(exe), `missing ${exe}`);
 assert(fs.existsSync(path.join(packageRoot, 'README-FIRST.txt')), 'missing distribution README');
 assert(fs.existsSync(path.join(resources, 'app.asar')), 'missing app.asar');
+const assistantGuidePath = path.join(resources, 'CATNIP_FORGE_USER_GUIDE.md');
+assert(fs.existsSync(assistantGuidePath), 'missing editable software assistant guide');
+const assistantGuide = fs.readFileSync(assistantGuidePath, 'utf-8');
+assert(assistantGuide.includes('# Catnip Forge 软件使用手册'), 'software assistant guide title drifted');
+assert(assistantGuide.includes('## 12. 回答边界'), 'software assistant guide is incomplete');
 assert(!fs.existsSync(path.join(resources, 'apikey.txt')), 'release must not contain a real apikey.txt');
 const keyExample = fs.readFileSync(path.join(resources, 'apikey.txt.example'), 'utf-8');
 const keyLines = keyExample.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !line.startsWith('#'));
 assert.deepEqual(keyLines, ['DEEPSEEK_API_KEY=sk-your-key-here'], 'API key example must contain only the documented placeholder');
 const distributionReadme = fs.readFileSync(path.join(packageRoot, 'README-FIRST.txt'), 'utf-8');
 assert(distributionReadme.includes('v1.0.0（Build 7201）'), 'distribution README version drifted');
+assert(distributionReadme.includes('D:\\CatnipForge'), 'distribution README must recommend the current short product path');
+assert(!distributionReadme.includes('Odyssey'), 'distribution README contains the retired product name');
 
 const required = [
   'agent/node_modules/@anthropic-ai/claude-code/bin/claude.exe',
