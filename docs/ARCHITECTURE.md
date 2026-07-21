@@ -45,8 +45,11 @@ Electron Chromium / WebContentsView
 - `electron/src/main/agent.ts`：Claude Agent 进程、动态 MCP 配置和生命周期管理。
 - `electron/src/main/first-run.ts`：首次运行目录与资源初始化。
 - `electron/src/main/tray.ts`：Windows 系统托盘和窗口显隐。
-- `electron/src/main/worker/session-store.ts`：Claude 会话上下文持久化。
-- `electron/src/renderer/App.tsx`：主 UI 状态、左右面板宽度持久化、拖动分隔和对话区收起/展开；同时管理独立于系统实时偏好的深色/浅色主题、可拖动外观按钮坐标和对应 `localStorage` 状态。
+- `electron/src/main/worker/session-store.ts`：v2 多会话索引、完整 UI 消息、精简 Agent 轮次、旧单会话迁移和重启恢复；成品数据位于用户目录，不写入安装资源。
+- `electron/src/renderer/App.tsx`：主 UI 状态、左右面板宽度持久化、拖动分隔和对话区收起/展开；同时管理独立于系统实时偏好的深色/浅色主题、可拖动外观按钮坐标，以及 Agent 消息清理、分类和等待状态聚合。
+- `electron/src/renderer/components/ChatPanel.tsx`：左侧历史会话栏与右侧 Agent 对话；支持新建、切换、收起，以及“⋯”菜单中的重命名、置顶和带确认删除，同时负责主要回复、执行过程和专业视图。
+- `electron/src/renderer/components/TaskProgress.tsx`：当前任务的紧凑运行仪表盘，挂在活动“执行过程”下方且只在 Agent 工作期间呈现，不再作为左栏独立面板。
+- `electron/src/renderer/components/MarkdownContent.tsx`：把 Agent Markdown 安全渲染为 React 节点，不执行原始 HTML，并限制外部链接协议。
 - `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器和编辑器；工作台前端入口隐藏，但组件内部浏览器工作台实现保留。任务管理器负责工程/设备刷新、相对工程选择、Build/Flash 控制、语义状态胶囊、可直接清除的 EventBus 历史和最近任务结果；监视器提供文本/HEX 双向收发及完整串口参数；编辑器负责多根资源树、懒加载目录、等宽标签、Portal 右键菜单、字号持久化和保存状态同步。
 - `electron/src/renderer/components/WorkspacePanel.tsx`：四仓库卡片、资源管理器入口和简短目录打开反馈；完整错误保留为悬停提示，反馈区域受最大宽度约束，不参与挤压主标题。
 - `electron/src/renderer/styles/apple.less`：1.0.0-7201 最终视觉覆盖，使用 `data-theme="dark|light"` 定义显式主题令牌，并提供冷色材质、排版层级、圆角、可拖动外观浮层、反馈动效和 reduced-motion/reduced-transparency 适配。
@@ -74,7 +77,7 @@ Electron Chromium / WebContentsView
 - `context.ts`：根据任务选择 `agent/skills/*.md` 并生成 prompt。
 - `search-preflight.ts`：平台搜索预处理。
 - `quick-tasks.ts`：本地快捷能力。
-- `chat-buffer.ts`：Agent stream-json 输出解析。
+- `chat-buffer.ts`：Agent stream-json 输出解析、消息语义类型保留和工具结果摘要裁剪。
 - `task-state.ts`：任务进度状态机。
 - `page-validator.ts`：HTML 页面/游戏验收。
 
@@ -87,6 +90,23 @@ Electron Chromium / WebContentsView
 - 停止会终止当前 Agent 并清空等待队列，避免旧任务状态泄漏到后续任务。
 
 对应实现集中在 `orchestrator.ts`，Renderer 状态与操作位于 `App.tsx` 和 `ChatPanel.tsx`。详细施工和验收见 `AGENT_TASK_QUEUE_CONSTRUCTION.md`。
+
+### Agent 对话呈现
+
+- `conversation` 作为产品主对话直接显示；`progress`、`detail`、`status` 按任务合并为“执行过程”。
+- 同一任务的等待心跳只更新原状态，不持续追加消息。
+- 专业视图保留工具和诊断可见性，默认视图减少过程噪声。
+- 工具调用和 system 输出不再写入持久化的 Agent 回复摘要，避免下一轮上下文继续携带日志。
+
+详细规则见 `AGENT_CHAT_PRESENTATION_CONSTRUCTION.md`。
+
+### Agent 历史会话
+
+- Gateway 持久化用户消息和每条流式 Agent 消息，并把 `conversationId` 返回 Renderer。
+- Agent 工作期间禁止切换会话；切换后终止旧常驻 Agent，下一任务只注入所选会话最近上下文。
+- 旧版单 `session.json` 自动迁移为 v2 会话集合，UI 消息和用于推理的精简轮次分别限量。
+
+详细规则见 `AGENT_CONVERSATION_HISTORY_CONSTRUCTION.md`。
 
 ## Agent 层
 

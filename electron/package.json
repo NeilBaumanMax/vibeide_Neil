@@ -18,6 +18,8 @@
     "typecheck": "node node_modules/typescript/lib/tsc.js --noEmit",
     "verify:version": "node scripts/verify_version.cjs",
     "smoke:workbench": "node scripts/run_workbench_smoke.cjs",
+    "smoke:chat-ui": "node scripts/verify_chat_ui.cjs",
+    "verify:chat-presentation": "node scripts/verify_chat_presentation.cjs",
     "verify:session": "node node_modules/electron/cli.js scripts/verify_claude_session.cjs",
     "verify:hardboard": "node node_modules/electron/cli.js scripts/verify_hardboard_context_rules.cjs",
     "verify:task-queue": "node node_modules/electron/cli.js scripts/verify_agent_task_queue.cjs"

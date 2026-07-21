@@ -19,6 +19,10 @@
 - 当前主题不再持续跟随 Windows/Electron 的 `prefers-color-scheme`。首次无记录时读取一次系统偏好，之后由外观菜单选择并持久化；按钮位置也独立持久化，可拖动避开编辑器字号工具条。
 - Windows packaged 工作台资源不得用 `win-unpacked/<资源>` 手工拼接：Skills 通过 `getAgentDir()` 指向 `resources/agent/skills`，文档和硬件分别通过 `getResourcesDir()` / `getHardboardDir()` 解析。工作台允许范围是明确仓库，不包含整个安装根目录。
 - 本轮继续加固任务生命周期：turn 完成后的页面验收、恢复和异常回调均校验原 `taskId`，停止或队列切换后的旧异步回调不会再完成新任务或复活旧任务；任务队列烟测已覆盖取消竞态及停止清空两类等待项。
+- Agent 对话当前采用双层呈现：用户回复直接显示并安全渲染 Markdown，PID/工具/诊断/心跳按任务折叠；“专业视图”可自动展开全部过程。工具日志不再混入持久化 Agent 回复摘要，旧版整段日志刷屏不应恢复。
+- 左栏旧“任务进度”步骤面板已取消；运行状态只在 Agent 工作时以紧凑仪表盘显示于当前“执行过程”下方，暂停或完成后不保留占位。
+- Agent 历史已升级为 v2 多会话：成品保存在 `%APPDATA%/@vibeide/electron/runtime-data/claude-session/session.json`，旧单会话自动迁移；侧栏可新建/切换/确认删除，关闭重启恢复完整消息，选中会话最近上下文会真正注入下一轮 Agent。
+- 历史标签的管理入口统一为右侧“⋯”菜单：支持原位重命名、持久化置顶/取消置顶和二次确认删除；Agent 工作期间这些编辑操作保持锁定。
 - 上一版 Windows exe PE 版本已验证（历史 v0.1.0）：
   - `FileVersion=0.1.0`
   - `ProductVersion=0.1.0`

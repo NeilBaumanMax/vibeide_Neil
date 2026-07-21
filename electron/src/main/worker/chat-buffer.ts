@@ -143,7 +143,9 @@ function formatToolResult(content: unknown): string {
   const text = normalizeToolContent(content);
   if (!text) return '  └ (no output)';
   const lines = text.split('\n').map((line) => line.trimEnd()).filter(Boolean);
-  const clipped = lines.slice(0, 12);
+  const clipped = lines.slice(0, 12).map((line) => (
+    line.length > 1200 ? `${line.slice(0, 1200)}… [line clipped]` : line
+  ));
   const suffix = lines.length > clipped.length ? `\n  └ … +${lines.length - clipped.length} lines` : '';
   return `  └ ${clipped.join('\n    ')}${suffix}`;
 }

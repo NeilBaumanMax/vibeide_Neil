@@ -7,7 +7,7 @@ import { buildContext } from './context';
 import { ChatBuffer, ParsedChunk } from './chat-buffer';
 import { logger } from './logger';
 import { isHtmlGameTask, validateCurrentPage } from './page-validator';
-import { appendClaudeSessionTurn, loadClaudeSession, getClaudeSessionFile } from './session-store';
+import { appendClaudeSessionTurn, buildClaudeSessionContext, getClaudeSessionFile, listChatConversations } from './session-store';
 
 export type PushUIFn = (channel: string, data: unknown) => void;
 export type TaskSubmitMode = 'auto' | 'guide' | 'queue';
@@ -24,6 +24,7 @@ export interface TaskSubmitResult {
 interface QueuedTask {
   id: string;
   text: string;
+  conversationId: string;
 }
 
 interface TaskContinuation {
@@ -38,6 +39,7 @@ export class Orchestrator {
   private buffer: ChatBuffer;
   private currentTask: string | null = null;
   private currentTaskId: string | null = null;
+  private currentConversationId: string | null = null;
   private currentAgentTranscript = '';
   private currentAttempt = 0;
   private observedAgentPid: number | null = null;
@@ -66,12 +68,16 @@ export class Orchestrator {
     this.ensurePersistentAgent();
   }
 
-  submitTask(task: string, mode: TaskSubmitMode = 'auto'): TaskSubmitResult {
+  submitTask(task: string, mode: TaskSubmitMode = 'auto', conversationId?: string): TaskSubmitResult {
     const text = task.trim();
     if (!text) throw new Error('任务内容不能为空');
-    const request: QueuedTask = { id: randomUUID(), text };
+    const targetConversationId = conversationId || listChatConversations().activeConversationId;
+    const request: QueuedTask = { id: randomUUID(), text, conversationId: targetConversationId };
 
     if (this.currentTask || this.turnInFlight || this.paused) {
+      if (this.currentConversationId && this.currentConversationId !== targetConversationId) {
+        throw new Error('Agent 正在当前对话中工作，完成或停止后才能切换历史对话');
+      }
       if (mode === 'queue') {
         this.queuedTasks.push(request);
         this.pushUI('chat:message', {
@@ -104,6 +110,7 @@ export class Orchestrator {
   private async startTask(request: QueuedTask): Promise<void> {
     this.currentTask = request.text;
     this.currentTaskId = request.id;
+    this.currentConversationId = request.conversationId;
     this.currentAttempt = 0;
     this.currentAgentTranscript = '';
     this.currentUserTurns = [request.text];
@@ -145,15 +152,16 @@ export class Orchestrator {
     } else if (continuation?.kind === 'resume') {
       effectiveTask = `${task}\n\n【恢复此前暂停的任务】\n${continuation.text}`;
     }
-    const session = loadClaudeSession();
+    const { session, text: sessionContext } = buildClaudeSessionContext(this.currentConversationId);
     const { prompt, skillsFound } = buildContext(effectiveTask);
+    const promptWithHistory = `${sessionContext}\n\n${prompt}`;
     logger.info('task:context', {
       skillsFound,
-      promptLength: prompt.length,
+      promptLength: promptWithHistory.length,
       sessionId: session.id,
       sessionTurns: session.turnCount,
       sessionFile: getClaudeSessionFile(),
-      promptPreview: prompt.slice(0, 500),
+      promptPreview: promptWithHistory.slice(0, 500),
     });
 
     this.state.advanceTo('running');
@@ -167,17 +175,19 @@ export class Orchestrator {
     this.pushUI('chat:message', {
       text: `[Agent] PID ${proc.pid}${skillsFound.length ? ` · ${skillsFound.join(', ')}` : ''}`,
       timestamp: Date.now(),
+      kind: 'detail',
       taskId: this.currentTaskId,
     });
     if (!continuation) {
       this.pushUI('chat:message', {
         text: this.describeExecutionPlan(task),
         timestamp: Date.now(),
+        kind: 'progress',
         taskId: this.currentTaskId,
       });
     }
 
-    sendAgentMessage(prompt);
+    sendAgentMessage(promptWithHistory);
     this.emitTaskStatus();
   }
 
@@ -205,7 +215,7 @@ export class Orchestrator {
       const text = chunk.toString().trim();
       if (text) {
         logger.stderr(text);
-        this.pushUI('chat:message', { text, timestamp: Date.now(), error: true, taskId: this.currentTaskId });
+        this.pushUI('chat:message', { text, timestamp: Date.now(), kind: 'detail', error: true, taskId: this.currentTaskId });
       }
     });
 
@@ -302,6 +312,7 @@ export class Orchestrator {
             this.pushUI('chat:message', {
               text: `[Worker] 页面验收未通过，开始自动返工（第 ${this.currentAttempt} 次）`,
               timestamp: Date.now(),
+              kind: 'progress',
               error: true,
               taskId: this.currentTaskId,
             });
@@ -339,6 +350,7 @@ export class Orchestrator {
     this.pushUI('chat:message', {
       text: code === 0 ? '[Agent] 任务完成' : `[Agent] 任务失败 (code: ${code})`,
       timestamp: Date.now(),
+      kind: 'status',
       taskId: this.currentTaskId,
     });
 
@@ -349,7 +361,7 @@ export class Orchestrator {
         user: this.currentUserTurns.join('\n\n追加要求：\n'),
         assistant: this.currentAgentTranscript || '[Agent] 任务完成',
         status: 'completed',
-      });
+      }, this.currentConversationId);
     } else {
       this.state.fail();
       logger.error('task:complete', { exitCode: code, msg: 'Agent exited with error' });
@@ -357,7 +369,7 @@ export class Orchestrator {
         user: this.currentUserTurns.join('\n\n追加要求：\n'),
         assistant: this.currentAgentTranscript || `[Agent] 任务失败 (code: ${code})`,
         status: 'failed',
-      });
+      }, this.currentConversationId);
       this.pushUI('chat:message', {
         text: '当前 Agent 通道不可用，请检查 apikey.txt 和 Claude Code 进程日志。',
         timestamp: Date.now(),
@@ -400,7 +412,7 @@ export class Orchestrator {
           : this.currentTask,
         assistant: this.currentAgentTranscript || `[Agent] 进程退出 (code: ${code})`,
         status: code === 0 ? 'completed' : 'failed',
-      });
+      }, this.currentConversationId);
     }
     if (code === 0) {
       this.state.complete();
@@ -467,8 +479,9 @@ export class Orchestrator {
       return;
     }
 
-    const isError = p.type === 'error';
-    if (p.content) {
+    const isError = p.type === 'error' || Boolean(p.isError);
+    const isExecutionDetail = p.type === 'tool_call' || p.type === 'tool_result' || p.type === 'system';
+    if (p.content && !isExecutionDetail) {
       this.currentAgentTranscript += `${p.content}\n`;
     }
 
@@ -476,6 +489,8 @@ export class Orchestrator {
     this.pushUI('chat:message', {
       text: p.content,
       timestamp: Date.now(),
+      kind: isExecutionDetail ? 'detail' : 'conversation',
+      toolName: p.toolName,
       error: isError,
       taskId: this.currentTaskId,
     });
@@ -503,6 +518,7 @@ export class Orchestrator {
       this.pushUI('chat:message', {
         text: `[Agent] 仍在执行，等待输出... ${seconds}s`,
         timestamp: now,
+        kind: 'status',
         taskId: this.currentTaskId,
       });
       logger.info('agent:silence', { seconds, task: this.currentTask.slice(0, 100) });
@@ -531,6 +547,16 @@ export class Orchestrator {
       queueLength: this.queuedTasks.length,
       guidanceCount: this.pendingGuidance.length,
     };
+  }
+
+  resetAgentConversation(): void {
+    if (this.getTaskStatus().busy) {
+      throw new Error('Agent 正在工作，完成或停止后才能切换历史对话');
+    }
+    this.observedAgentPid = null;
+    this.buffer = new ChatBuffer();
+    killAgent();
+    logger.info('claude:session', { event: 'conversation-agent-reset' });
   }
 
   private submitResult(disposition: TaskSubmitResult['disposition'], taskId: string): TaskSubmitResult {
@@ -572,6 +598,7 @@ export class Orchestrator {
     this.stopSilenceTimer();
     this.currentTask = null;
     this.currentTaskId = null;
+    this.currentConversationId = null;
     this.currentAgentTranscript = '';
     this.currentAttempt = 0;
     this.currentUserTurns = [];
@@ -658,7 +685,7 @@ export class Orchestrator {
         user: this.currentUserTurns.length ? this.currentUserTurns.join('\n\n追加要求：\n') : this.currentTask,
         assistant: this.currentAgentTranscript || '[Worker] 任务已停止',
         status: 'interrupted',
-      });
+      }, this.currentConversationId);
     }
     killAgent();
     this.observedAgentPid = null;

@@ -1,8 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomUUID } from 'node:crypto';
 import { ipcMain, BrowserWindow, shell } from 'electron';
 import { getOrchestrator } from './worker';
 import type { TaskSubmitMode } from './worker/orchestrator';
+import { activateChatConversation, appendChatMessage, createChatConversation, deleteChatConversation, getChatConversation, listChatConversations, renameChatConversation, setChatConversationPinned } from './worker/session-store';
 import { activateTab, closeTab, listTabs, openTabUrl, setBrowserTabsEmitter, setBrowserViewBoundsFromRenderer } from './browser-view';
 import { listBrowserRecordingSummaries, listBrowserRecordings, replayBrowserRecording, replayLatestBrowserRecording, startBrowserRecording, stopBrowserRecording } from './browser-recorder';
 import { createWorkbenchEntry, deleteWorkbenchEntry, getWorkbenchOverview, listWorkbenchDirectory, openWorkbenchItem, readWorkbenchFile, renameWorkbenchEntry, writeWorkbenchFile } from './workbench';
@@ -22,6 +24,32 @@ import {
 export function startGateway(mainWindow: BrowserWindow): void {
   // Gateway 提供 pushUI 能力 — Worker 通过它推消息到 UI
   const pushUI = (channel: string, data: unknown) => {
+    if (channel === 'chat:message' && data && typeof data === 'object') {
+      const payload = data as {
+        id?: string;
+        text?: string;
+        timestamp?: number;
+        kind?: 'conversation' | 'progress' | 'detail' | 'status';
+        toolName?: string;
+        error?: boolean;
+        taskId?: string | null;
+      };
+      if (typeof payload.text === 'string' && payload.text.trim()) {
+        const conversationId = listChatConversations().activeConversationId;
+        const message = appendChatMessage(conversationId, {
+          id: payload.id || randomUUID(),
+          text: payload.text,
+          role: 'agent',
+          timestamp: payload.timestamp || Date.now(),
+          kind: payload.kind,
+          toolName: payload.toolName,
+          error: payload.error,
+          taskId: payload.taskId,
+        });
+        mainWindow.webContents.send(channel, { ...payload, ...message, conversationId });
+        return;
+      }
+    }
     mainWindow.webContents.send(channel, data);
   };
 
@@ -32,8 +60,53 @@ export function startGateway(mainWindow: BrowserWindow): void {
   const orch = getOrchestrator(mainWindow, pushUI);
 
   // 聊天 — 委托 Worker
-  ipcMain.handle('chat:send', async (_event, text: string, mode?: TaskSubmitMode) => {
-    return orch.submitTask(text, mode || 'auto');
+  ipcMain.handle('chat:send', async (_event, text: string, mode?: TaskSubmitMode, conversationId?: string, messageId?: string, timestamp?: number) => {
+    const store = listChatConversations();
+    const targetConversationId = conversationId || store.activeConversationId;
+    const status = orch.getTaskStatus();
+    if (status.busy && targetConversationId !== store.activeConversationId) {
+      throw new Error('Agent 正在工作，完成或停止后才能切换历史对话');
+    }
+    if (!status.busy && targetConversationId !== store.activeConversationId) activateChatConversation(targetConversationId);
+    const message = appendChatMessage(targetConversationId, {
+      id: messageId || randomUUID(),
+      text,
+      role: 'user',
+      timestamp: timestamp || Date.now(),
+    });
+    return { ...orch.submitTask(text, mode || 'auto', targetConversationId), message };
+  });
+
+  ipcMain.handle('chat:conversations:list', async () => listChatConversations());
+
+  ipcMain.handle('chat:conversations:get', async (_event, id?: string) => getChatConversation(id));
+
+  ipcMain.handle('chat:conversations:create', async () => {
+    if (orch.getTaskStatus().busy) throw new Error('Agent 正在工作，完成或停止后才能新建对话');
+    orch.resetAgentConversation();
+    return createChatConversation();
+  });
+
+  ipcMain.handle('chat:conversations:activate', async (_event, id: string) => {
+    if (orch.getTaskStatus().busy) throw new Error('Agent 正在工作，完成或停止后才能切换历史对话');
+    orch.resetAgentConversation();
+    return activateChatConversation(id);
+  });
+
+  ipcMain.handle('chat:conversations:delete', async (_event, id: string) => {
+    if (orch.getTaskStatus().busy) throw new Error('Agent 正在工作，完成或停止后才能删除对话');
+    orch.resetAgentConversation();
+    return deleteChatConversation(id);
+  });
+
+  ipcMain.handle('chat:conversations:rename', async (_event, id: string, title: string) => {
+    if (orch.getTaskStatus().busy) throw new Error('Agent 正在工作，完成或停止后才能重命名对话');
+    return renameChatConversation(id, title);
+  });
+
+  ipcMain.handle('chat:conversations:pin', async (_event, id: string, pinned: boolean) => {
+    if (orch.getTaskStatus().busy) throw new Error('Agent 正在工作，完成或停止后才能调整置顶');
+    return setChatConversationPinned(id, pinned);
   });
 
   ipcMain.handle('task:status', async () => orch.getTaskStatus());

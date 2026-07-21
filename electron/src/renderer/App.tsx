@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatPanel from './components/ChatPanel';
 import BrowserPanel from './components/BrowserPanel';
-import TaskProgress from './components/TaskProgress';
-import type { AgentTaskStatus, BrowserTab, ChatMessage, HardboardDevice, RecordingSummary, TaskStep, TaskSubmitMode, WorkbenchOverview } from './types';
+import type { AgentTaskStatus, BrowserTab, ChatConversation, ChatConversationSummary, ChatMessage, ChatMessageKind, HardboardDevice, RecordingSummary, TaskStep, TaskSubmitMode, WorkbenchOverview } from './types';
 
 const LEFT_PANEL_WIDTH_KEY = 'vibeide.ui.leftPanelWidth';
 const APPEARANCE_THEME_KEY = 'vibeide.appearance.theme';
@@ -13,6 +12,24 @@ const APPEARANCE_EDGE_GAP = 12;
 const IDLE_TASK_STATUS: AgentTaskStatus = { busy: false, paused: false, activeTaskId: null, activeTask: null, queueLength: 0, guidanceCount: 0 };
 type AppearanceTheme = 'dark' | 'light';
 type FloatingPosition = { x: number; y: number };
+
+function cleanAgentText(value: string): string {
+  return value
+    .replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, '')
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001A\u001C-\u001F\u007F]/g, '')
+    .trim();
+}
+
+function inferChatMessageKind(text: string, provided?: ChatMessageKind, error = false): ChatMessageKind {
+  if (provided) return provided;
+  // Unclassified worker failures need to remain visible as conversational output.
+  // Typed tool failures are already marked as `detail` by the main process.
+  if (error) return 'conversation';
+  if (/^\[Agent\] 仍在执行，等待输出/.test(text)) return 'status';
+  if (/^\[Agent\] PID\b|^\s*•\s+(?:Tool|Read|Ran|Edited|Created)|^\s*└|^\{"type":"/.test(text)) return 'detail';
+  if (/^\[(?:Worker|Agent)\]/.test(text)) return 'progress';
+  return 'conversation';
+}
 
 function readInitialAppearanceTheme(): AppearanceTheme {
   try {
@@ -83,6 +100,9 @@ function readLeftPanelWidth(): number {
 
 export default function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatConversations, setChatConversations] = useState<ChatConversationSummary[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState('');
+  const [chatHistoryError, setChatHistoryError] = useState('');
   const [steps, setSteps] = useState<TaskStep[]>([]);
   const [taskStatus, setTaskStatus] = useState<AgentTaskStatus>(IDLE_TASK_STATUS);
   const [browserUrl, setBrowserUrl] = useState('about:blank');
@@ -100,6 +120,7 @@ export default function App() {
   const [appearancePosition, setAppearancePosition] = useState<FloatingPosition>(readInitialAppearancePosition);
   const [appearanceDragging, setAppearanceDragging] = useState(false);
   const workbenchSmokeTriggered = useRef(false);
+  const activeConversationIdRef = useRef('');
   const appearanceSettingsRef = useRef<HTMLDivElement>(null);
   const appearanceDragRef = useRef<{
     pointerId: number;
@@ -261,21 +282,75 @@ export default function App() {
     }
   }, []);
 
+  const applyConversation = useCallback((conversation: ChatConversation) => {
+    activeConversationIdRef.current = conversation.id;
+    setActiveConversationId(conversation.id);
+    setMessages(conversation.messages ?? []);
+    setSteps([]);
+    setChatHistoryError('');
+  }, []);
+
+  const refreshChatConversationList = useCallback(async () => {
+    const result = await window.electronAPI?.listChatConversations();
+    if (!result) return null;
+    setChatConversations(result.conversations);
+    return result;
+  }, []);
+
+  const initializeChatHistory = useCallback(async () => {
+    try {
+      const result = await refreshChatConversationList();
+      if (!result) return;
+      const conversation = await window.electronAPI?.getChatConversation(result.activeConversationId);
+      if (conversation) applyConversation(conversation);
+    } catch (error) {
+      setChatHistoryError(`历史对话加载失败：${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, [applyConversation, refreshChatConversationList]);
+
   useEffect(() => {
     if (window.electronAPI) {
       window.electronAPI.onMessage((msg) => {
-        setMessages(prev => [...prev, {
-          id: crypto.randomUUID(),
-          text: msg.text,
+        if (msg.conversationId && activeConversationIdRef.current && msg.conversationId !== activeConversationIdRef.current) {
+          void refreshChatConversationList();
+          return;
+        }
+        const text = cleanAgentText(msg.text);
+        if (!text) return;
+        const kind = inferChatMessageKind(text, msg.kind, msg.error);
+        const nextMessage: ChatMessage = {
+          id: msg.id || crypto.randomUUID(),
+          text,
           role: 'agent',
           timestamp: msg.timestamp,
+          kind,
+          toolName: msg.toolName,
           error: msg.error,
           taskId: msg.taskId,
-        }]);
+        };
+        setMessages((current) => {
+          if (kind !== 'status') return [...current, nextMessage];
+          const existingIndex = current.findIndex((entry) => entry.kind === 'status' && entry.taskId === msg.taskId);
+          if (existingIndex < 0) return [...current, nextMessage];
+          const next = [...current];
+          next[existingIndex] = { ...nextMessage, id: current[existingIndex].id };
+          return next;
+        });
+        if (msg.conversationId) {
+          setChatConversations((current) => current
+            .map((conversation) => conversation.id === msg.conversationId
+              ? { ...conversation, preview: text.replace(/\s+/g, ' ').slice(0, 30), updatedAt: new Date(msg.timestamp).toISOString(), messageCount: conversation.messageCount + (kind === 'status' ? 0 : 1) }
+              : conversation)
+            .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt)));
+        }
       });
 
       window.electronAPI.onTaskProgress((result) => {
         setSteps(result.steps);
+      });
+
+      window.electronAPI.onTaskComplete(() => {
+        void refreshChatConversationList();
       });
 
       window.electronAPI.onTaskStatus((result) => setTaskStatus(result));
@@ -298,10 +373,16 @@ export default function App() {
       });
 
       void refreshWorkbench();
+      void initializeChatHistory();
     }
-  }, [refreshWorkbench]);
+  }, [initializeChatHistory, refreshChatConversationList, refreshWorkbench]);
 
   const handleSend = useCallback((text: string, mode: TaskSubmitMode = 'auto') => {
+    const conversationId = activeConversationIdRef.current;
+    if (!conversationId) {
+      setChatHistoryError('历史对话尚未加载完成，请稍后再试');
+      return;
+    }
     const msg: ChatMessage = {
       id: crypto.randomUUID(),
       text,
@@ -309,10 +390,23 @@ export default function App() {
       timestamp: Date.now(),
     };
     setMessages(prev => [...prev, msg]);
+    setChatConversations((current) => current
+      .map((conversation) => conversation.id === conversationId
+        ? {
+          ...conversation,
+          title: conversation.title === '新对话' ? text.replace(/\s+/g, ' ').slice(0, 30) : conversation.title,
+          preview: text.replace(/\s+/g, ' ').slice(0, 30),
+          updatedAt: new Date(msg.timestamp).toISOString(),
+          messageCount: conversation.messageCount + 1,
+        }
+        : conversation)
+      .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt)));
 
     setSteps([]);
 
-    void window.electronAPI?.sendMessage(text, mode).catch((error) => {
+    void window.electronAPI?.sendMessage(text, mode, conversationId, msg.id, msg.timestamp).then(() => {
+      void refreshChatConversationList();
+    }).catch((error) => {
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
         text: `发送失败: ${error instanceof Error ? error.message : String(error)}`,
@@ -320,7 +414,63 @@ export default function App() {
         timestamp: Date.now(),
         error: true,
       }]);
+      setChatHistoryError(error instanceof Error ? error.message : String(error));
     });
+  }, [refreshChatConversationList]);
+
+  const handleCreateConversation = useCallback(async () => {
+    try {
+      const conversation = await window.electronAPI?.createChatConversation();
+      if (!conversation) return;
+      applyConversation(conversation);
+      await refreshChatConversationList();
+    } catch (error) {
+      setChatHistoryError(error instanceof Error ? error.message : String(error));
+    }
+  }, [applyConversation, refreshChatConversationList]);
+
+  const handleSelectConversation = useCallback(async (id: string) => {
+    if (id === activeConversationIdRef.current) return;
+    try {
+      const conversation = await window.electronAPI?.activateChatConversation(id);
+      if (conversation) applyConversation(conversation);
+    } catch (error) {
+      setChatHistoryError(error instanceof Error ? error.message : String(error));
+    }
+  }, [applyConversation]);
+
+  const handleDeleteConversation = useCallback(async (id: string) => {
+    try {
+      const result = await window.electronAPI?.deleteChatConversation(id);
+      if (!result) return;
+      setChatConversations(result.conversations);
+      if (id === activeConversationIdRef.current) {
+        const conversation = await window.electronAPI?.getChatConversation(result.activeConversationId);
+        if (conversation) applyConversation(conversation);
+      }
+    } catch (error) {
+      setChatHistoryError(error instanceof Error ? error.message : String(error));
+    }
+  }, [applyConversation]);
+
+  const handleRenameConversation = useCallback(async (id: string, title: string) => {
+    try {
+      const result = await window.electronAPI?.renameChatConversation(id, title);
+      if (result) setChatConversations(result.conversations);
+      setChatHistoryError('');
+    } catch (error) {
+      setChatHistoryError(error instanceof Error ? error.message : String(error));
+    }
+  }, []);
+
+  const handleToggleConversationPinned = useCallback(async (id: string, pinned: boolean) => {
+    try {
+      const result = await window.electronAPI?.setChatConversationPinned(id, pinned);
+      if (result) setChatConversations(result.conversations);
+      setChatHistoryError('');
+    } catch (error) {
+      setChatHistoryError(error instanceof Error ? error.message : String(error));
+    }
   }, []);
 
   const handleStopTask = useCallback(() => {
@@ -477,8 +627,21 @@ export default function App() {
       >
         {!leftPanelCollapsed ? (
           <div className="left-panel">
-            <ChatPanel messages={messages} taskStatus={taskStatus} onSend={handleSend} onStop={handleStopTask} />
-            <TaskProgress steps={steps} />
+            <ChatPanel
+              messages={messages}
+              steps={steps}
+              conversations={chatConversations}
+              activeConversationId={activeConversationId}
+              historyError={chatHistoryError}
+              taskStatus={taskStatus}
+              onSend={handleSend}
+              onStop={handleStopTask}
+              onCreateConversation={handleCreateConversation}
+              onSelectConversation={handleSelectConversation}
+              onDeleteConversation={handleDeleteConversation}
+              onRenameConversation={handleRenameConversation}
+              onToggleConversationPinned={handleToggleConversationPinned}
+            />
           </div>
         ) : null}
         <div

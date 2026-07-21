@@ -17,6 +17,8 @@
 11. [RUNTIME_TASK_MANAGER_UI_CONSTRUCTION](RUNTIME_TASK_MANAGER_UI_CONSTRUCTION.md)：把 runtime eventbus、任务进程、编译/烧录日志和任务结果真正显示到 Electron。
 12. [Hardboard Agent 运行文档](../runtime/hardboard/doc/README.md)：Agent 在运行时可读的硬件工程、烧录和工具调用规则。
 13. [AGENT_TASK_QUEUE_CONSTRUCTION](AGENT_TASK_QUEUE_CONSTRUCTION.md)：Agent 单活动任务、执行中追加要求、显式排队和任务状态关联的施工与验收规则。
+14. [AGENT_CHAT_PRESENTATION_CONSTRUCTION](AGENT_CHAT_PRESENTATION_CONSTRUCTION.md)：Agent 主回复、执行过程折叠、专业视图与安全 Markdown 渲染的施工规则。
+15. [AGENT_CONVERSATION_HISTORY_CONSTRUCTION](AGENT_CONVERSATION_HISTORY_CONSTRUCTION.md)：多历史会话、重启恢复、切换删除、旧 session 迁移和 Agent 上下文续接规则。
 
 ## 现有历史文档
 

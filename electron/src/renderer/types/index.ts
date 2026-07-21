@@ -1,10 +1,35 @@
+export type ChatMessageKind = 'conversation' | 'progress' | 'detail' | 'status';
+
 export interface ChatMessage {
   id: string;
   text: string;
   role: 'user' | 'agent';
   timestamp: number;
+  kind?: ChatMessageKind;
+  toolName?: string;
   error?: boolean;
   taskId?: string | null;
+}
+
+export interface ChatConversationSummary {
+  id: string;
+  title: string;
+  pinned: boolean;
+  preview: string;
+  createdAt: string;
+  updatedAt: string;
+  messageCount: number;
+  turnCount: number;
+}
+
+export interface ChatConversation {
+  id: string;
+  title: string;
+  pinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+  turnCount: number;
+  messages: ChatMessage[];
 }
 
 export type TaskSubmitMode = 'auto' | 'guide' | 'queue';
@@ -157,8 +182,15 @@ export interface HardboardRuntimeLaunchResult {
 }
 
 export interface WindowAPI {
-  sendMessage: (text: string, mode?: TaskSubmitMode) => Promise<TaskSubmitResult>;
-  onMessage: (cb: (msg: { text: string; timestamp: number; error?: boolean; taskId?: string | null }) => void) => void;
+  sendMessage: (text: string, mode?: TaskSubmitMode, conversationId?: string, messageId?: string, timestamp?: number) => Promise<TaskSubmitResult & { message?: ChatMessage }>;
+  onMessage: (cb: (msg: { id?: string; text: string; timestamp: number; kind?: ChatMessageKind; toolName?: string; error?: boolean; taskId?: string | null; conversationId?: string }) => void) => void;
+  listChatConversations: () => Promise<{ activeConversationId: string; conversations: ChatConversationSummary[] }>;
+  getChatConversation: (id?: string) => Promise<ChatConversation>;
+  createChatConversation: () => Promise<ChatConversation>;
+  activateChatConversation: (id: string) => Promise<ChatConversation>;
+  deleteChatConversation: (id: string) => Promise<{ activeConversationId: string; conversations: ChatConversationSummary[] }>;
+  renameChatConversation: (id: string, title: string) => Promise<{ activeConversationId: string; conversations: ChatConversationSummary[] }>;
+  setChatConversationPinned: (id: string, pinned: boolean) => Promise<{ activeConversationId: string; conversations: ChatConversationSummary[] }>;
   onTaskComplete: (cb: (result: { code: number | null; taskId?: string | null }) => void) => void;
   onTaskProgress: (cb: (result: { steps: TaskStep[]; taskId?: string | null }) => void) => void;
   onTaskStatus: (cb: (result: AgentTaskStatus) => void) => void;

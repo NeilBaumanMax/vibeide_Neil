@@ -1,10 +1,17 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  sendMessage: (text: string, mode?: 'auto' | 'guide' | 'queue') => ipcRenderer.invoke('chat:send', text, mode),
-  onMessage: (cb: (msg: { text: string; timestamp: number; error?: boolean; taskId?: string | null }) => void) => {
+  sendMessage: (text: string, mode?: 'auto' | 'guide' | 'queue', conversationId?: string, messageId?: string, timestamp?: number) => ipcRenderer.invoke('chat:send', text, mode, conversationId, messageId, timestamp),
+  onMessage: (cb: (msg: { id?: string; text: string; timestamp: number; kind?: 'conversation' | 'progress' | 'detail' | 'status'; toolName?: string; error?: boolean; taskId?: string | null; conversationId?: string }) => void) => {
     ipcRenderer.on('chat:message', (_event, msg) => cb(msg));
   },
+  listChatConversations: () => ipcRenderer.invoke('chat:conversations:list'),
+  getChatConversation: (id?: string) => ipcRenderer.invoke('chat:conversations:get', id),
+  createChatConversation: () => ipcRenderer.invoke('chat:conversations:create'),
+  activateChatConversation: (id: string) => ipcRenderer.invoke('chat:conversations:activate', id),
+  deleteChatConversation: (id: string) => ipcRenderer.invoke('chat:conversations:delete', id),
+  renameChatConversation: (id: string, title: string) => ipcRenderer.invoke('chat:conversations:rename', id, title),
+  setChatConversationPinned: (id: string, pinned: boolean) => ipcRenderer.invoke('chat:conversations:pin', id, pinned),
   onTaskComplete: (cb: (result: { code: number | null; taskId?: string | null }) => void) => {
     ipcRenderer.on('task:complete', (_event, result) => cb(result));
   },
