@@ -201,7 +201,7 @@
         border-radius: inherit;
         background: linear-gradient(90deg, var(--leaf), var(--leaf-bright));
         box-shadow: 0 0 12px rgba(128, 189, 55, 0.38);
-        transition: width 420ms cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: width;
       }
 
       #progress-bar::after {
@@ -300,12 +300,107 @@
     </main>
 
     <script>
-      window.setSplashProgress = (progress, status) => {
-        const normalized = Math.max(0, Math.min(100, Math.round(Number(progress) || 0)));
-        document.getElementById('status').textContent = String(status || '正在启动');
-        document.getElementById('progress-value').textContent = `${normalized}%`;
-        document.getElementById('progress-bar').style.width = `${normalized}%`;
-        document.querySelector('.progress-track').setAttribute('aria-valuenow', String(normalized));
+      const SPLASH_START_PROGRESS = 8;
+      const SPLASH_WAIT_PROGRESS = 94;
+      const SPLASH_DEFAULT_DURATION_MS = 5000;
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const statusElement = document.getElementById('status');
+      const progressValueElement = document.getElementById('progress-value');
+      const progressBarElement = document.getElementById('progress-bar');
+      const progressTrackElement = document.querySelector('.progress-track');
+      let displayedProgress = SPLASH_START_PROGRESS;
+      let timelineDurationMs = SPLASH_DEFAULT_DURATION_MS;
+      let timelineFrame = 0;
+      let timelineRunning = false;
+
+      const renderProgress = (progress) => {
+        displayedProgress = Math.max(0, Math.min(100, Number(progress) || 0));
+        const rounded = Math.round(displayedProgress);
+        progressValueElement.textContent = `${rounded}%`;
+        progressBarElement.style.width = `${displayedProgress.toFixed(2)}%`;
+        progressTrackElement.setAttribute('aria-valuenow', String(rounded));
+      };
+
+      const stopTimeline = () => {
+        if (timelineFrame) cancelAnimationFrame(timelineFrame);
+        timelineFrame = 0;
+        timelineRunning = false;
+      };
+
+      window.setSplashStage = (status) => {
+        statusElement.textContent = String(status || '正在启动');
+      };
+
+      window.startSplashTimeline = (durationMs = SPLASH_DEFAULT_DURATION_MS) => {
+        stopTimeline();
+        timelineDurationMs = Math.max(1, Number(durationMs) || SPLASH_DEFAULT_DURATION_MS);
+        renderProgress(SPLASH_START_PROGRESS);
+
+        if (reduceMotion) {
+          renderProgress(SPLASH_WAIT_PROGRESS);
+          return;
+        }
+
+        const startedAt = performance.now();
+        timelineRunning = true;
+        const advance = (now) => {
+          const elapsedRatio = Math.min(1, (now - startedAt) / timelineDurationMs);
+          renderProgress(
+            SPLASH_START_PROGRESS + (SPLASH_WAIT_PROGRESS - SPLASH_START_PROGRESS) * elapsedRatio,
+          );
+          if (elapsedRatio < 1) {
+            timelineFrame = requestAnimationFrame(advance);
+          } else {
+            timelineFrame = 0;
+            timelineRunning = false;
+          }
+        };
+        timelineFrame = requestAnimationFrame(advance);
+      };
+
+      window.completeSplashProgress = (status) => {
+        window.setSplashStage(status || '准备就绪');
+        stopTimeline();
+
+        if (reduceMotion) {
+          renderProgress(100);
+          return;
+        }
+
+        const startProgress = displayedProgress;
+        const startedAt = performance.now();
+        const completionDurationMs = 180;
+        timelineRunning = true;
+        const finish = (now) => {
+          const elapsedRatio = Math.min(1, (now - startedAt) / completionDurationMs);
+          const easedRatio = 1 - Math.pow(1 - elapsedRatio, 3);
+          renderProgress(startProgress + (100 - startProgress) * easedRatio);
+          if (elapsedRatio < 1) {
+            timelineFrame = requestAnimationFrame(finish);
+          } else {
+            timelineFrame = 0;
+            timelineRunning = false;
+          }
+        };
+        timelineFrame = requestAnimationFrame(finish);
+      };
+
+      window.forceSplashProgressForTest = (progress, status) => {
+        stopTimeline();
+        window.setSplashStage(status);
+        renderProgress(progress);
+      };
+
+      window.getSplashProgressState = () => ({
+        defaultDurationMs: SPLASH_DEFAULT_DURATION_MS,
+        durationMs: timelineDurationMs,
+        progress: displayedProgress,
+        running: timelineRunning,
+        reducedMotion: reduceMotion,
+      });
+
+      window.restartSplashTimelineForTest = (durationMs) => {
+        window.startSplashTimeline(durationMs);
       };
     </script>
   </body>

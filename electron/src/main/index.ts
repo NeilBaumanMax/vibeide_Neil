@@ -26,13 +26,29 @@ let splashWindow: BrowserWindow | null = null;
 let shutdownInFlight: Promise<void> | null = null;
 let firstRunRestartScheduled = false;
 let splashProgress = { value: 8, status: '正在唤醒 Catnip Forge' };
+const SPLASH_MIN_VISIBLE_MS = 5_000;
+const SPLASH_COMPLETION_MS = 220;
+let splashShownAt = 0;
+let splashMainReady = false;
+let splashCompletionTimer: ReturnType<typeof setTimeout> | null = null;
+let splashCloseTimer: ReturnType<typeof setTimeout> | null = null;
+
+function clearSplashTimers(): void {
+  if (splashCompletionTimer) clearTimeout(splashCompletionTimer);
+  if (splashCloseTimer) clearTimeout(splashCloseTimer);
+  splashCompletionTimer = null;
+  splashCloseTimer = null;
+}
 
 function applySplashProgress(): void {
   if (!splashWindow || splashWindow.isDestroyed() || splashWindow.webContents.isLoading()) return;
 
   const { value, status } = splashProgress;
+  const expression = value >= 100
+    ? `window.completeSplashProgress?.(${JSON.stringify(status)})`
+    : `window.setSplashStage?.(${JSON.stringify(status)})`;
   void splashWindow.webContents
-    .executeJavaScript(`window.setSplashProgress?.(${value}, ${JSON.stringify(status)})`)
+    .executeJavaScript(expression)
     .catch((error) => {
       logger.warn('browser:view-event', { event: 'splash-progress-failed', message: String(error) });
     });
@@ -49,6 +65,9 @@ function updateSplash(value: number, status: string): void {
 function createSplashWindow(): void {
   if (splashWindow && !splashWindow.isDestroyed()) return;
 
+  clearSplashTimers();
+  splashShownAt = 0;
+  splashMainReady = false;
   splashProgress = { value: 8, status: '正在唤醒 Catnip Forge' };
   splashWindow = new BrowserWindow({
     width: 760,
@@ -74,26 +93,55 @@ function createSplashWindow(): void {
     applySplashProgress();
   });
   splashWindow.once('ready-to-show', () => {
-    splashWindow?.show();
+    if (!splashWindow || splashWindow.isDestroyed()) return;
+    splashShownAt = Date.now();
+    splashWindow.show();
+    void splashWindow.webContents
+      .executeJavaScript(`window.startSplashTimeline?.(${SPLASH_MIN_VISIBLE_MS})`)
+      .catch((error) => {
+        logger.warn('browser:view-event', { event: 'splash-timeline-failed', message: String(error) });
+      });
+    scheduleSplashCompletion();
   });
   splashWindow.on('closed', () => {
+    clearSplashTimers();
+    splashShownAt = 0;
     splashWindow = null;
   });
 }
 
-function finishSplash(): void {
-  updateSplash(100, '准备就绪');
-  if (process.env.VIBEIDE_SPLASH_HOLD === '1') return;
+function revealMainWindow(): void {
+  if (splashWindow && !splashWindow.isDestroyed()) {
+    splashWindow.close();
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.show();
+    mainWindow.focus();
+  }
+}
 
-  setTimeout(() => {
-    if (splashWindow && !splashWindow.isDestroyed()) {
-      splashWindow.close();
-    }
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.show();
-      mainWindow.focus();
-    }
-  }, 320);
+function scheduleSplashCompletion(): void {
+  if (!splashMainReady || !splashShownAt || !splashWindow || splashWindow.isDestroyed()) return;
+
+  if (splashCompletionTimer) clearTimeout(splashCompletionTimer);
+  const elapsed = Date.now() - splashShownAt;
+  const remaining = Math.max(0, SPLASH_MIN_VISIBLE_MS - elapsed);
+
+  splashCompletionTimer = setTimeout(() => {
+    splashCompletionTimer = null;
+    updateSplash(100, '准备就绪');
+    if (process.env.VIBEIDE_SPLASH_HOLD === '1') return;
+
+    splashCloseTimer = setTimeout(() => {
+      splashCloseTimer = null;
+      revealMainWindow();
+    }, SPLASH_COMPLETION_MS);
+  }, remaining);
+}
+
+function finishSplash(): void {
+  splashMainReady = true;
+  scheduleSplashCompletion();
 }
 
 function scheduleFirstRunRestart(): void {
@@ -126,6 +174,7 @@ async function shutdownApp(reason: string): Promise<void> {
     logger.warn('browser:view-event', { event: 'shutdown', reason });
     killAgent();
     await flushBrowserStorage();
+    clearSplashTimers();
 
     if (splashWindow && !splashWindow.isDestroyed()) {
       splashWindow.destroy();

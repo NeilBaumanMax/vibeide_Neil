@@ -42,8 +42,13 @@ async function main() {
   try {
     const evaluated = await call(socket, 1, 'Runtime.evaluate', {
       expression: `(async () => {
-        window.setSplashProgress?.(63, '正在验证启动界面');
-        await new Promise((resolve) => setTimeout(resolve, 480));
+        const defaultTimeline = window.getSplashProgressState?.();
+        window.restartSplashTimelineForTest?.(800);
+        await new Promise((resolve) => setTimeout(resolve, 220));
+        const firstTimelineSample = window.getSplashProgressState?.();
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        const secondTimelineSample = window.getSplashProgressState?.();
+        window.forceSplashProgressForTest?.(63, '正在验证启动界面');
         const shell = document.querySelector('.splash');
         const shellRect = shell?.getBoundingClientRect();
         const cat = document.querySelector('.cat');
@@ -64,6 +69,9 @@ async function main() {
           status: document.getElementById('status')?.textContent,
           progress: document.getElementById('progress-value')?.textContent,
           progressWidth: bar?.style.width,
+          defaultTimeline,
+          firstTimelineSample,
+          secondTimelineSample,
           headline: heading?.innerText,
           fontFamily: heading ? getComputedStyle(heading).fontFamily : '',
           overflow: document.documentElement.scrollWidth > innerWidth || document.documentElement.scrollHeight > innerHeight,
@@ -82,6 +90,12 @@ async function main() {
       || result?.status !== '正在验证启动界面'
       || result?.progress !== '63%'
       || result?.progressWidth !== '63%'
+      || result?.defaultTimeline?.defaultDurationMs !== 5000
+      || (!result?.firstTimelineSample?.reducedMotion && (
+        result?.firstTimelineSample?.progress <= 8
+        || result?.secondTimelineSample?.progress <= result?.firstTimelineSample?.progress
+        || result?.secondTimelineSample?.progress >= 94
+      ))
       || result?.headline !== 'One prompt.\nWorking hardware.'
       || result?.overflow
       || !inViewport
