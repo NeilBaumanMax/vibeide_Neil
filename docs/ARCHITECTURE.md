@@ -26,7 +26,7 @@ Electron Chromium / WebContentsView
 
 职责：
 
-- 创建主窗口。
+- 创建品牌启动窗口和隐藏的主窗口；真实加载节点驱动启动进度，主窗口 `ready-to-show` 后完成双窗口切换。
 - 暴露 CDP 端口 `9230`。
 - 管理右侧 `WebContentsView` 浏览页和 tabs。
 - 提供 Renderer 到 Worker 的 IPC。
@@ -35,7 +35,8 @@ Electron Chromium / WebContentsView
 
 关键文件：
 
-- `electron/src/main/index.ts`：应用启动、主窗口、CDP、生命周期。
+- `electron/src/main/index.ts`：应用启动、Splash/主窗口切换、CDP、生命周期。
+- `electron/assets/splash.html`：不依赖 Renderer bundle 的品牌启动页，使用随包 `splash-*.png` 素材并响应主进程进度更新。
 - `electron/src/main/gateway.ts`：IPC 注册，唯一入口。
 - `electron/src/main/browser-view.ts`：右侧 WebContentsView tabs、持久 session、bounds 同步。
 - `electron/src/main/browser-recorder.ts`：Electron 侧录制和回放。

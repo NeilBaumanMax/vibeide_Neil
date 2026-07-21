@@ -22,8 +22,79 @@ const chromeProfileDir = path.join(userDataDir, 'chrome-profile');
 fs.mkdirSync(chromeProfileDir, { recursive: true });
 
 let mainWindow: BrowserWindow | null = null;
+let splashWindow: BrowserWindow | null = null;
 let shutdownInFlight: Promise<void> | null = null;
 let firstRunRestartScheduled = false;
+let splashProgress = { value: 8, status: '正在唤醒 Catnip Forge' };
+
+function applySplashProgress(): void {
+  if (!splashWindow || splashWindow.isDestroyed() || splashWindow.webContents.isLoading()) return;
+
+  const { value, status } = splashProgress;
+  void splashWindow.webContents
+    .executeJavaScript(`window.setSplashProgress?.(${value}, ${JSON.stringify(status)})`)
+    .catch((error) => {
+      logger.warn('browser:view-event', { event: 'splash-progress-failed', message: String(error) });
+    });
+}
+
+function updateSplash(value: number, status: string): void {
+  splashProgress = {
+    value: Math.max(0, Math.min(100, Math.round(value))),
+    status,
+  };
+  applySplashProgress();
+}
+
+function createSplashWindow(): void {
+  if (splashWindow && !splashWindow.isDestroyed()) return;
+
+  splashProgress = { value: 8, status: '正在唤醒 Catnip Forge' };
+  splashWindow = new BrowserWindow({
+    width: 760,
+    height: 470,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    movable: true,
+    show: false,
+    center: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    hasShadow: false,
+    backgroundColor: '#00000000',
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  });
+
+  splashWindow.loadFile(path.join(__dirname, '..', '..', 'assets', 'splash.html'));
+  splashWindow.webContents.once('did-finish-load', () => {
+    applySplashProgress();
+  });
+  splashWindow.once('ready-to-show', () => {
+    splashWindow?.show();
+  });
+  splashWindow.on('closed', () => {
+    splashWindow = null;
+  });
+}
+
+function finishSplash(): void {
+  updateSplash(100, '准备就绪');
+  if (process.env.VIBEIDE_SPLASH_HOLD === '1') return;
+
+  setTimeout(() => {
+    if (splashWindow && !splashWindow.isDestroyed()) {
+      splashWindow.close();
+    }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  }, 320);
+}
 
 function scheduleFirstRunRestart(): void {
   if (firstRunRestartScheduled) return;
@@ -56,10 +127,15 @@ async function shutdownApp(reason: string): Promise<void> {
     killAgent();
     await flushBrowserStorage();
 
+    if (splashWindow && !splashWindow.isDestroyed()) {
+      splashWindow.destroy();
+    }
+
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.destroy();
     }
 
+    splashWindow = null;
     mainWindow = null;
   })();
 
@@ -67,11 +143,13 @@ async function shutdownApp(reason: string): Promise<void> {
 }
 
 function createWindow() {
+  updateSplash(22, '正在准备工作区');
   mainWindow = new BrowserWindow({
     width: 1600,
     height: 1000,
     minWidth: 800,
     minHeight: 600,
+    show: false,
     backgroundColor: '#1a1b26',
     title: 'Catnip Forge · Catnip 硬件智能开发平台',
     icon: path.join(getResourcesDir(), 'electron', 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
@@ -98,6 +176,7 @@ function createWindow() {
 
   setupBrowserView(mainWindow);
   startGateway(mainWindow);
+  updateSplash(48, '正在连接开发环境');
 
   // 首次启动检查
   const startupStatus = checkStartupStatus();
@@ -121,7 +200,16 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
   }
 
-  mainWindow.webContents.on('did-finish-load', resyncBrowserBounds);
+  mainWindow.webContents.on('did-finish-load', () => {
+    updateSplash(84, '正在载入工作台');
+    resyncBrowserBounds();
+  });
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+    logger.warn('browser:view-event', { event: 'splash-main-load-failed', errorCode, errorDescription });
+    updateSplash(100, '界面载入失败，请检查运行环境');
+    if (splashWindow && !splashWindow.isDestroyed()) splashWindow.close();
+    mainWindow?.show();
+  });
   mainWindow.webContents.on('did-navigate-in-page', resyncBrowserBounds);
   mainWindow.webContents.on('will-navigate', (event, url) => {
     if (isShellUrl(url)) return;
@@ -151,14 +239,20 @@ function createWindow() {
       shellTitle: mainWindow?.webContents.getTitle() || '',
     });
   });
-  mainWindow.once('ready-to-show', resyncBrowserBounds);
+  mainWindow.once('ready-to-show', () => {
+    resyncBrowserBounds();
+    finishSplash();
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createSplashWindow();
+  createWindow();
+});
 
 app.on('web-contents-created', (_event, contents) => {
   logger.warn('browser:webcontents-created', {
@@ -211,6 +305,7 @@ app.on('window-all-closed', () => {
 
 app.on('activate', () => {
   if (mainWindow === null) {
+    createSplashWindow();
     createWindow();
   }
 });

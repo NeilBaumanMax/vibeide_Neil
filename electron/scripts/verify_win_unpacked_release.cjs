@@ -46,7 +46,16 @@ for (const relative of required) {
 const packagedVersion = JSON.parse(fs.readFileSync(path.join(resources, 'config', 'version.json'), 'utf-8'));
 assert.deepEqual(packagedVersion, version, 'packaged version metadata drifted');
 const asarEntries = new Set(asar.listPackage(path.join(resources, 'app.asar')));
-for (const entry of ['\\assets\\icon.ico', '\\assets\\icon.png', '\\dist\\main\\skill-manager.js', '\\dist\\renderer\\index.html']) {
+for (const entry of [
+  '\\assets\\icon.ico',
+  '\\assets\\icon.png',
+  '\\assets\\splash.html',
+  '\\assets\\splash-cat.png',
+  '\\assets\\splash-leaf.png',
+  '\\assets\\splash-logo.png',
+  '\\dist\\main\\skill-manager.js',
+  '\\dist\\renderer\\index.html',
+]) {
   assert(asarEntries.has(entry), `app.asar missing ${entry}`);
 }
 

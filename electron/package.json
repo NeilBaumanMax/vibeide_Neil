@@ -26,6 +26,7 @@
     "verify:release": "node scripts/verify_win_unpacked_release.cjs",
     "verify:first-run": "node scripts/verify_packaged_first_run.cjs",
     "verify:first-run-restart": "node scripts/verify_first_run_restart.cjs",
+    "verify:splash-ui": "node scripts/verify_splash_ui.cjs",
     "verify:software-assistant-ui": "node scripts/verify_software_assistant_ui.cjs",
     "verify:task-queue": "node node_modules/electron/cli.js scripts/verify_agent_task_queue.cjs"
   },
