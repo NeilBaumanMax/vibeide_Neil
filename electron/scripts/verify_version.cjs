@@ -3,6 +3,9 @@ const path = require('node:path');
 
 const root = path.resolve(__dirname, '..', '..');
 const versionInfo = readJson('config/version.json');
+if (versionInfo.publicVersion !== '1.0.0' || versionInfo.buildNumber !== 7201) {
+  throw new Error('config/version.json: expected public release v1.0.0 build 7201');
+}
 const packageFiles = [
   'electron/package.json',
   'runtime/package.json',
@@ -33,6 +36,7 @@ requireText(readText('pyproject.toml'), `version = "${versionInfo.releaseVersion
 const builder = readText('electron/electron-builder.yml');
 requireText(builder, `productName: ${versionInfo.productName}`, 'electron/electron-builder.yml');
 requireText(builder, `buildVersion: ${versionInfo.releaseVersion}`, 'electron/electron-builder.yml');
+requireText(readText('electron/DISTRIBUTION_README.txt'), `v${versionInfo.publicVersion}`, 'electron/DISTRIBUTION_README.txt');
 
 const productFiles = [
   'electron/src/main/index.ts',

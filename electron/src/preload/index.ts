@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  getStartupStatus: () => ipcRenderer.invoke('startup:status'),
+  saveStartupApiKey: (key: string) => ipcRenderer.invoke('startup:save-apikey', key),
   sendMessage: (text: string, mode?: 'auto' | 'guide' | 'queue', conversationId?: string, messageId?: string, timestamp?: number) => ipcRenderer.invoke('chat:send', text, mode, conversationId, messageId, timestamp),
   onMessage: (cb: (msg: { id?: string; text: string; timestamp: number; kind?: 'conversation' | 'progress' | 'detail' | 'status'; toolName?: string; error?: boolean; taskId?: string | null; conversationId?: string }) => void) => {
     ipcRenderer.on('chat:message', (_event, msg) => cb(msg));
@@ -38,6 +40,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   createWorkbenchEntry: (parentPath: string, name: string, kind: 'file' | 'dir') => ipcRenderer.invoke('workbench:createEntry', parentPath, name, kind),
   renameWorkbenchEntry: (targetPath: string, nextName: string) => ipcRenderer.invoke('workbench:renameEntry', targetPath, nextName),
   deleteWorkbenchEntry: (targetPath: string) => ipcRenderer.invoke('workbench:deleteEntry', targetPath),
+  listManagedSkills: () => ipcRenderer.invoke('skills:list'),
+  getManagedSkill: (id: string) => ipcRenderer.invoke('skills:get', id),
+  saveManagedSkill: (input: { id: string; name: string; description: string; body: string; originalId?: string }) => ipcRenderer.invoke('skills:save', input),
+  deleteManagedSkill: (id: string) => ipcRenderer.invoke('skills:delete', id),
+  syncManagedSkills: () => ipcRenderer.invoke('skills:sync'),
   isWorkbenchSmokeTest: process.env.VIBEIDE_SMOKE_WORKBENCH_OPEN === '1',
   finishWorkbenchSmokeTest: (result: unknown) => ipcRenderer.invoke('smoke:workbench:finish', result),
   activateBrowserTab: (id: string) => ipcRenderer.invoke('browser:activateTab', id),

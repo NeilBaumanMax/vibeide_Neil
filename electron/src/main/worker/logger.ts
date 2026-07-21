@@ -13,7 +13,7 @@ const logPath = path.join(LOG_DIR, `worker-${sessionId}.log`);
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 type LogEvent =
   | 'task:start' | 'task:context' | 'task:state' | 'task:complete' | 'task:error'
-  | 'agent:spawn' | 'agent:stdout' | 'agent:stderr' | 'agent:parsed'
+  | 'agent:spawn' | 'agent:skills-deployed' | 'agent:stdout' | 'agent:stderr' | 'agent:parsed'
   | 'agent:close' | 'agent:error' | 'agent:kill' | 'agent:mcp-config-write-failed'
   | 'agent:stdin' | 'agent:turn-complete' | 'agent:silence'
   | 'claude:session'

@@ -5,7 +5,7 @@ import { flushBrowserStorage, openTabUrl, setupBrowserView, updateBrowserViewBou
 import { startGateway } from './gateway';
 import { logger } from './worker/logger';
 import { getChromeProfileDir, getResourcesDir, isDev } from './paths';
-import { checkStartupStatus, saveApiKey } from './first-run';
+import { checkStartupStatus, getApiKeyPromptData, saveApiKey } from './first-run';
 import { killAgent } from './agent';
 
 app.commandLine.appendSwitch('remote-debugging-port', '9230');
@@ -91,8 +91,11 @@ function createWindow() {
   logger.info('first-run:status', startupStatus as unknown as Record<string, unknown>);
 
   // 注册 IPC 处理器
-  ipcMain.handle('startup:status', () => startupStatus);
-  ipcMain.handle('startup:save-apikey', async (_event, key: string) => saveApiKey(key));
+  ipcMain.handle('startup:status', () => ({ ...checkStartupStatus(), ...getApiKeyPromptData() }));
+  ipcMain.handle('startup:save-apikey', async (_event, key: string) => {
+    const ok = saveApiKey(key);
+    return { ok, status: checkStartupStatus() };
+  });
 
   if (process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV === '1') {
     mainWindow.loadURL('http://localhost:5173');

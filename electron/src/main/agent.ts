@@ -16,6 +16,7 @@ import {
   isPackaged,
 } from './paths';
 import { buildAgentSystemPrompt } from './worker/context';
+import { ensureManagedSkillsDeployed } from './skill-manager';
 
 const AGENT_DIR = getAgentDir();
 const AGENT_WORKSPACE_DIR = getAgentWorkspaceDir();
@@ -37,6 +38,14 @@ export function ensureAgentProcess(): ChildProcess {
 
   // 动态生成 MCP 配置（不依赖静态文件）
   fs.mkdirSync(AGENT_WORKSPACE_DIR, { recursive: true });
+  const skillSnapshot = ensureManagedSkillsDeployed();
+  logger.info('agent:skills-deployed', {
+    sourceDir: skillSnapshot.status.sourceDir,
+    deployDir: skillSnapshot.status.deployDir,
+    skillCount: skillSnapshot.status.skillCount,
+    deployedCount: skillSnapshot.status.deployedCount,
+    error: skillSnapshot.status.error,
+  });
   const mcpConfig = buildMcpConfig();
   let mcpConfigPath = path.join(AGENT_WORKSPACE_DIR, `.mcp-config-${seq}.json`);
   try {

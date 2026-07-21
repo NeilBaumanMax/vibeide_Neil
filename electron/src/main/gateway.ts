@@ -8,6 +8,7 @@ import { activateChatConversation, appendChatMessage, createChatConversation, de
 import { activateTab, closeTab, listTabs, openTabUrl, setBrowserTabsEmitter, setBrowserViewBoundsFromRenderer } from './browser-view';
 import { listBrowserRecordingSummaries, listBrowserRecordings, replayBrowserRecording, replayLatestBrowserRecording, startBrowserRecording, stopBrowserRecording } from './browser-recorder';
 import { createWorkbenchEntry, deleteWorkbenchEntry, getWorkbenchOverview, listWorkbenchDirectory, openWorkbenchItem, readWorkbenchFile, renameWorkbenchEntry, writeWorkbenchFile } from './workbench';
+import { deleteManagedSkill, getManagedSkill, listManagedSkills, saveManagedSkill, syncManagedSkills } from './skill-manager';
 import {
   isSerialMonitorRunning,
   clearHardboardRuntimeHistory,
@@ -194,6 +195,47 @@ export function startGateway(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('workbench:deleteEntry', async (_event, targetPath: string) => {
     return deleteWorkbenchEntry(targetPath);
+  });
+
+  ipcMain.handle('skills:list', async () => {
+    try {
+      return { ok: true, ...listManagedSkills() };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle('skills:get', async (_event, id: string) => {
+    try {
+      return { ok: true, skill: getManagedSkill(id) };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle('skills:save', async (_event, input: { id: string; name: string; description: string; body: string; originalId?: string }) => {
+    try {
+      return { ok: true, skill: saveManagedSkill(input), snapshot: listManagedSkills() };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle('skills:delete', async (_event, id: string) => {
+    try {
+      await deleteManagedSkill(id);
+      return { ok: true, snapshot: listManagedSkills() };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  ipcMain.handle('skills:sync', async () => {
+    try {
+      return { ok: true, ...syncManagedSkills() };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) };
+    }
   });
 
   ipcMain.handle('smoke:workbench:finish', async (_event, result: unknown) => {

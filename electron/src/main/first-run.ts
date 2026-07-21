@@ -82,10 +82,12 @@ export function getApiKeyPromptData(): Record<string, unknown> {
 /** 保存用户输入的 API Key */
 export function saveApiKey(key: string): boolean {
   try {
+    const normalized = key.trim().replace(/^DEEPSEEK_API_KEY\s*=\s*/i, '').trim();
+    if (!isUsableApiKeyContent(normalized)) return false;
     const keyPath = getApiKeyPath();
     const dir = path.dirname(keyPath);
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(keyPath, `DEEPSEEK_API_KEY=${key.trim()}\n`, 'utf-8');
+    fs.writeFileSync(keyPath, `DEEPSEEK_API_KEY=${normalized}\n`, 'utf-8');
     logger.info('first-run:apikey-saved', { keyPath });
     return true;
   } catch (err) {

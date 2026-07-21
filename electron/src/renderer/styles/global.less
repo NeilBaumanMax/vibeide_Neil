@@ -1931,6 +1931,140 @@ body.is-resizing-panels * {
   line-height: 1.6;
 }
 
+.skill-manager {
+  grid-column: 1 / -1;
+  min-height: 280px;
+}
+
+.skill-manager-header {
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: start;
+}
+
+.skill-manager-actions,
+.skill-manager-row-actions,
+.skill-editor-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.skill-manager-actions button,
+.skill-manager-row-actions button {
+  min-height: 34px;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+}
+
+.skill-manager-status {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: #cbd5e1;
+  font-size: 10px;
+}
+
+.skill-manager-status span {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+}
+
+.skill-manager-status .is-ready { color: #86efac; }
+.skill-manager-status .is-error { color: #fca5a5; }
+.skill-manager-status code { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.skill-manager-feedback {
+  grid-column: 1 / -1;
+  color: #bfdbfe;
+  font-size: 10px;
+}
+
+.skill-manager-list {
+  min-height: 0;
+  max-height: 430px;
+  overflow: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skill-manager-row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--nes-border) 28%, transparent);
+  border-radius: 10px;
+  background: var(--ui-fill);
+}
+
+.skill-manager-state {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  background: #16a34a;
+  font-size: 13px;
+}
+
+.skill-manager-copy { min-width: 0; }
+.skill-manager-copy > div { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.skill-manager-copy strong { font-size: 12px; }
+.skill-manager-copy code { color: #2563eb; font-size: 10px; }
+.skill-manager-copy em { padding: 2px 6px; border-radius: 999px; color: #92400e; background: #fef3c7; font-size: 9px; font-style: normal; }
+.skill-manager-copy p { margin: 5px 0 0; color: var(--ui-text-secondary); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.skill-editor-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 6, 23, 0.58);
+  backdrop-filter: blur(8px);
+}
+
+.skill-editor {
+  width: min(760px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  color: var(--ui-text);
+  background: var(--ui-surface-solid);
+  border: 1px solid color-mix(in srgb, var(--nes-border) 35%, transparent);
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+}
+
+.skill-editor-title { display: flex; justify-content: space-between; align-items: center; font-size: 15px; }
+.skill-editor-title button { border: 0; color: inherit; background: transparent; font-size: 24px; cursor: pointer; }
+.skill-editor label { display: grid; gap: 6px; font-size: 11px; }
+.skill-editor input,
+.skill-editor textarea { font-family: "Noto Sans SC", "Microsoft YaHei UI", sans-serif; font-size: 12px !important; }
+.skill-editor textarea { resize: vertical; line-height: 1.6; }
+.skill-description { min-height: 76px; }
+.skill-body { min-height: 260px; font-family: Consolas, "SFMono-Regular", monospace !important; }
+.skill-editor-actions { justify-content: flex-end; }
+
+@media (max-width: 900px) {
+  .skill-manager-header { grid-template-columns: 1fr; }
+  .skill-manager-actions { flex-wrap: wrap; }
+  .skill-manager-status { grid-template-columns: auto auto; }
+  .skill-manager-status code { grid-column: 1 / -1; }
+  .skill-manager-row { grid-template-columns: 26px minmax(0, 1fr); }
+  .skill-manager-row-actions { grid-column: 2; }
+}
+
 .task-manager-panel {
   min-height: 0;
   flex: 1;

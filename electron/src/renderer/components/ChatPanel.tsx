@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import type { AgentTaskStatus, ChatConversationSummary, ChatMessage, TaskStep, TaskSubmitMode } from '../types';
+import type { AgentTaskStatus, ChatConversationSummary, ChatMessage, ManagedSkillSummary, TaskStep, TaskSubmitMode } from '../types';
 import MarkdownContent from './MarkdownContent';
 import TaskProgress from './TaskProgress';
 
@@ -78,6 +78,7 @@ function detailLabel(message: ChatMessage): string {
   if (message.error) return '错误';
   if (message.kind === 'status') return '状态';
   if (message.kind === 'progress') return '过程';
+  if (message.toolName === 'Skill') return '技能';
   if (message.toolName) return '工具';
   return '详情';
 }
@@ -136,8 +137,14 @@ export default function ChatPanel({
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [skills, setSkills] = useState<ManagedSkillSummary[]>([]);
+  const [selectedSkill, setSelectedSkill] = useState<ManagedSkillSummary | null>(null);
+  const [skillPickerOpen, setSkillPickerOpen] = useState(false);
+  const [skillLoadError, setSkillLoadError] = useState('');
   const cancelRenameRef = useRef(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const skillPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -158,6 +165,38 @@ export default function ChatPanel({
       // The preference remains active for this session.
     }
   }, [historyCollapsed]);
+
+  useEffect(() => {
+    let active = true;
+    void window.electronAPI?.listManagedSkills?.().then((result) => {
+      if (!active) return;
+      if (result?.ok) {
+        setSkills(result.skills);
+        setSkillLoadError('');
+      } else {
+        setSkillLoadError(result?.error || 'Skill 列表读取失败');
+      }
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!skillPickerOpen) return undefined;
+    const closePicker = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Node && skillPickerRef.current?.contains(target)) return;
+      setSkillPickerOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSkillPickerOpen(false);
+    };
+    document.addEventListener('pointerdown', closePicker);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closePicker);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [skillPickerOpen]);
 
   useEffect(() => {
     if (!openMenuId) return undefined;
@@ -205,8 +244,10 @@ export default function ChatPanel({
   const submit = (mode: TaskSubmitMode) => {
     const text = input.trim();
     if (!text) return;
-    onSend(text, mode);
+    onSend(selectedSkill ? `${selectedSkill.command} ${text}` : text, mode);
     setInput('');
+    setSelectedSkill(null);
+    setSkillPickerOpen(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -362,7 +403,16 @@ export default function ChatPanel({
         <div ref={bottomRef} />
       </div>
       <form className="chat-input" onSubmit={handleSubmit}>
+        {selectedSkill ? (
+          <div className="chat-selected-skill" aria-label={`已选择 ${selectedSkill.name}`}>
+            <span>Skill</span>
+            <strong>{selectedSkill.name}</strong>
+            <code>{selectedSkill.command}</code>
+            <button type="button" aria-label="取消选择 Skill" title="取消选择" onClick={() => setSelectedSkill(null)}>×</button>
+          </div>
+        ) : null}
         <textarea
+          ref={textareaRef}
           className="nes-input"
           rows={2}
           value={input}
@@ -376,6 +426,57 @@ export default function ChatPanel({
           placeholder={taskStatus.busy ? '输入对当前任务的追加要求；Shift+Enter 换行' : '描述要交给 Agent 的任务；Shift+Enter 换行'}
         />
         <div className="chat-input-actions">
+          <div className="chat-skill-picker-wrap" ref={skillPickerRef}>
+            <button
+              className={`chat-skill-button nes-btn${skillPickerOpen ? ' is-active' : ''}`}
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded={skillPickerOpen}
+              onClick={() => {
+                const opening = !skillPickerOpen;
+                setSkillPickerOpen(opening);
+                if (!opening) return;
+                void window.electronAPI?.listManagedSkills?.().then((result) => {
+                  if (result?.ok) {
+                    setSkills(result.skills);
+                    setSkillLoadError('');
+                  } else {
+                    setSkillLoadError(result?.error || 'Skill 列表读取失败');
+                  }
+                });
+              }}
+            >
+              <span aria-hidden="true">＋</span> Skills
+            </button>
+            {skillPickerOpen ? (
+              <div className="chat-skill-picker" role="listbox" aria-label="选择要调用的 Skill">
+                <div className="chat-skill-picker-head">
+                  <strong>选择 Skill</strong>
+                  <span>选中后随下一条消息调用</span>
+                </div>
+                {skillLoadError ? <p className="chat-skill-error">{skillLoadError}</p> : null}
+                <div className="chat-skill-options">
+                  {skills.length ? skills.map((skill) => (
+                    <button
+                      key={skill.id}
+                      type="button"
+                      role="option"
+                      aria-selected={selectedSkill?.id === skill.id}
+                      disabled={!skill.deployed}
+                      onClick={() => {
+                        setSelectedSkill(skill);
+                        setSkillPickerOpen(false);
+                        requestAnimationFrame(() => textareaRef.current?.focus());
+                      }}
+                    >
+                      <span><strong>{skill.name}</strong><code>{skill.command}</code></span>
+                      <small>{skill.deployed ? skill.description : '等待同步后可用'}</small>
+                    </button>
+                  )) : !skillLoadError ? <p className="chat-skill-empty">暂无可用 Skill</p> : null}
+                </div>
+              </div>
+            ) : null}
+          </div>
           <button className="nes-btn is-primary" type="submit" disabled={!input.trim()}>{taskStatus.busy ? '追加要求' : '发送'}</button>
           {taskStatus.busy ? <button className="nes-btn is-warning" type="button" disabled={!input.trim()} onClick={() => submit('queue')}>排队</button> : null}
           {taskStatus.busy ? <button className="nes-btn is-error" type="button" onClick={onStop}>停止</button> : null}

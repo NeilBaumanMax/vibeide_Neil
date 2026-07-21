@@ -14,15 +14,15 @@ Electron UI -> Gateway -> Worker -> Agent -> Runtime MCP -> Electron Chromium / 
 
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`
 - 当前施工分支：`electron_design`
-- 当前发布版本：`1.0.0-7201`（Windows PE 四段版本映射为 `1.0.0.7201`）
+- 当前对外发布版本：`v1.0.0`；内部构建号 `7201`，npm 包版本 `1.0.0-7201`，Windows PE 文件版本 `1.0.0.7201`
 - 当前 Windows 源码目录：`E:\Agent\vibeide\vibeide`
 - 上一版 Windows v0.1.0 unpacked 包：`E:\vibeide-0.1-win-unpacked`（历史验证对象）
 - 历史 Linux、`C:\vibeide` 和旧 `E:\vibeide` 路径仅用于迁移记录，不再作为当前施工目录。
-- 当前代码来源：Windows 工作区在 `electron_design` 分支维护 Apple 风格 Electron 界面、任务历史真实清理、四仓库入口、双向串口助手和编辑器交互修正；GitHub 推送状态以 `git branch -vv` 为准。
+- 当前代码来源：Windows 工作区在 `electron_design` 分支维护 Apple 风格 Electron 界面、任务历史真实清理、Skill/工程仓库入口、双向串口助手和编辑器交互修正；GitHub 推送状态以 `git branch -vv` 为准。
 
 ## 能力边界
 
-- Electron 桌面窗口采用 Apple 风格冷色界面，提供聊天区、任务进度、固定四仓库、串口监视、任务管理和 Monaco 代码编辑入口；编辑器支持多根文件树、多文件等宽标签、保存、字号持久化及贴近指针的右键文件管理。浏览器工作台前端入口当前隐藏，相关后端能力暂时保留。
+- Electron 桌面窗口采用 Apple 风格冷色界面，提供聊天区、Skill/工程资源仓库、串口监视、任务管理和 Monaco 代码编辑入口；仓库页显示硬件工程、参考代码与 Skills，编辑器仍可访问 Agent 工作区等受控根目录。浏览器工作台前端入口当前隐藏，相关后端能力暂时保留。
 - Worker 负责快捷任务、搜索预处理、任务上下文构造和 Agent 生命周期；同一时间只运行一个活动任务，执行中消息默认追加到当前任务，显式“排队”才建立独立后续任务。
 - Agent 负责推理和任务执行规划，但所有浏览器操作必须通过 MCP 工具完成。
 - Runtime 通过 CDP 连接 Electron Chromium，提供 `browser.*`、`storage.*` 和 `hardboard.*` MCP tools。
@@ -47,6 +47,8 @@ powershell -ExecutionPolicy Bypass -File scripts\start_electron_desktop.ps1
 cd /d E:\Agent\vibeide\vibeide
 scripts\start_electron_desktop.cmd
 ```
+
+发布给其他用户时，应压缩并分发完整的 `electron\dist-package\win-unpacked` 文件夹。接收方完整解压到普通可写目录后运行 `奥德赛1.0.0-7201.exe`；首次启动窗口会引导保存 DeepSeek API Key。不能只发送 exe，也不要把包含真实 `resources\apikey.txt` 的目录重新分发。详细口径见 [Windows v1.0.0 便携版发布检查](docs/WINDOWS_V1_0_0_RELEASE_CHECKLIST.md)。
 
 ### Linux / macOS
 

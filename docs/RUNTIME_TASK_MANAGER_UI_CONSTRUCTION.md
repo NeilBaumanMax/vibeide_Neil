@@ -6,7 +6,7 @@
 
 - 当前分支为 `electron_design`，可见页签为仓库、监视器、任务管理器、编辑器；浏览器工作台前端入口隐藏。
 - 界面已全面放弃 NES/像素风，使用 Apple 风格冷色材质、系统字体、弱分隔和邻近反馈。
-- 仓库固定为 Agent 生成、硬件工程、参考代码、Skills 四组；不再提供导入/移除，每组可以在资源管理器中打开。打包版 Skills 使用 `resources/agent/skills`，目录打开反馈不得挤压仓库标题。
+- 仓库页显示硬件工程、参考代码和 Skills，不显示 Agent 生成卡片；编辑器仍保留 Agent 工作区等受控根目录。打包版 Skills 使用 `resources/agent/skills`。
 - 任务管理器保持相对工程选择和 Build/Flash 两行控制；Build 第二列刷新工程，Flash 第二列刷新设备，项目与串口使用带原生指示器的下拉框，状态使用内容宽度的语义胶囊。
 - 最近任务按 `taskId` 聚合。清除会立即从 UI 移除旧记录，并删除 EventBus `events.jsonl` 与 Hardboard `.log`；残留 PID 或 `running` 状态不再拒绝清除，运行任务之后产生的新事件继续显示。
 - 监视器后端是真实双向 `pyserial` 服务，使用左侧接收/发送、右侧配置布局，支持完整串口参数及文本/HEX 收发；原数值趋势图已删除。Windows CIM 枚举失败时回退到随包 `pyserial`。
@@ -19,9 +19,9 @@
 
 ## 2026-07-18 编辑器历史实现
 
-> 本节记录 1.0.0-7201 之前的编辑器基线；其中用户导入目录等描述已被当前固定四仓库方案取代。
+> 本节记录 1.0.0-7201 之前的编辑器基线；当前仓库页显示三类资源，编辑器保留四个受控根目录。
 
-- 左侧文件资源管理器直接复用仓库的 Agent 生成、硬件工程、参考代码、Skills 四个固定受控根目录作为多根工作区；目录按需通过 `workbench:listDirectory` 懒加载，并过滤 `.git`、`node_modules`、build、dist 等内容。历史用户导入目录不再进入当前概览。
+- 编辑器左侧文件资源管理器使用 Agent 工作区、硬件工程、参考代码和 Skills 四个固定受控根目录；仓库页只显示后三类。目录按需通过 `workbench:listDirectory` 懒加载，并过滤 `.git`、`node_modules`、build、dist 等内容。
 - 右侧上方保留多文件标签、当前绝对路径和保存按钮，下方改用 Monaco Editor；`Ctrl+S`、未保存标记、切换标签、关闭标签和保存结果提示继续生效。
 - Monaco、C/C++/Markdown/JSON/TypeScript 等语言定义及 editor/json/css/html/typescript Worker 均打进 renderer，本地开发和 packaged 环境不从 CDN 下载资源。
 - C/C++ 使用内置深色主题；CMake 额外注册基础 Monarch tokenizer。编辑区显示行号、括号配色、代码缩略图、选择高亮和缩进辅助线。

@@ -35,7 +35,7 @@
 
 ### 仓库
 
-- 固定显示 Agent 生成、硬件工程、参考代码、Skills 四个仓库，不再提供“导入文件夹”。
+- 仓库页显示硬件工程、参考代码和 Skills，不显示 Agent 生成卡片，也不提供“导入文件夹”；Agent 工作区继续保留为编辑器受控根目录。
 - 每个仓库标题区提供“在资源管理器中打开”，通过受限 IPC 校验路径后调用 Electron `shell.openPath`。
 - 打包版 Skills 根目录必须通过 `getAgentDir()` 解析为 `resources/agent/skills`，不得从 `win-unpacked/agent/skills` 手工拼接；工作台允许范围只包含 Agent 工作区、硬件目录、Skills/Tools、文档、录制与工作流等明确根目录，不把整个安装根目录设为可写范围。
 - 打开目录的结果只显示可收缩的成功/失败状态，完整路径或错误放在 `title` 提示中；仓库标题正文设置 `min-width: 0`，长错误不得挤压成竖排。
@@ -85,7 +85,7 @@
 - `electron/src/renderer/styles/apple.less`：Apple 风格材质、排版、颜色、动效和无障碍覆盖。
 - `electron/src/renderer/App.tsx`：显式主题状态、主题/悬浮坐标持久化、外观菜单、拖动手势与窗口边界约束。
 - `electron/src/renderer/components/BrowserPanel.tsx`：四页面交互、任务清除、双向串口助手、编辑器标签和右键菜单。
-- `electron/src/renderer/components/WorkspacePanel.tsx`：四仓库与资源管理器入口。
+- `electron/src/renderer/components/WorkspacePanel.tsx`：Skill/工程资源卡片与资源管理器入口；主动调用入口位于左侧对话输入区。
 - `electron/src/main/gateway.ts` / `preload/index.ts`：受限文件夹打开和硬件 IPC。
 - `electron/src/main/hardboard.ts`：真实双向串口服务、设备枚举回退、Runtime 历史清理与 Build/Flash 桥接。
 - `runtime/src/eventbus/event-store.ts`：EventBus 与 `.log` 物理清理。

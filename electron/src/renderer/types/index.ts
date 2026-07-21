@@ -52,6 +52,15 @@ export interface AgentTaskStatus {
   guidanceCount: number;
 }
 
+export interface StartupStatus {
+  apiKeyReady: boolean;
+  playwrightReady: boolean;
+  firstRun: boolean;
+  keyPath: string;
+  message?: string;
+  detail?: string;
+}
+
 export interface TaskStep {
   id: string;
   label: string;
@@ -99,6 +108,38 @@ export interface WorkbenchOverview {
   hardboardProjects: string[];
   sections: WorkbenchSection[];
 }
+
+export interface ManagedSkillSummary {
+  id: string;
+  name: string;
+  description: string;
+  sourcePath: string;
+  sourceFormat: 'legacy' | 'standard';
+  updatedAt: number;
+  deployed: boolean;
+  command: string;
+}
+
+export interface ManagedSkillDetail extends ManagedSkillSummary {
+  body: string;
+}
+
+export interface SkillManagerStatus {
+  sourceDir: string;
+  deployDir: string;
+  writable: boolean;
+  skillCount: number;
+  deployedCount: number;
+  lastSyncAt: number | null;
+  error?: string;
+}
+
+export interface SkillManagerSnapshot {
+  skills: ManagedSkillSummary[];
+  status: SkillManagerStatus;
+}
+
+export type SkillManagerResult = ({ ok: true } & SkillManagerSnapshot) | { ok: false; error: string };
 
 export interface RecordingSummary {
   file: string;
@@ -182,6 +223,8 @@ export interface HardboardRuntimeLaunchResult {
 }
 
 export interface WindowAPI {
+  getStartupStatus: () => Promise<StartupStatus>;
+  saveStartupApiKey: (key: string) => Promise<{ ok: boolean; status: Pick<StartupStatus, 'apiKeyReady' | 'playwrightReady' | 'firstRun'> }>;
   sendMessage: (text: string, mode?: TaskSubmitMode, conversationId?: string, messageId?: string, timestamp?: number) => Promise<TaskSubmitResult & { message?: ChatMessage }>;
   onMessage: (cb: (msg: { id?: string; text: string; timestamp: number; kind?: ChatMessageKind; toolName?: string; error?: boolean; taskId?: string | null; conversationId?: string }) => void) => void;
   listChatConversations: () => Promise<{ activeConversationId: string; conversations: ChatConversationSummary[] }>;
@@ -211,6 +254,11 @@ export interface WindowAPI {
   createWorkbenchEntry: (parentPath: string, name: string, kind: 'file' | 'dir') => Promise<{ ok: boolean; path?: string; kind?: 'file' | 'dir'; error?: string }>;
   renameWorkbenchEntry: (targetPath: string, nextName: string) => Promise<{ ok: boolean; path?: string; oldPath?: string; kind?: 'file' | 'dir'; error?: string }>;
   deleteWorkbenchEntry: (targetPath: string) => Promise<{ ok: boolean; path?: string; kind?: 'file' | 'dir'; error?: string }>;
+  listManagedSkills: () => Promise<SkillManagerResult>;
+  getManagedSkill: (id: string) => Promise<{ ok: boolean; skill?: ManagedSkillDetail; error?: string }>;
+  saveManagedSkill: (input: { id: string; name: string; description: string; body: string; originalId?: string }) => Promise<{ ok: boolean; skill?: ManagedSkillDetail; snapshot?: SkillManagerSnapshot; error?: string }>;
+  deleteManagedSkill: (id: string) => Promise<{ ok: boolean; snapshot?: SkillManagerSnapshot; error?: string }>;
+  syncManagedSkills: () => Promise<SkillManagerResult>;
   isWorkbenchSmokeTest?: boolean;
   finishWorkbenchSmokeTest?: (result: unknown) => Promise<{ ok: boolean }>;
   activateBrowserTab: (id: string) => Promise<{ ok: boolean }>;

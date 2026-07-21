@@ -9,15 +9,17 @@
 - 内部工程代号：`vibeide`。
 - 当前本机工作目录：`E:\Agent\vibeide\vibeide`（Windows 实机）。
 - 当前 GitHub：`https://github.com/NeilBaumanMax/vibeide_Neil.git`；当前本机记录的 `origin/main` 位于 `5e6ba3b`。
-- 当前施工分支：`electron_design`。该分支在既有任务串行化、编辑器和 Runtime EventBus 基线上完成 Apple 风格界面、四仓库入口、任务清除、内置双向串口助手、随包 Python/MCP 修复、应用内持久化主题和可拖动外观入口。本轮维护本地 Git，不推送远端；近期本地基线包括主题入口 `9848c33`、packaged 工作台修复 `5493f39` 和任务页比例调整 `3c091ec`，不要再把其中任一旧提交写成动态“最新 HEAD”。
+- 当前施工分支：`electron_design`。该分支在既有任务串行化、编辑器和 Runtime EventBus 基线上完成 Apple 风格界面、Skill/工程仓库、任务清除、内置双向串口助手、随包 Python/MCP 修复、应用内持久化主题和可拖动外观入口。本轮维护本地 Git，不推送远端。
 - 旧 GitHub/历史源：`git@github.com:howtion0/vibeide.git`、`git@github.com:howtio/vibeide.git` 仍可能出现在历史日志或迁移文档中，不再作为当前同步目标。
 
 ## 当前版本和验证
 
-- 当前发布版本：`1.0.0-7201`；Windows PE 四段版本映射为 `1.0.0.7201`。
+- 当前对外发布版本：`v1.0.0`；内部构建号 `7201`，npm 包版本 `1.0.0-7201`，Windows PE 四段版本映射为 `1.0.0.7201`。
+- Windows 便携成品是完整的 `electron/dist-package/win-unpacked`，必须解压到普通可写目录后运行，不能只分发 exe。发布包不含真实 `resources/apikey.txt`，只含模板；无 Key 首启由应用内窗口完成配置。
 - `electron_design` 当前源码需以 Runtime/Electron typecheck、main/renderer build、Windows unpacked 打包和 `git diff --check` 作为提交门禁。当前版本已执行 Windows 打包、MCP handshake、随包 Python、ESP-IDF 冷构建及 COM5 串口回归；真实 Agent 长时间连续对话仍需持续观察。
 - 当前主题不再持续跟随 Windows/Electron 的 `prefers-color-scheme`。首次无记录时读取一次系统偏好，之后由外观菜单选择并持久化；按钮位置也独立持久化，可拖动避开编辑器字号工具条。
 - Windows packaged 工作台资源不得用 `win-unpacked/<资源>` 手工拼接：Skills 通过 `getAgentDir()` 指向 `resources/agent/skills`，文档和硬件分别通过 `getResourcesDir()` / `getHardboardDir()` 解析。工作台允许范围是明确仓库，不包含整个安装根目录。
+- `resources/agent/skills` 是唯一用户维护源仓库；`skill-manager.ts` 在 Agent 启动前把它标准化部署到用户数据下的 `agent-workspace/.claude/skills`。仓库页 Skill 管理器负责 CRUD/同步，不能把源路径改到 `%APPDATA%`。
 - 本轮继续加固任务生命周期：turn 完成后的页面验收、恢复和异常回调均校验原 `taskId`，停止或队列切换后的旧异步回调不会再完成新任务或复活旧任务；任务队列烟测已覆盖取消竞态及停止清空两类等待项。
 - Agent 对话当前采用双层呈现：用户回复直接显示并安全渲染 Markdown，PID/工具/诊断/心跳按任务折叠；“专业视图”可自动展开全部过程。工具日志不再混入持久化 Agent 回复摘要，旧版整段日志刷屏不应恢复。
 - 左栏旧“任务进度”步骤面板已取消；运行状态只在 Agent 工作时以紧凑仪表盘显示于当前“执行过程”下方，暂停或完成后不保留占位。
@@ -80,10 +82,23 @@
 - 目录打开反馈显示绿色短状态，完整路径放在悬停提示；成功后仓库标题正文宽 632px、头部高 147px，没有再被长错误挤成竖排。
 - Electron typecheck、renderer build、Windows `pack:win` 和 `git diff --check` 通过。
 
+已通过（原生 Skill 部署与仓库页管理，2026-07-21）：
+
+- Electron typecheck、main/renderer build、Windows `pack:win`、`verify:skills`、`verify:hardboard`。
+- 12 个随包 Skill 已标准化部署，普通 Electron 编译不触发 Hardboard，ESP32 任务推荐 `/espidf-hardboard`。
+- `smoke:workbench` 已改用隔离临时 userData，但本机 Electron GPU 子进程仍以 `0xC0000135` 退出，未获得 UI 结果；需在具备完整图形运行依赖的桌面环境补跑。
+
+已通过（Windows v1.0.0 便携发布，2026-07-21）：
+
+- 最终 `win-unpacked` 共 `4,459,269,207` 字节，PE 文件版本和产品版本均为 `1.0.0.7201`。
+- `verify:release` 验证便携 Node `v22.14.0`、pyserial `3.5`、Claude Code `2.1.167`、Runtime health、12 个 Skills、Playwright 与 ESP-IDF 资源。
+- 成品无 Key 实际启动后首次配置窗口正常，模板占位 Key 被拒绝；验证结束后 `resources/apikey.txt` 不存在。
+- 当前 exe 未做商业代码签名，换机运行可能出现 SmartScreen；正式对外分发前应配置可信代码签名证书。
+
 已通过（Electron Apple UI 与 1.0.0-7201，2026-07-20）：
 
 - 全面移除 NES.css 依赖与像素式控件表达，新增 `styles/apple.less` 冷色材质与无障碍覆盖。
-- 仓库固定为 Agent 生成、硬件工程、参考代码、Skills 四组；移除导入入口，每组可在资源管理器打开。
+- 仓库页显示硬件工程、参考代码和 Skills；Agent 工作区不再显示为仓库卡片，但仍作为编辑器受控根目录。
 - 任务历史清除不再被残留 PID/运行状态阻止，界面即时归零，Runtime 删除 EventBus 与 `.log` 文件。
 - 监视器确认使用真实 `pyserial`；2026-07-21 已升级为双向串口助手并删除数值趋势图，见下方最新验证。
 - 编辑器标签等宽分配，关闭按钮有 hover/focus 反馈，右键菜单使用 Portal 贴近鼠标定位。
@@ -158,11 +173,11 @@
 - 任务管理器：先从 `hardboard/projects/<name>` 相对路径选择工程，再执行对齐的 Build/Flash 控制；Build/Flash 第二列分别刷新工程/设备，状态为语义胶囊；旧文件选择器、源码预览和 PID/Task/Tool 摘要块已移除。
 - 任务诊断：实时日志、完整日志、事件卡片按需打开；最近任务结果按 `taskId` 汇总并支持滚动。任一“清除”都会立即清空旧记录并删除 EventBus 历史和 Hardboard `.log` 文件，不再因残留运行状态拒绝或回滚界面。
 - 日志定位：点击某条任务的“查看”会在完整日志中自动定位对应 `taskId`；失败使用克制红色，其余状态避免突兀高饱和强调。
-- 编辑器：左侧显示固定四仓库的多根文件资源管理器，目录按需展开；右侧使用 Monaco Editor，支持语法高亮、等宽弹性多文件标签、`Ctrl+S` 保存和关闭。右键菜单通过 Portal 贴近鼠标显示。
+- 编辑器：左侧显示 Agent 工作区、硬件工程、参考代码和 Skills 四个受控根目录，目录按需展开；右侧使用 Monaco Editor，支持语法高亮、等宽弹性多文件标签、`Ctrl+S` 保存和关闭。
 - 编辑器空状态：标签栏提示、未打开路径和代码区说明使用主题文字令牌；旧版固定深蓝色不再覆盖深色主题。修复后 Electron typecheck、renderer build、Windows `pack:win` 与 `git diff --check` 已通过，并已启动成品复测。
 - 编辑器字号：底部提供减小、增大和重置，范围 10–24px，使用 `localStorage` 保存用户上次字号。
 - 编辑器文件管理：目录右键可新建文件/文件夹，文件和子目录可重命名或移到系统回收站，所有节点可刷新；新建、重命名和删除确认均使用软件内置对话框。主进程只允许操作工作台许可范围，禁止覆盖同名条目和修改资源管理器根目录。
-- 仓库：固定为 Agent 生成、硬件工程、参考代码、Skills 四组；不再显示“导入文件夹”，每组提供“在资源管理器中打开”。历史 `runtime/workbench-imports.json` 不再进入当前仓库概览。
+- 仓库：显示硬件工程、参考代码和 Skills，不显示“Agent 生成”及“导入文件夹”。左侧对话输入区提供 Skills 按钮，选中项以标签进入输入区并在发送时自动注入命令。
 
 ## 必读顺序
 

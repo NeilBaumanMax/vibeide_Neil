@@ -68,7 +68,7 @@ export function buildContext(task: string): TaskContext {
       : '',
     platformRules,
     '',
-    skillsContent ? `【本轮相关知识】\n${skillsContent}` : '',
+    skillsContent ? `【建议技能】\n${skillsContent}` : '',
   ].filter(Boolean).join('\n');
 
   logger.debug('task:context', {
@@ -144,16 +144,10 @@ function readSkills(task: string): { content: string; files: string[] } {
   try {
     const allFiles = fs.readdirSync(skillsDir).filter((f) => f.endsWith('.md')).sort();
     const files = selectSkillFiles(task, allFiles);
-    let content = '';
-    for (const file of files) {
-      try {
-        const text = fs.readFileSync(path.join(skillsDir, file), 'utf-8');
-        content += `\n### ${file}\n${text}\n`;
-        logger.debug('task:context', { skillFile: file, size: text.length });
-      } catch (err) {
-        logger.warn('task:context', { error: `Cannot read skill: ${file}` });
-      }
-    }
+    const commands = files.map((file) => `/${file.replace(/\.md$/i, '').replace(/_/g, '-')}`);
+    const content = commands.length
+      ? `根据任务需要优先调用这些已部署的原生 Skill：${commands.join('、')}。调用前简短说明选择原因；若 Skill 工具不可用，再按项目规则完成任务。`
+      : '';
     return { content, files };
   } catch {
     logger.warn('task:context', { error: 'Skills directory not found' });
@@ -167,7 +161,7 @@ function selectSkillFiles(task: string, allFiles: string[]): string[] {
   const needsSearchWorkflow = /(搜索|查找|搜一下|搜一搜|整理结果|整理视频|列出|最火|最热|top|排行|search|find)/i.test(task);
   const needsRecordingWorkflow = /(录制|回放|重放|播放录制|工作流|流程复用|保存流程|开始录制|停止录制)/i.test(task);
   const needsReplayTooling = /(优化重放|优化回放|信息捕获|封装成脚本|封装.*流程|下次.*调用|复用.*任务|保存成工具|workflow|工作流|重放.*提取|回放.*提取)/i.test(task);
-  const needsHardboard = /(esp32|esp-idf|espidf|idf\.py|硬件|开发板|串口|烧录|刷机|固件|编译|flash|build|monitor|esp32s3|esp32-s3|s3|esp32c3|esp32-c3)/i.test(task);
+  const needsHardboard = /(esp32|esp-idf|espidf|idf\.py|硬件|开发板|串口|烧录|刷机|固件|flash|monitor|esp32s3|esp32-s3|esp32c3|esp32-c3|(?:编译|build).{0,12}(?:固件|开发板|esp|idf)|(?:固件|开发板|esp|idf).{0,12}(?:编译|build))/i.test(task);
   const add = (...files: string[]) => {
     for (const file of files) {
       if (allFiles.includes(file)) selected.add(file);

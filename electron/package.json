@@ -22,6 +22,9 @@
     "verify:chat-presentation": "node scripts/verify_chat_presentation.cjs",
     "verify:session": "node node_modules/electron/cli.js scripts/verify_claude_session.cjs",
     "verify:hardboard": "node node_modules/electron/cli.js scripts/verify_hardboard_context_rules.cjs",
+    "verify:skills": "node node_modules/electron/cli.js scripts/verify_skill_manager.cjs",
+    "verify:release": "node scripts/verify_win_unpacked_release.cjs",
+    "verify:first-run": "node scripts/verify_packaged_first_run.cjs",
     "verify:task-queue": "node node_modules/electron/cli.js scripts/verify_agent_task_queue.cjs"
   },
   "dependencies": {

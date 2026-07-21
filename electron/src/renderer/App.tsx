@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatPanel from './components/ChatPanel';
 import BrowserPanel from './components/BrowserPanel';
-import type { AgentTaskStatus, BrowserTab, ChatConversation, ChatConversationSummary, ChatMessage, ChatMessageKind, HardboardDevice, RecordingSummary, TaskStep, TaskSubmitMode, WorkbenchOverview } from './types';
+import type { AgentTaskStatus, BrowserTab, ChatConversation, ChatConversationSummary, ChatMessage, ChatMessageKind, HardboardDevice, RecordingSummary, StartupStatus, TaskStep, TaskSubmitMode, WorkbenchOverview } from './types';
 
 const LEFT_PANEL_WIDTH_KEY = 'vibeide.ui.leftPanelWidth';
 const APPEARANCE_THEME_KEY = 'vibeide.appearance.theme';
@@ -119,6 +119,10 @@ export default function App() {
   const [appearanceMenuOpen, setAppearanceMenuOpen] = useState(false);
   const [appearancePosition, setAppearancePosition] = useState<FloatingPosition>(readInitialAppearancePosition);
   const [appearanceDragging, setAppearanceDragging] = useState(false);
+  const [startupStatus, setStartupStatus] = useState<StartupStatus | null>(null);
+  const [startupApiKey, setStartupApiKey] = useState('');
+  const [startupApiKeyError, setStartupApiKeyError] = useState('');
+  const [startupApiKeySaving, setStartupApiKeySaving] = useState(false);
   const workbenchSmokeTriggered = useRef(false);
   const activeConversationIdRef = useRef('');
   const appearanceSettingsRef = useRef<HTMLDivElement>(null);
@@ -135,6 +139,29 @@ export default function App() {
   useEffect(() => {
     window.localStorage.setItem(LEFT_PANEL_WIDTH_KEY, String(leftPanelWidth));
   }, [leftPanelWidth]);
+
+  useEffect(() => {
+    void window.electronAPI?.getStartupStatus?.().then((status) => setStartupStatus(status));
+  }, []);
+
+  const handleStartupApiKeySave = useCallback(async (event: React.FormEvent) => {
+    event.preventDefault();
+    const key = startupApiKey.trim();
+    if (key.length <= 12 || key.includes('sk-your-key-here')) {
+      setStartupApiKeyError('请输入有效的 DeepSeek API Key');
+      return;
+    }
+    setStartupApiKeySaving(true);
+    const result = await window.electronAPI?.saveStartupApiKey?.(key);
+    setStartupApiKeySaving(false);
+    if (!result?.ok) {
+      setStartupApiKeyError('保存失败。请确认解压目录具有写入权限，或手工创建 resources\\apikey.txt。');
+      return;
+    }
+    setStartupApiKey('');
+    setStartupApiKeyError('');
+    setStartupStatus((current) => current ? { ...current, ...result.status } : null);
+  }, [startupApiKey]);
 
   useEffect(() => {
     applyAppearanceTheme(appearanceTheme);
@@ -690,6 +717,34 @@ export default function App() {
           />
         </div>
       </div>
+      {startupStatus?.firstRun ? (
+        <div className="startup-key-backdrop">
+          <form className="startup-key-dialog" onSubmit={handleStartupApiKeySave}>
+            <div className="startup-key-brand">奥德赛 · v1.0.0</div>
+            <h2>配置 DeepSeek API Key</h2>
+            <p>首次使用需要添加 API Key。密钥只写入当前解压目录，不会进入对话记录或上传到其他服务。</p>
+            <label>
+              <span>API Key</span>
+              <input
+                autoFocus
+                type="password"
+                autoComplete="off"
+                spellCheck={false}
+                value={startupApiKey}
+                placeholder="粘贴 DeepSeek API Key"
+                onChange={(event) => { setStartupApiKey(event.target.value); setStartupApiKeyError(''); }}
+              />
+            </label>
+            <code title={startupStatus.keyPath}>{startupStatus.keyPath}</code>
+            {startupApiKeyError ? <div className="startup-key-error" role="alert">{startupApiKeyError}</div> : null}
+            {!startupStatus.playwrightReady ? <div className="startup-key-error" role="alert">发布包缺少浏览器运行资源，请重新获取完整压缩包。</div> : null}
+            <button type="submit" disabled={startupApiKeySaving || !startupStatus.playwrightReady || startupApiKey.trim().length <= 12}>
+              {startupApiKeySaving ? '正在保存…' : '保存并开始使用'}
+            </button>
+            <small>也可以关闭软件，将 `apikey.txt.example` 复制为 `apikey.txt` 后填写密钥。</small>
+          </form>
+        </div>
+      ) : null}
       <div
         className={`appearance-settings${appearanceDragging ? ' is-dragging' : ''}${appearancePosition.x < 282 ? ' opens-right' : ''}${appearancePosition.y < 244 ? ' opens-down' : ''}`}
         ref={appearanceSettingsRef}

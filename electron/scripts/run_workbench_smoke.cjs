@@ -5,6 +5,7 @@ const { spawn } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
 const resultFile = path.join(os.tmpdir(), `vibeide-workbench-smoke-${process.pid}.json`);
+const smokeUserData = fs.mkdtempSync(path.join(os.tmpdir(), 'vibeide-workbench-userdata-'));
 const electronCli = path.join(root, 'node_modules', 'electron', 'cli.js');
 
 try {
@@ -13,7 +14,7 @@ try {
   // ignore
 }
 
-const child = spawn(process.execPath, [electronCli, '.'], {
+const child = spawn(process.execPath, [electronCli, '--disable-gpu', `--user-data-dir=${smokeUserData}`, '.'], {
   cwd: root,
   env: {
     ...process.env,
@@ -25,6 +26,9 @@ const child = spawn(process.execPath, [electronCli, '.'], {
 });
 
 let output = '';
+const cleanup = () => {
+  try { fs.rmSync(smokeUserData, { recursive: true, force: true }); } catch { /* ignore */ }
+};
 child.stdout.on('data', (chunk) => {
   output += chunk.toString();
 });
@@ -43,10 +47,12 @@ const timer = setInterval(() => {
     if (result.ok && result.url && String(result.url).startsWith('file://')) {
       console.log(`workbench smoke ok: ${result.kind} ${result.path}`);
       child.kill();
+      cleanup();
       process.exit(0);
     }
     console.error(`workbench smoke failed: ${raw}`);
     child.kill();
+    cleanup();
     process.exit(1);
   }
 
@@ -55,6 +61,7 @@ const timer = setInterval(() => {
     console.error('workbench smoke timed out');
     console.error(output.slice(-4000));
     child.kill();
+    cleanup();
     process.exit(1);
   }
 }, 250);
@@ -64,6 +71,7 @@ child.on('exit', (code) => {
     clearInterval(timer);
     console.error(`electron exited before smoke result, code=${code}`);
     console.error(output.slice(-4000));
+    cleanup();
     process.exit(1);
   }
 });

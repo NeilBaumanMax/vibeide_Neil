@@ -6,12 +6,18 @@ artifactName: "${productName}-${os}-${arch}.${ext}"
 directories:
   output: dist-package
 
+extraFiles:
+  - from: DISTRIBUTION_README.txt
+    to: README-FIRST.txt
+
 files:
   - dist/**/*
   - package.json
   - assets/**/*
 
 extraResources:
+  - from: apikey.txt.example
+    to: apikey.txt.example
   - from: ../agent
     to: agent
     filter:

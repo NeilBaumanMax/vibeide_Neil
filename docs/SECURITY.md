@@ -63,7 +63,9 @@ API Key 文件始终位于 `resources/apikey.txt`，与应用同目录。
 DEEPSEEK_API_KEY=<your-key>
 ```
 
-后续可以添加 `apikey.txt.example`，但不能包含真实 key。
+发布包只携带 `resources/apikey.txt.example` 占位模板，不携带 `resources/apikey.txt`。首次启动没有 Key 时，应用会显示阻塞式配置窗口；保存后只写入当前解压目录的 `resources/apikey.txt`。
+
+分发前必须再次确认真实 Key 文件不存在。用户自行编辑模板或通过首次启动窗口保存都可以，但不得把保存过 Key 的目录再次压缩转发。
 
 ## 提交前检查
 
@@ -86,4 +88,3 @@ ssh hp@192.168.137.1
 ```
 
 密码只写 `.local-secrets/HANDOFF_PRIVATE.md`。
-

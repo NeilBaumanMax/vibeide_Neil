@@ -1,5 +1,28 @@
 # 施工日志
 
+## 2026-07-21 — Windows v1.0.0 便携发布收口
+
+- 对外版本固定为 `v1.0.0`，内部构建号 `7201`；npm 与 Windows PE 继续分别使用 `1.0.0-7201`、`1.0.0.7201`。
+- 增加无 Key 首次启动配置窗口和 `resources/apikey.txt.example`，真实 `resources/apikey.txt` 不进入发布包；用户保存后写入当前解压目录。
+- 发布目录根部新增 `README-FIRST.txt`，说明完整解压、可写目录、API Key、驱动与 SmartScreen 边界。
+- 新增 `verify:release`，校验版本元数据、关键随包资源、无真实 Key、便携 Node/Python/Claude Code、Runtime health 和目录体积。
+- 新增 `WINDOWS_V1_0_0_RELEASE_CHECKLIST.md`，作为便携包分发和复验的施工真相源。
+
+## 2026-07-21 — 对话输入区 Skill 选择器
+
+- 仓库概览移除“Agent 生成”卡片，保留硬件工程、参考代码和 Skills；Agent 工作区仍作为编辑器受控根目录，避免破坏生成文件访问。
+- 仓库顶部保持简洁资源说明；真正的主动调用入口改到左侧 Agent 对话输入区。
+- 输入区新增 Skills 按钮、已部署 Skill 弹层和选中标签；发送时自动注入 `/skill-id`，随后清除选择，用户无需记忆命令。自然语言自动选择仍保留。
+
+## 2026-07-21 — Skill 原生部署与仓库页管理
+
+- 保持 Windows 成品 `win-unpacked/resources/agent/skills` 路径不变，将其定义为唯一用户可编辑源仓库；开发版对应 `agent/skills`。
+- 新增 `skill-manager.ts`：兼容历史扁平 Markdown 和标准 `<id>/SKILL.md`，生成 `name/description` frontmatter，部署到 Agent 工作区 `.claude/skills`，并通过管理清单避免删除非奥德赛 Skill。
+- Agent 每次启动前同步 Skill；同名非托管目标拒绝覆盖。任务上下文改为原生命令推荐，不再注入整篇文档，并收紧 Hardboard 的“编译”触发条件。
+- 仓库页 Skills 区升级为专用管理器：新增、编辑、回收站删除、打开目录、立即同步、可写状态和部署数量；保存后自动同步。
+- 对话执行过程增加“技能”标签，分别显示任务路由推荐和 Claude Code 的实际 `Skill` 工具调用。
+- 新增 `verify:skills`；typecheck、main/renderer build、Windows `pack:win`、Skill 与 Hardboard 烟测通过。工作台 smoke 已隔离 userData，但本机 Electron GPU 子进程仍以 `0xC0000135` 退出，需在完整桌面图形环境补跑。
+
 > 当前日志只保留对现代码仍然成立的记录。
 
 ## 2026-07-21 — 历史对话标签编辑菜单

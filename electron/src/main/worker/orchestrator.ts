@@ -173,11 +173,20 @@ export class Orchestrator {
     this.startSilenceTimer();
 
     this.pushUI('chat:message', {
-      text: `[Agent] PID ${proc.pid}${skillsFound.length ? ` · ${skillsFound.join(', ')}` : ''}`,
+      text: `[Agent] PID ${proc.pid}`,
       timestamp: Date.now(),
       kind: 'detail',
       taskId: this.currentTaskId,
     });
+    if (skillsFound.length) {
+      this.pushUI('chat:message', {
+        text: `已根据任务推荐：${skillsFound.map((file) => `/${file.replace(/\.md$/i, '').replace(/_/g, '-')}`).join('、')}。Agent 将按需加载。`,
+        timestamp: Date.now(),
+        kind: 'detail',
+        toolName: 'Skill',
+        taskId: this.currentTaskId,
+      });
+    }
     if (!continuation) {
       this.pushUI('chat:message', {
         text: this.describeExecutionPlan(task),
