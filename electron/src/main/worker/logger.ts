@@ -18,6 +18,7 @@ type LogEvent =
   | 'agent:stdin' | 'agent:turn-complete' | 'agent:silence'
   | 'claude:session'
   | 'first-run:detected' | 'first-run:apikey-saved' | 'first-run:apikey-save-failed' | 'first-run:apikey-copied-from-resources' | 'first-run:apikey-copy-failed' | 'first-run:status' | 'first-run:restart-scheduled' | 'first-run:restarting'
+  | 'software-assistant:request' | 'software-assistant:response' | 'software-assistant:error'
   | 'mcp:init'
   | 'ui:push'
   | 'browser:navigate' | 'browser:state'

@@ -45,16 +45,17 @@ Electron Chromium / WebContentsView
 - `electron/src/main/paths.ts`：开发版与 packaged 环境的资源、Runtime、Agent 和 API key 路径解析。
 - `electron/src/main/first-run.ts`：校验并保存 DeepSeek API Key；无 Key 时通过 Preload/IPC 向 Renderer 提供首次启动状态，Renderer 显示阻塞式配置窗口。保存成功后主进程调度一次 `app.relaunch()`，先走统一退出清理再自动重启，使 Agent 从新进程读取 Key。
 - `electron/src/main/agent.ts`：Claude Agent 进程、动态 MCP 配置和生命周期管理。
+- `electron/src/main/software-assistant.ts`：独立的软件使用问答通道；复用本地 DeepSeek Key，通过 OpenAI Chat Completions 接口调用 `deepseek-v4-flash`，限制上下文长度和回答边界，不进入硬件 Agent 队列。
 - `electron/src/main/tray.ts`：Windows 系统托盘和窗口显隐。
 - `electron/src/main/worker/session-store.ts`：v2 多会话索引、完整 UI 消息、精简 Agent 轮次、旧单会话迁移和重启恢复；成品数据位于用户目录，不写入安装资源。
-- `electron/src/renderer/App.tsx`：主 UI 状态、左右面板宽度持久化、拖动分隔和对话区收起/展开；同时管理独立于系统实时偏好的深色/浅色主题、可拖动外观按钮坐标，以及 Agent 消息清理、分类和等待状态聚合。
+- `electron/src/renderer/App.tsx`：主 UI 状态、左右面板宽度持久化、拖动分隔和对话区收起/展开；同时管理独立于系统实时偏好的深色/浅色主题、可拖动“猫薄荷”助手坐标、微型帮助会话，以及 Agent 消息清理、分类和等待状态聚合。
 - `electron/src/renderer/components/ChatPanel.tsx`：左侧历史会话栏与右侧 Agent 对话；支持新建、切换、收起，以及“⋯”菜单中的重命名、置顶和带确认删除，同时负责主要回复、执行过程和专业视图。
 - `electron/src/renderer/components/TaskProgress.tsx`：当前任务的紧凑运行仪表盘，挂在活动“执行过程”下方且只在 Agent 工作期间呈现，不再作为左栏独立面板。
 - `electron/src/renderer/components/MarkdownContent.tsx`：把 Agent Markdown 安全渲染为 React 节点，不执行原始 HTML，并限制外部链接协议。
 - `electron/src/renderer/components/BrowserPanel.tsx`：仓库、监视器、任务管理器和编辑器；工作台前端入口隐藏，但组件内部浏览器工作台实现保留。任务管理器负责工程/设备刷新、相对工程选择、Build/Flash 控制、语义状态胶囊、可直接清除的 EventBus 历史和最近任务结果；监视器提供文本/HEX 双向收发及完整串口参数；编辑器负责多根资源树、懒加载目录、等宽标签、Portal 右键菜单、字号持久化和保存状态同步。
 - `electron/src/renderer/components/WorkspacePanel.tsx`：显示硬件工程、参考代码和 Skills 三类资源，不显示 Agent 生成卡片；Skills 卡片可新增、编辑、回收站删除、同步并查看源仓库可写/部署状态。
 - `electron/src/renderer/components/ChatPanel.tsx`：对话输入区提供 Skills 按钮和选择弹层；选中项以标签进入输入区，发送时自动注入对应 `/skill-id`，无需用户记忆或手工输入命令。
-- `electron/src/renderer/styles/apple.less`：1.0.0-7201 最终视觉覆盖，使用 `data-theme="dark|light"` 定义显式主题令牌，并提供冷色材质、排版层级、圆角、可拖动外观浮层、反馈动效和 reduced-motion/reduced-transparency 适配。
+- `electron/src/renderer/styles/apple.less`：1.0.0-7201 最终视觉覆盖，使用 `data-theme="dark|light"` 定义显式主题令牌，并提供冷色材质、排版层级、圆角、可拖动助手浮层、反馈动效和 reduced-motion/reduced-transparency 适配。
 - `electron/src/renderer/components/CodeEditor.tsx`：基于 Monaco Editor 的代码区，按扩展名选择 C/C++、CMake、Markdown、JSON、TypeScript 等语言，使用内置 C/C++ 深色主题并接收用户字号设置。
 - `electron/src/renderer/monaco.ts`：本地 Monaco editor/json/css/html/typescript Worker 注册，保证开发版和打包版不依赖在线 CDN。
 

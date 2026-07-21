@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('electronAPI', {
   getStartupStatus: () => ipcRenderer.invoke('startup:status'),
   saveStartupApiKey: (key: string) => ipcRenderer.invoke('startup:save-apikey', key),
+  askSoftwareAssistant: (messages: Array<{ role: 'user' | 'assistant'; content: string }>) => ipcRenderer.invoke('software-assistant:ask', messages),
   sendMessage: (text: string, mode?: 'auto' | 'guide' | 'queue', conversationId?: string, messageId?: string, timestamp?: number) => ipcRenderer.invoke('chat:send', text, mode, conversationId, messageId, timestamp),
   onMessage: (cb: (msg: { id?: string; text: string; timestamp: number; kind?: 'conversation' | 'progress' | 'detail' | 'status'; toolName?: string; error?: boolean; taskId?: string | null; conversationId?: string }) => void) => {
     ipcRenderer.on('chat:message', (_event, msg) => cb(msg));

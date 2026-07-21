@@ -61,6 +61,12 @@ export interface StartupStatus {
   detail?: string;
 }
 
+export interface SoftwareAssistantMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface TaskStep {
   id: string;
   label: string;
@@ -225,6 +231,7 @@ export interface HardboardRuntimeLaunchResult {
 export interface WindowAPI {
   getStartupStatus: () => Promise<StartupStatus>;
   saveStartupApiKey: (key: string) => Promise<{ ok: boolean; restarting: boolean; status: Pick<StartupStatus, 'apiKeyReady' | 'playwrightReady' | 'firstRun'> }>;
+  askSoftwareAssistant: (messages: Array<Pick<SoftwareAssistantMessage, 'role' | 'content'>>) => Promise<{ ok: true; text: string }>;
   sendMessage: (text: string, mode?: TaskSubmitMode, conversationId?: string, messageId?: string, timestamp?: number) => Promise<TaskSubmitResult & { message?: ChatMessage }>;
   onMessage: (cb: (msg: { id?: string; text: string; timestamp: number; kind?: ChatMessageKind; toolName?: string; error?: boolean; taskId?: string | null; conversationId?: string }) => void) => void;
   listChatConversations: () => Promise<{ activeConversationId: string; conversations: ChatConversationSummary[] }>;

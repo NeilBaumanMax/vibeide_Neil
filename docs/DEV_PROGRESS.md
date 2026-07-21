@@ -36,7 +36,8 @@
 - [x] 旧单会话 `session.json` 自动迁移为 v2；选中历史会话的最近问答真实注入 Agent 提示词，切换时重置常驻进程防止工程上下文串线
 - [x] Electron 前端已全面放弃 NES.css / 像素视觉，改为 Apple 风格冷色材质、系统字体、克制边框和直接反馈
 - [x] 深色/浅色主题已从持续跟随系统媒体查询改为应用内显式选择；首次读取系统偏好后持久化到 `vibeide.appearance.theme`，避免运行中因系统偏好变化突然切色
-- [x] 右下角外观入口支持 Pointer Capture 拖动、6px 防误触阈值、坐标持久化、窗口边界约束和四象限浮层方向适配；默认避开编辑器字号工具条
+- [x] 右下角外观入口升级为“猫薄荷”软件助手：使用用户提供的形象，支持 Pointer Capture 拖动、坐标持久化、窗口边界约束和四象限展开；微型聊天框通过独立 DeepSeek V4 Flash 通道回答软件操作问题，标题栏保留深色/浅色切换
+- [x] 新增软件助手 CDP 界面烟测：`npm.cmd --prefix electron run verify:software-assistant-ui`，覆盖形象加载、浮层边界、欢迎语、输入框和主题操作按钮
 - [x] 内置串口助手采用左侧收发、右侧配置布局，支持完整串口参数、文本/HEX 双向收发、编码与行尾控制；无用数值趋势图已删除，并适配整体浅色/深色材质
 - [x] Windows 串口设备 CIM 枚举失败时自动回退到随包 `pyserial`，COM5 中文设备名、打开和关闭释放已完成打包版验证
 - [x] Windows ESP-IDF 和串口统一使用 `resources/runtime/python/Scripts/python.exe`；旧 `esptools/idf-tools/python_env` 不再进入安装包，隔离模式由 `sitecustomize.py` 恢复脚本目录导入

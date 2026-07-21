@@ -263,7 +263,7 @@ function buildMcpConfig(): { mcpServers: Record<string, unknown> } {
   };
 }
 
-function readDeepSeekApiKey(): string | null {
+export function readDeepSeekApiKey(): string | null {
   try {
     const text = fs.readFileSync(API_KEY_FILE, 'utf-8');
     for (const rawLine of text.split(/\r?\n/)) {

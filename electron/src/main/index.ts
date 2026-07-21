@@ -7,6 +7,7 @@ import { logger } from './worker/logger';
 import { getChromeProfileDir, getResourcesDir, isDev } from './paths';
 import { checkStartupStatus, getApiKeyPromptData, saveApiKey } from './first-run';
 import { killAgent } from './agent';
+import { askSoftwareAssistant, type SoftwareAssistantMessage } from './software-assistant';
 
 app.commandLine.appendSwitch('remote-debugging-port', '9230');
 app.disableHardwareAcceleration();
@@ -109,6 +110,9 @@ function createWindow() {
     const status = checkStartupStatus();
     if (ok) scheduleFirstRunRestart();
     return { ok, status, restarting: ok };
+  });
+  ipcMain.handle('software-assistant:ask', async (_event, messages: SoftwareAssistantMessage[]) => {
+    return askSoftwareAssistant(Array.isArray(messages) ? messages : []);
   });
 
   if (process.env.NODE_ENV === 'development' || process.env.ELECTRON_DEV === '1') {

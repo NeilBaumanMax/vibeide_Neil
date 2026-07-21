@@ -1,5 +1,13 @@
 # 施工日志
 
+## 2026-07-21 — “猫薄荷”悬浮软件助手
+
+- 将原右下角深浅模式悬浮球升级为用户提供形象的“猫薄荷”软件助手；默认位于右下角，保留拖动、防误触、坐标持久化和四象限展开能力。
+- 点击形象后从触发点展开非阻塞微型聊天框，支持 Markdown 回答、连续上下文、等待反馈和键盘发送；深色/浅色切换收进助手标题栏。
+- 新增独立 `software-assistant.ts` IPC 通道，复用本地 `resources/apikey.txt`，通过 DeepSeek OpenAI Chat Completions 调用 `deepseek-v4-flash`；限制为软件使用答疑，不进入硬件 Agent 队列，也不具备执行权限。
+- 接口限制最近 12 条消息、单条 2000 字和 45 秒超时，不记录问题正文或 Key；错误以用户可见消息降级。
+- `verify:software-assistant-ui` 实机 CDP 烟测通过：形象加载、360×500 浮层、欢迎语、输入框、主题按钮和窗口边界均正常；同时覆盖 reduced-motion、reduced-transparency 和高对比度适配。
+
 ## 2026-07-21 — 首次配置 API Key 后自动重启
 
 - 修复首次启动保存 `resources/apikey.txt` 后仍需用户手工重启才能使用 Agent 的产品断点。

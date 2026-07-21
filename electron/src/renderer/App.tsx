@@ -1,16 +1,23 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ChatPanel from './components/ChatPanel';
 import BrowserPanel from './components/BrowserPanel';
+import MarkdownContent from './components/MarkdownContent';
 import catnipForgeIcon from './assets/catnip-forge.png';
-import type { AgentTaskStatus, BrowserTab, ChatConversation, ChatConversationSummary, ChatMessage, ChatMessageKind, HardboardDevice, RecordingSummary, StartupStatus, TaskStep, TaskSubmitMode, WorkbenchOverview } from './types';
+import catnipAssistantImage from './assets/catnip-assistant.png';
+import type { AgentTaskStatus, BrowserTab, ChatConversation, ChatConversationSummary, ChatMessage, ChatMessageKind, HardboardDevice, RecordingSummary, SoftwareAssistantMessage, StartupStatus, TaskStep, TaskSubmitMode, WorkbenchOverview } from './types';
 
 const LEFT_PANEL_WIDTH_KEY = 'vibeide.ui.leftPanelWidth';
 const APPEARANCE_THEME_KEY = 'vibeide.appearance.theme';
 const APPEARANCE_POSITION_KEY = 'vibeide.appearance.position';
 const DEFAULT_LEFT_PANEL_WIDTH = 34;
-const APPEARANCE_BUTTON_SIZE = 42;
+const APPEARANCE_BUTTON_SIZE = 52;
 const APPEARANCE_EDGE_GAP = 12;
 const IDLE_TASK_STATUS: AgentTaskStatus = { busy: false, paused: false, activeTaskId: null, activeTask: null, queueLength: 0, guidanceCount: 0 };
+const ASSISTANT_WELCOME: SoftwareAssistantMessage = {
+  id: 'welcome',
+  role: 'assistant',
+  content: '你好，我是 **猫薄荷**。遇到 Catnip Forge 的界面、编译、烧录、串口或 Skills 使用问题，都可以直接问我。',
+};
 type AppearanceTheme = 'dark' | 'light';
 type FloatingPosition = { x: number; y: number };
 
@@ -120,6 +127,9 @@ export default function App() {
   const [appearanceMenuOpen, setAppearanceMenuOpen] = useState(false);
   const [appearancePosition, setAppearancePosition] = useState<FloatingPosition>(readInitialAppearancePosition);
   const [appearanceDragging, setAppearanceDragging] = useState(false);
+  const [softwareAssistantMessages, setSoftwareAssistantMessages] = useState<SoftwareAssistantMessage[]>([ASSISTANT_WELCOME]);
+  const [softwareAssistantInput, setSoftwareAssistantInput] = useState('');
+  const [softwareAssistantPending, setSoftwareAssistantPending] = useState(false);
   const [startupStatus, setStartupStatus] = useState<StartupStatus | null>(null);
   const [startupApiKey, setStartupApiKey] = useState('');
   const [startupApiKeyError, setStartupApiKeyError] = useState('');
@@ -128,6 +138,7 @@ export default function App() {
   const workbenchSmokeTriggered = useRef(false);
   const activeConversationIdRef = useRef('');
   const appearanceSettingsRef = useRef<HTMLDivElement>(null);
+  const softwareAssistantMessagesRef = useRef<HTMLDivElement>(null);
   const appearanceDragRef = useRef<{
     pointerId: number;
     startX: number;
@@ -199,6 +210,14 @@ export default function App() {
   }, [appearanceMenuOpen]);
 
   useEffect(() => {
+    if (!appearanceMenuOpen) return;
+    softwareAssistantMessagesRef.current?.scrollTo({
+      top: softwareAssistantMessagesRef.current.scrollHeight,
+      behavior: softwareAssistantMessages.length > 1 ? 'smooth' : 'auto',
+    });
+  }, [appearanceMenuOpen, softwareAssistantMessages, softwareAssistantPending]);
+
+  useEffect(() => {
     const handleResize = () => {
       setAppearancePosition((current) => {
         const next = clampAppearancePosition(current);
@@ -264,6 +283,37 @@ export default function App() {
     }
     setAppearanceMenuOpen((open) => !open);
   }, []);
+
+  const handleSoftwareAssistantSubmit = useCallback(async (event: React.FormEvent) => {
+    event.preventDefault();
+    const content = softwareAssistantInput.trim();
+    if (!content || softwareAssistantPending) return;
+
+    const userMessage: SoftwareAssistantMessage = { id: `user-${Date.now()}`, role: 'user', content };
+    const nextMessages = [...softwareAssistantMessages, userMessage];
+    setSoftwareAssistantMessages(nextMessages);
+    setSoftwareAssistantInput('');
+    setSoftwareAssistantPending(true);
+
+    try {
+      const result = await window.electronAPI.askSoftwareAssistant(
+        nextMessages.filter((message) => message.id !== 'welcome').map(({ role, content: text }) => ({ role, content: text })),
+      );
+      setSoftwareAssistantMessages((current) => [...current, {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: result.text,
+      }]);
+    } catch (error) {
+      setSoftwareAssistantMessages((current) => [...current, {
+        id: `assistant-error-${Date.now()}`,
+        role: 'assistant',
+        content: `暂时无法回答：${error instanceof Error ? error.message : String(error)}`,
+      }]);
+    } finally {
+      setSoftwareAssistantPending(false);
+    }
+  }, [softwareAssistantInput, softwareAssistantMessages, softwareAssistantPending]);
 
   const handleDividerPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (leftPanelCollapsed || window.innerWidth <= 820) return;
@@ -761,42 +811,59 @@ export default function App() {
         </div>
       ) : null}
       <div
-        className={`appearance-settings${appearanceDragging ? ' is-dragging' : ''}${appearancePosition.x < 282 ? ' opens-right' : ''}${appearancePosition.y < 244 ? ' opens-down' : ''}`}
+        className={`appearance-settings${appearanceDragging ? ' is-dragging' : ''}${appearancePosition.x < 382 ? ' opens-right' : ''}${appearancePosition.y < 520 ? ' opens-down' : ''}`}
         ref={appearanceSettingsRef}
         style={{ left: appearancePosition.x, top: appearancePosition.y }}
       >
         {appearanceMenuOpen ? (
-          <div className="appearance-popover" role="dialog" aria-label="外观设置">
-            <div className="appearance-popover-heading">
-              <strong>外观</strong>
-              <span>选择界面主题</span>
-            </div>
-            <div className="appearance-theme-options" role="radiogroup" aria-label="界面主题">
-              {(['dark', 'light'] as AppearanceTheme[]).map((theme) => (
-                <button
-                  className={`appearance-theme-option${appearanceTheme === theme ? ' is-selected' : ''}`}
-                  type="button"
-                  role="radio"
-                  aria-checked={appearanceTheme === theme}
-                  key={theme}
-                  onClick={() => setAppearanceTheme(theme)}
-                >
-                  <span className={`appearance-theme-preview appearance-theme-preview--${theme}`} aria-hidden="true">
-                    <i />
-                    <b />
-                  </span>
-                  <span>{theme === 'dark' ? '深色' : '浅色'}</span>
-                  <span className="appearance-theme-check" aria-hidden="true">✓</span>
-                </button>
+          <section className="appearance-popover software-assistant-popover" role="dialog" aria-label="猫薄荷软件助手">
+            <header className="software-assistant-header">
+              <div className="software-assistant-identity">
+                <span className="software-assistant-avatar" aria-hidden="true"><img src={catnipAssistantImage} alt="" /></span>
+                <span><strong>猫薄荷</strong><small>Catnip Forge 使用助手</small></span>
+              </div>
+              <div className="software-assistant-actions" role="group" aria-label="助手与外观设置">
+                <button type="button" className={appearanceTheme === 'light' ? 'is-selected' : ''} onClick={() => setAppearanceTheme('light')} title="浅色模式" aria-label="切换到浅色模式">☀</button>
+                <button type="button" className={appearanceTheme === 'dark' ? 'is-selected' : ''} onClick={() => setAppearanceTheme('dark')} title="深色模式" aria-label="切换到深色模式">☾</button>
+                <button type="button" onClick={() => setAppearanceMenuOpen(false)} title="关闭助手" aria-label="关闭助手">×</button>
+              </div>
+            </header>
+            <div className="software-assistant-messages" ref={softwareAssistantMessagesRef} aria-live="polite">
+              {softwareAssistantMessages.map((message) => (
+                <div className={`software-assistant-message software-assistant-message--${message.role}`} key={message.id}>
+                  {message.role === 'assistant' ? <MarkdownContent text={message.content} /> : <p>{message.content}</p>}
+                </div>
               ))}
+              {softwareAssistantPending ? (
+                <div className="software-assistant-typing" role="status" aria-label="猫薄荷正在回答"><i /><i /><i /></div>
+              ) : null}
             </div>
-          </div>
+            <form className="software-assistant-composer" onSubmit={handleSoftwareAssistantSubmit}>
+              <textarea
+                rows={2}
+                value={softwareAssistantInput}
+                maxLength={2000}
+                disabled={softwareAssistantPending}
+                placeholder="问我怎么使用 Catnip Forge…"
+                aria-label="向猫薄荷提问"
+                onChange={(event) => setSoftwareAssistantInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }}
+              />
+              <button type="submit" disabled={!softwareAssistantInput.trim() || softwareAssistantPending} aria-label="发送问题">↑</button>
+            </form>
+            <footer>仅回答软件使用问题 · 回答由 DeepSeek 生成</footer>
+          </section>
         ) : null}
         <button
           className={`appearance-settings-trigger${appearanceMenuOpen ? ' is-open' : ''}`}
           type="button"
-          title="外观设置"
-          aria-label="打开外观设置"
+          title="猫薄荷软件助手（可拖动）"
+          aria-label="打开猫薄荷软件助手"
           aria-haspopup="dialog"
           aria-expanded={appearanceMenuOpen}
           onPointerDown={handleAppearancePointerDown}
@@ -805,11 +872,7 @@ export default function App() {
           onPointerCancel={finishAppearanceDrag}
           onClick={handleAppearanceClick}
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M10 14v6" />
-            <circle cx="14" cy="7" r="2" />
-            <circle cx="10" cy="17" r="2" />
-          </svg>
+          <img src={catnipAssistantImage} alt="" aria-hidden="true" />
         </button>
       </div>
     </div>
